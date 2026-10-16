@@ -332,6 +332,12 @@ mark{background:#F6E3A1;color:inherit;border-radius:3px;padding:0 1px}
 .note.now ul{color:var(--ink)}
 .note-link{display:flex;justify-content:space-between;width:100%;margin-top:12px;padding:12px 15px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer;font-weight:550}
 .note-link span{color:var(--faint);font-weight:400}
+.note-link+.note-link{margin-top:8px}
+.chk{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.5;color:var(--ink)}
+.chk:first-child{border-top:0}
+.chk b{width:20px;flex:none;text-align:center}
+.chk.ok b{color:var(--accent)}.chk.no b{color:var(--warn)}
+.chk em{font-style:normal;color:var(--sub);font-size:12.5px}
 .themes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .theme-opt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:10px 11px;cursor:pointer}
 .theme-opt.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
@@ -952,7 +958,7 @@ function openSnipForm(id) {
     <div class="seg" id="seg">${['인용','생각','메모'].map(t => `<button data-t="${t}" class="${snipType === t ? 'on' : ''}">${t === '인용' ? '인용 (책 문장)' : t === '생각' ? '내 생각' : '메모'}</button>`).join('')}</div>
     <label>제목 <span style="font-weight:400;color:var(--faint)">내가 붙이는 표제</span><button type="button" class="kw-ai" data-ai-title onclick="aiTitle(this)">AI 제목</button></label>
     <input class="field" id="f-ttl" value="${esc(s ? s['제목'] : '')}" placeholder="예: 과학은 믿음을 싫어한다">
-    <label>내용</label>
+    <label>내용 <span style="font-weight:400;color:var(--faint)">복사한 글은 붙여넣으면 줄바꿈이 정리돼요</span><button type="button" class="kw-ai" onclick="pasteClip(this)">붙여넣기</button></label>
     <textarea class="field" id="f-txt" placeholder="책 속 문장이나 생각을 적어 주세요">${esc(s ? s['내용'] : '')}</textarea>
     <label>쪽수 <span style="font-weight:400;color:var(--faint)">여러 쪽이면 36, 37</span></label>
     <input class="field" id="f-page" inputmode="decimal" style="max-width:160px" value="${esc(s ? s['쪽수'] : '')}">
@@ -971,6 +977,7 @@ function openSnipForm(id) {
     if (!cur.includes(c.dataset.kw)) cur.push(c.dataset.kw);
     $('f-kw').value = cur.join(', ');
   });
+  $('f-txt').addEventListener('paste', onSnipPaste);
   setTimeout(() => { const el = s ? $('f-txt') : $('f-ttl'); if (el) el.focus(); }, 50);
 }
 function submitSnip(id, keepOpen) {
@@ -1795,6 +1802,7 @@ function openSettings() {
       <div class="small" style="line-height:1.6">${API.url ? '연결됨 · 마지막으로 받은 데이터는 이 기기에 저장돼 있어 바로 열려요.' : '아직 연결 안 됨'}${S.outbox.length ? `<br>시트에 올라가길 기다리는 기록 ${S.outbox.length}개` : ''}</div>
       <div class="actions" style="margin-top:8px"><button class="btn" onclick="openConnect()">연결 바꾸기</button>
         <button class="btn" onclick="resetLocal()">새로 불러오기</button></div></div>
+    <button class="note-link" onclick="openShareCheck()">공유 받기 점검 <span>공유 목록에 안 보일 때</span></button>
     <button class="note-link" onclick="openPatchNotes()">업데이트 내역 <span>v${APP_VERSION}</span></button>`);
 }
 async function saveSettingsUI() {
@@ -2091,9 +2099,61 @@ async function aiTitle(btn, auto, raw) {
   finally { if (btn.isConnected) { btn.disabled = false; btn.textContent = 'AI 제목'; } }
 }
 
+
+/* ----- 복사한 글 붙여넣기 (갤럭시 텍스트 추출 → 복사 → 여기 붙여넣기) ----- */
+function fillPasted(txt) {
+  const c = cleanShared({ text: txt });
+  const ta = $('f-txt'); if (!ta || !c.text) return;
+  if (!ta.value.trim()) ta.value = c.text;
+  else { const a = ta.selectionStart, b = ta.selectionEnd; ta.value = ta.value.slice(0, a) + c.text + ta.value.slice(b); }
+  if (c.page && !$('f-page').value.trim()) $('f-page').value = c.page;
+  const btn = document.querySelector('[data-ai-title]');
+  if (btn && navigator.onLine && !$('f-ttl').value.trim() && ta.value.trim() === c.text) aiTitle(btn, true, c.raw);
+}
+function onSnipPaste(e) {
+  const txt = (e.clipboardData || window.clipboardData).getData('text');
+  if (!txt || !/\n/.test(txt)) return;   // 한 줄짜리는 그대로 붙여넣기
+  e.preventDefault(); fillPasted(txt);
+}
+async function pasteClip(btn) {
+  try {
+    const txt = await navigator.clipboard.readText();
+    if (!txt.trim()) { toast('복사한 글이 없어요'); return; }
+    fillPasted(txt);
+  } catch (e) {
+    $('f-txt').focus();
+    toast('내용 칸을 길게 눌러 붙여넣기 해 주세요');
+  }
+}
+
+/* ----- 공유 받기 점검 ----- */
+async function shareStatusHtml() {
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  let mf = false;
+  try { const r = await fetch('manifest.webmanifest', { cache: 'no-store' }); mf = !!(await r.json()).share_target; } catch (e) {}
+  const ua = navigator.userAgent;
+  const browser = /SamsungBrowser/.test(ua) ? '삼성 인터넷' : /Chrome/.test(ua) ? '크롬' : '기타 브라우저';
+  const row = (ok, t, fix) => `<div class="chk ${ok ? 'ok' : 'no'}"><b>${ok ? '✓' : '✕'}</b><span>${t}${!ok && fix ? `<br><em>${fix}</em>` : ''}</span></div>`;
+  return row(mf, '앱 설정에 공유 받기가 들어 있어요', 'GitHub에 manifest.webmanifest 파일을 다시 올려 주세요') +
+    row(standalone, standalone ? '설치한 앱으로 열려 있어요' : '지금은 브라우저에서 열려 있어요', '홈 화면 아이콘으로 열어 주세요. 아이콘이 없으면 크롬 메뉴(⋮) → 앱 설치') +
+    row(browser === '크롬', '브라우저: ' + browser, '공유 받기는 크롬으로 설치한 앱에서 가장 잘 돼요. 크롬에서 주소를 열고 메뉴(⋮) → 앱 설치');
+}
+async function openShareCheck() {
+  modal(`<h3>공유 받기 점검</h3><div id="chk-box" class="small">확인하는 중…</div>
+    <div class="small" style="line-height:1.7;margin-top:12px">모두 ✓인데도 공유 목록에 없으면: 홈 화면 아이콘을 지우고 → 크롬에서 앱 주소를 열고 → 메뉴(⋮) → <b>앱 설치</b>로 다시 설치한 뒤, 휴대폰을 한 번 껐다 켜 주세요.<br>
+    공유 목록 맨 끝 <b>더보기</b>에 숨어 있을 수도 있어요.<br><br>
+    공유 대신 쓰는 방법: 텍스트 추출에서 <b>복사</b> → 앱에서 책을 열고 <b>+ 문장 추가</b> → 내용 칸에 붙여넣기. 줄바꿈 정리와 AI 제목은 공유와 똑같이 돼요.</div>
+    <div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>`);
+  $('chk-box').innerHTML = await shareStatusHtml();
+}
+
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.2.1';
 const PATCH_NOTES = [
+  { v: '2.2.1', d: '2026.10.17', t: '공유 받기 고침 · 붙여넣기', items: [
+    '설치할 때 예전 앱 설정이 쓰여 공유 목록에 안 나오던 문제를 고쳤어요',
+    '복사한 글을 내용 칸에 붙여넣으면 줄바꿈 정리 · 쪽수 · AI 제목이 공유와 똑같이 돼요',
+    '설정 → 공유 받기 점검에서 무엇이 막혔는지 확인할 수 있어요'] },
   { v: '2.2', d: '2026.10.17', t: '공유로 받기 · 새 디자인', items: [
     '다른 앱에서 공유 → 나의 서재: 갤럭시 텍스트 추출로 고른 글이나 사진을 바로 필사로 보내요',
     '공유받은 글은 화면 줄바꿈을 정리하고, 끝에 적힌 "36p"는 쪽수 칸으로 옮겨요',

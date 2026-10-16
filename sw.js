@@ -2,9 +2,9 @@
  * 앱 화면을 기기에 저장해 두고 바로 띄웁니다. 새 버전이 올라오면 뒤에서 받아 두고 알려줘요.
  * (이 파일은 거의 바꿀 일이 없어요. index.html만 고쳐 올리면 자동으로 반영됩니다.)
  */
-const SHELL = 'shell-v2';  // sw.js를 고칠 때만 숫자를 올려요
+const SHELL = 'shell-v3';  // sw.js를 고칠 때만 숫자를 올려요
 const ASSETS = 'assets-v1';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './icon-maskable-512.png'];
+const FILES = ['./', './index.html', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
@@ -21,6 +21,8 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (/script\.google(usercontent)?\.com$/.test(url.hostname)) return;   // 서버 요청은 그대로
+  // 앱 설정 파일(manifest)과 sw.js는 저장해 두지 않고 늘 새로 받음 → 설치할 때 최신 설정(공유 받기 등)이 쓰이도록
+  if (url.origin === location.origin && /(manifest\.webmanifest|sw\.js)$/.test(url.pathname)) return;
 
   // 앱 화면: 저장된 것을 바로 보여주고, 뒤에서 새 버전 확인
   if (req.mode === 'navigate' || (url.origin === location.origin && /\/(index\.html)?$/.test(url.pathname))) {
