@@ -2,7 +2,7 @@
  * 앱 화면을 기기에 저장해 두고 바로 띄웁니다. 새 버전이 올라오면 뒤에서 받아 두고 알려줘요.
  * (이 파일은 거의 바꿀 일이 없어요. index.html만 고쳐 올리면 자동으로 반영됩니다.)
  */
-const SHELL = 'shell-v1';  // sw.js를 고칠 때만 숫자를 올려요
+const SHELL = 'shell-v2';  // sw.js를 고칠 때만 숫자를 올려요
 const ASSETS = 'assets-v1';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './icon-maskable-512.png'];
 
@@ -16,6 +16,8 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const req = e.request;
+  // 다른 앱에서 '공유 → 나의 서재'로 보낸 글 · 사진 받기
+  if (req.method === 'POST' && new URL(req.url).pathname.endsWith('/share-target')) { e.respondWith(takeShare(req)); return; }
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (/script\.google(usercontent)?\.com$/.test(url.hostname)) return;   // 서버 요청은 그대로
@@ -73,4 +75,22 @@ async function notify(id) {
     if (!id) { (await self.clients.matchAll({ type: 'window' })).forEach(x => x.postMessage({ type: 'updated' })); return; }
     await new Promise(r => setTimeout(r, 300));
   }
+}
+
+// 공유받은 글 · 사진을 잠시 보관하고 앱을 열어 줌 (앱이 읽은 뒤 바로 지움)
+async function takeShare(req) {
+  const back = new URL('./?share=1', self.registration.scope).href;
+  try {
+    const f = await req.formData();
+    const c = await caches.open('share');
+    for (const k of await c.keys()) await c.delete(k);
+    const files = f.getAll('images').filter(x => x && typeof x !== 'string' && x.size);
+    for (let i = 0; i < files.length; i++) {
+      await c.put(new URL('./_share/img/' + i, self.registration.scope).href,
+        new Response(files[i], { headers: { 'Content-Type': files[i].type || 'image/jpeg', 'X-Name': encodeURIComponent(files[i].name || 'image' + i) } }));
+    }
+    const meta = { title: String(f.get('title') || ''), text: String(f.get('text') || ''), url: String(f.get('url') || ''), n: files.length, at: Date.now() };
+    await c.put(new URL('./_share/meta', self.registration.scope).href, new Response(JSON.stringify(meta), { headers: { 'Content-Type': 'application/json' } }));
+  } catch (err) {}
+  return Response.redirect(back, 303);
 }

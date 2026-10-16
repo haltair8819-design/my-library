@@ -2,17 +2,18 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('theme')||'manuscript'}catch(e){document.documentElement.dataset.theme='manuscript'}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>나의 서재</title>
-<meta name="theme-color" content="#F6F2EA" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F2F3EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15181E" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Gowun+Batang:wght@400;700&display=swap">
 <style>
 :root{
   --paper:#F6F2EA; --card:#FFFDF8; --ink:#24211D; --sub:#6F6A61; --faint:#A39D92;
@@ -240,6 +241,21 @@ body.ai-mode{padding-bottom:230px}
 
 /* 추가 기능 */
 .brand .iconbtn{margin:0}
+.scan-pick{display:flex;gap:8px;flex-wrap:wrap}
+.scan-pick .btn,.actions label.btn{display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.scan-page{border-top:1px solid var(--line);padding:12px 0 4px}
+.scan-head{display:flex;gap:12px;align-items:center;margin-bottom:10px;line-height:1.5}
+.scan-head img,.scan-ph{width:52px;height:68px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:var(--accent-soft);flex:none}
+.scan-seg{margin-bottom:10px}
+.scan-chunk{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.scan-chunk.off{opacity:.45}
+.scan-chunk .field{margin-top:6px}
+.scan-chunk textarea.field{font-family:'Noto Serif KR',serif;line-height:1.7;min-height:110px}
+.scan-title{font-weight:600}
+.scan-row{display:flex;gap:8px}.scan-row .field:first-child{max-width:150px}
+.scan-on{font-size:13px;color:var(--sub);display:flex;gap:6px;align-items:center}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
 .brand-r{display:flex;align-items:center;gap:8px}
 .sync{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);cursor:pointer;white-space:nowrap}
 .sync.err{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
@@ -300,6 +316,146 @@ mark{background:#F6E3A1;color:inherit;border-radius:3px;padding:0 1px}
   padding:9px 16px;border-radius:999px;font-size:13.5px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 .loading{text-align:center;color:var(--faint);padding:80px 0}
+
+/* ===== 업데이트 내역 · 공유 · 디자인 고르기 ===== */
+.share-peek{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--sub);line-height:1.6;margin-bottom:10px;white-space:pre-wrap;word-break:keep-all}
+.share-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:52vh;overflow:auto}
+.share-list .spine{width:34px;min-height:48px;font-size:10px}
+.notes{display:flex;flex-direction:column;gap:4px}
+.note{border-top:1px solid var(--line);padding:12px 2px 6px}
+.note:first-child{border-top:0;padding-top:2px}
+.nh{display:flex;align-items:baseline;gap:8px}
+.nh b{font-size:14px;color:var(--accent)}
+.nh span{font-weight:600;font-size:14px;flex:1}
+.nh em{font-style:normal;font-size:12px;color:var(--faint)}
+.note ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;line-height:1.65;color:var(--sub)}
+.note.now ul{color:var(--ink)}
+.note-link{display:flex;justify-content:space-between;width:100%;margin-top:12px;padding:12px 15px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer;font-weight:550}
+.note-link span{color:var(--faint);font-weight:400}
+.themes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.theme-opt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:10px 11px;cursor:pointer}
+.theme-opt.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.theme-opt b{font-size:14px}
+.theme-opt span{font-size:12px;color:var(--sub);line-height:1.45}
+.tsw{display:flex;gap:3px;margin-bottom:4px}
+.tsw i{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ================= 시안 1 · 원고지 =================
+   서늘한 종이, 만년필 잉크색, 문장은 옅은 붉은 줄 위에. 내가 쓰던 <제목> 꺾쇠를 그대로 */
+html[data-theme="manuscript"]{
+  --paper:#F2F3EF; --card:#FFFFFF; --ink:#1D2330; --sub:#5A6270; --faint:#8F96A1;
+  --line:#DADDD6; --accent:#2D4F86; --accent-soft:#E4EAF4; --warn:#B04A3A; --quote:#1D2B45;
+  --rule:#EBCFC8; --shadow:none; --serif:'Gowun Batang','Noto Serif KR',serif;
+}
+@media (prefers-color-scheme: dark){html[data-theme="manuscript"]{
+  --paper:#15181E; --card:#1C2028; --ink:#E7E9ED; --sub:#A3AAB6; --faint:#6E7581;
+  --line:#2E333D; --accent:#93B2E8; --accent-soft:#243149; --warn:#E59484; --quote:#DCE4F2; --rule:#4A3633; }}
+html[data-theme="manuscript"] h1,
+html[data-theme="manuscript"] .dtitle,
+html[data-theme="manuscript"] .stitle,
+html[data-theme="manuscript"] .snip.quote .txt,
+html[data-theme="manuscript"] .today .tx,
+html[data-theme="manuscript"] .report .quote,
+html[data-theme="manuscript"] .scan-chunk textarea.field{font-family:var(--serif)}
+html[data-theme="manuscript"] h1{font-weight:700;font-size:25px}
+html[data-theme="manuscript"] .book,
+html[data-theme="manuscript"] .snip,
+html[data-theme="manuscript"] .today,
+html[data-theme="manuscript"] .panel,
+html[data-theme="manuscript"] .panel2,
+html[data-theme="manuscript"] .tile,
+html[data-theme="manuscript"] .hit{border-radius:6px}
+html[data-theme="manuscript"] .chip,
+html[data-theme="manuscript"] .badge{border-radius:4px}
+html[data-theme="manuscript"] .stitle{font-weight:700;color:var(--accent)}
+html[data-theme="manuscript"] .stitle:before{content:'<';color:var(--faint);font-weight:400;margin-right:2px}
+html[data-theme="manuscript"] .stitle:after{content:'>';color:var(--faint);font-weight:400;margin-left:2px}
+html[data-theme="manuscript"] .snip.quote .txt,
+html[data-theme="manuscript"] .today .tx{
+  border-left:1px solid var(--rule); padding-left:13px; line-height:2; font-size:15.5px;
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(2em - 1px),var(--rule) calc(2em - 1px),var(--rule) 2em);
+  background-position:0 0; background-origin:content-box; background-clip:content-box}
+html[data-theme="manuscript"] .today .lb{color:var(--accent);letter-spacing:0}
+html[data-theme="manuscript"] .nav{background:var(--paper)}
+html[data-theme="manuscript"] .spine{border-radius:2px 4px 4px 2px}
+
+/* ================= 시안 2 · 형광펜 =================
+   새하얀 바탕, 검은 글자, 노란 형광펜 하나. 표제와 지금 보는 메뉴에 형광펜을 긋는다 */
+html[data-theme="marker"]{
+  --paper:#FFFFFF; --card:#F6F6F2; --ink:#1B1B19; --sub:#63635D; --faint:#9A9A93;
+  --line:#E6E6E0; --accent:#1B1B19; --accent-soft:#FFF5C2; --warn:#C0392B; --quote:#1B1B19;
+  --hl:#FFE66B; --shadow:none;
+}
+@media (prefers-color-scheme: dark){html[data-theme="marker"]{
+  --paper:#1A1A18; --card:#242421; --ink:#F1F1EA; --sub:#ABABA3; --faint:#74746D;
+  --line:#34342F; --accent:#F1F1EA; --accent-soft:#3D3618; --warn:#EE8A7C; --quote:#F1F1EA; --hl:rgba(255,222,70,.4); }}
+html[data-theme="marker"] h1{font-family:inherit;font-weight:800;font-size:27px;letter-spacing:-.04em}
+html[data-theme="marker"] .dtitle{font-family:inherit;font-weight:800;font-size:23px;letter-spacing:-.035em}
+html[data-theme="marker"] .btitle{font-weight:700}
+html[data-theme="marker"] .book,
+html[data-theme="marker"] .snip,
+html[data-theme="marker"] .today,
+html[data-theme="marker"] .panel,
+html[data-theme="marker"] .panel2,
+html[data-theme="marker"] .tile,
+html[data-theme="marker"] .hit,
+html[data-theme="marker"] .info-card{border-color:transparent;border-radius:16px}
+html[data-theme="marker"] .search,
+html[data-theme="marker"] .field{background:var(--card);border-color:transparent}
+html[data-theme="marker"] .search:focus,
+html[data-theme="marker"] .field:focus{border-color:var(--ink)}
+html[data-theme="marker"] .stitle,
+html[data-theme="marker"] .today .lb span:first-child{
+  font-family:inherit;font-weight:750;color:var(--ink);width:fit-content;padding:0 3px;margin-left:-3px;
+  background:linear-gradient(transparent 52%,var(--hl) 52%,var(--hl) 90%,transparent 90%)}
+html[data-theme="marker"] .snip.quote .txt,
+html[data-theme="marker"] .today .tx{font-family:inherit;font-size:15.5px;line-height:1.8;font-weight:450;border-left:0;padding-left:0}
+html[data-theme="marker"] .smeta{padding-left:0}
+html[data-theme="marker"] .snip.thought .txt{padding-left:15px}
+html[data-theme="marker"] .chip.on,
+html[data-theme="marker"] .seg button.on{background:var(--hl);border-color:var(--hl);color:#1B1B19}
+html[data-theme="marker"] .nav{border-top-color:transparent;box-shadow:0 -1px 0 var(--line)}
+html[data-theme="marker"] .nav button.on{color:var(--ink)}
+html[data-theme="marker"] .nav button.on svg{background:linear-gradient(transparent 60%,var(--hl) 60%);border-radius:2px}
+html[data-theme="marker"] .vbar .fill,
+html[data-theme="marker"] .hbar .fill,
+html[data-theme="marker"] .bar i,
+html[data-theme="marker"] .mini-bar i{background:var(--ink)}
+html[data-theme="marker"] .kw{color:var(--sub)}
+html[data-theme="marker"] mark{background:var(--hl)}
+
+/* ================= 시안 3 · 문고판 =================
+   책마다 표지 색. 목록은 표지 띠, 책 화면은 문고판 표지처럼 색으로 채운다 */
+html[data-theme="bunko"]{
+  --paper:#ECEEF1; --card:#FFFFFF; --ink:#151922; --sub:#566070; --faint:#8D95A2;
+  --line:#D9DDE3; --accent:#23489A; --accent-soft:#E1E8F5; --warn:#B23A48; --quote:#151922;
+  --shadow:0 1px 0 rgba(20,25,35,.05);
+}
+@media (prefers-color-scheme: dark){html[data-theme="bunko"]{
+  --paper:#12151A; --card:#1B1F26; --ink:#E8EBF0; --sub:#A3ABB8; --faint:#6D7584;
+  --line:#2B313B; --accent:#8AA8E6; --accent-soft:#1F2B44; --warn:#EB8A95; --quote:#E8EBF0; --shadow:none; }}
+html[data-theme="bunko"] h1{font-family:inherit;font-weight:800;font-size:26px;letter-spacing:-.035em}
+html[data-theme="bunko"] .book{padding:0;gap:0;overflow:hidden;border-radius:8px;border-color:transparent}
+html[data-theme="bunko"] .book .spine{width:62px;min-height:92px;border-radius:0;box-shadow:none;font-size:12.5px;font-weight:600}
+html[data-theme="bunko"] .book .binfo{padding:12px 14px}
+html[data-theme="bunko"] .detail-head{
+  background:var(--bc,#23489A);color:#fff;margin:6px -16px 18px;padding:22px 20px 20px;gap:18px;align-items:flex-end;min-height:190px}
+@media (min-width:792px){html[data-theme="bunko"] .detail-head{margin:6px 0 18px;border-radius:10px}}
+html[data-theme="bunko"] .detail-head .spine{width:86px;min-height:124px;box-shadow:0 6px 18px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.22);border-radius:2px;background-image:linear-gradient(rgba(0,0,0,.24),rgba(0,0,0,.24))}
+html[data-theme="bunko"] .detail-head .dtitle{color:#fff;font-size:24px;font-weight:700;line-height:1.3}
+html[data-theme="bunko"] .detail-head .dauthor{color:rgba(255,255,255,.82)}
+html[data-theme="bunko"] .detail-head .tag{border-color:rgba(255,255,255,.35);color:rgba(255,255,255,.9)}
+html[data-theme="bunko"] .snip,
+html[data-theme="bunko"] .today,
+html[data-theme="bunko"] .panel,
+html[data-theme="bunko"] .panel2,
+html[data-theme="bunko"] .tile,
+html[data-theme="bunko"] .hit,
+html[data-theme="bunko"] .grid{border-radius:8px;border-color:transparent}
+html[data-theme="bunko"] .stitle{font-family:inherit;font-weight:700;color:var(--ink);font-size:15px}
+html[data-theme="bunko"] .snip.quote .txt{border-left-width:4px;border-left-color:var(--bc,var(--accent))}
+html[data-theme="bunko"] .chip{border-radius:6px}
 </style>
 </head>
 <body>
@@ -586,11 +742,11 @@ function boot() {
   const c = loadCache();
   if (c && c.books) {
     S.books = c.books; S.snips = c.snippets || []; S.ver = c.ver || ''; if (c.settings) S.settings = c.settings;
-    S.loaded = true; route();
+    S.loaded = true; route(); takeShared(); checkNewVersion();
     refresh(false).then(() => flush());
   } else {
     show('library'); $('list').innerHTML = '<div class="empty">처음 한 번 불러오는 중이에요…</div>';
-    refresh(true).then(ok => { if (ok) route(); flush(); });
+    refresh(true).then(ok => { if (ok) { route(); takeShared(); } checkNewVersion(); flush(); });
   }
 }
 window.addEventListener('online', () => { renderSync(); flush(); });
@@ -606,8 +762,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   navigator.serviceWorker.register('./sw.js').catch(() => {});
   navigator.serviceWorker.addEventListener('message', e => {
     if (e.data && e.data.type === 'updated') {
-      const t = $('toast'); t.innerHTML = '새 버전이 있어요 · <u>눌러서 적용</u>'; t.classList.add('show');
-      clearTimeout(t._h); t.onclick = () => location.reload(); t._h = setTimeout(() => { t.classList.remove('show'); t.onclick = null; }, 8000);
+      toastAction('새 버전이 있어요 · <u>눌러서 적용</u>', () => location.reload());
     }
   });
   try { navigator.serviceWorker.startMessages(); } catch (e) {}
@@ -619,7 +774,9 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
 const PALETTE = ['#5B7A6A','#8C5E4A','#4F6684','#8A7347','#6E5A80','#3F7378','#94604F','#5E6E45','#7A4E64','#55657A'];
-function spineColor(b) { const k = b['대분류'] || b['제목'] || ''; let h = 0; for (const c of k) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length]; }
+const PALETTE_BUNKO = ['#2B5797','#B23A48','#2E7D5B','#C0841A','#5B4B8A','#1F7A8C','#8C3B6E','#3E4A61','#A0522D','#4F7A28'];
+function spineColor(b) { const k = b['대분류'] || b['제목'] || ''; let h = 0; for (const c of k) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const P = document.documentElement.dataset.theme === 'bunko' ? PALETTE_BUNKO : PALETTE; return P[h % P.length]; }
 function spine(b) {
   if (b['표지URL']) return `<div class="spine" style="background:${spineColor(b)}"><img src="${esc(b['표지URL'])}" alt=""></div>`;
   return `<div class="spine" style="background:${spineColor(b)}">${esc(String(b['제목']).slice(0, 8))}</div>`;
@@ -706,6 +863,7 @@ function renderBook() {
     (fileOrder(x) ? (Number(x['쪽수']) || 99999) - (Number(y['쪽수']) || 99999) : 0) ||
     String(x.ID).localeCompare(String(y.ID)));
   const tags = [b['대분류'], b['중분류'], b['개인분류'], b['플랫폼'], b['경로']].filter(Boolean);
+  $('v-book').style.setProperty('--bc', spineColor(b));
   $('v-book').innerHTML = `
     <div class="topbar">
       <button class="iconbtn" onclick="go('library')">← 서재</button>
@@ -728,7 +886,7 @@ function renderBook() {
     ${b['상태'] === '읽는중' || b['상태'] === '중단' ? `<div class="actions"><button class="btn primary grow" onclick="finish('${b.ID}')">오늘 완독했어요</button></div>` : ''}
     ${bookExtrasHtml(b)}
     <div class="sec-head"><h2>필사 노트 <span style="color:var(--faint);font-weight:500">${snips.length}</span></h2>
-      <button class="btn" onclick="openSnipForm(null)">+ 문장 추가</button></div>
+      <div style="display:flex;gap:8px"><button class="btn" onclick="openScan()">📷 사진으로</button><button class="btn" onclick="openSnipForm(null)">+ 문장 추가</button></div></div>
     ${snips.length ? snips.map(snipHtml).join('')
     : '<div class="empty">아직 필사한 문장이 없어요.<br>‘+ 문장 추가’로 시작해 보세요.</div>'}
   `;
@@ -792,7 +950,7 @@ function openSnipForm(id) {
   modal(`
     <h3>${s ? '문장 수정' : '문장 추가'} <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span></h3>
     <div class="seg" id="seg">${['인용','생각','메모'].map(t => `<button data-t="${t}" class="${snipType === t ? 'on' : ''}">${t === '인용' ? '인용 (책 문장)' : t === '생각' ? '내 생각' : '메모'}</button>`).join('')}</div>
-    <label>제목 <span style="font-weight:400;color:var(--faint)">내가 붙이는 표제</span></label>
+    <label>제목 <span style="font-weight:400;color:var(--faint)">내가 붙이는 표제</span><button type="button" class="kw-ai" data-ai-title onclick="aiTitle(this)">AI 제목</button></label>
     <input class="field" id="f-ttl" value="${esc(s ? s['제목'] : '')}" placeholder="예: 과학은 믿음을 싫어한다">
     <label>내용</label>
     <textarea class="field" id="f-txt" placeholder="책 속 문장이나 생각을 적어 주세요">${esc(s ? s['내용'] : '')}</textarea>
@@ -1632,10 +1790,12 @@ function openSettings() {
     <div class="small" style="margin-top:6px;line-height:1.6">도서관 누리집에서 아무 책이나 검색한 뒤, 주소창의 주소를 복사해 붙여넣고 검색어 부분만 {q}로 바꾸세요. 비워 두면 네이버 검색으로 찾아요.</div>
     <div class="actions"><button class="btn" onclick="closeModal()">취소</button>
       <button class="btn primary grow" onclick="saveSettingsUI()">저장</button></div>
-    <div class="panel2" style="margin-top:18px"><h4>서버 연결</h4>
+    ${themePickerHtml()}
+    <div class="panel2" style="margin-top:12px"><h4>서버 연결</h4>
       <div class="small" style="line-height:1.6">${API.url ? '연결됨 · 마지막으로 받은 데이터는 이 기기에 저장돼 있어 바로 열려요.' : '아직 연결 안 됨'}${S.outbox.length ? `<br>시트에 올라가길 기다리는 기록 ${S.outbox.length}개` : ''}</div>
       <div class="actions" style="margin-top:8px"><button class="btn" onclick="openConnect()">연결 바꾸기</button>
-        <button class="btn" onclick="resetLocal()">새로 불러오기</button></div></div>`);
+        <button class="btn" onclick="resetLocal()">새로 불러오기</button></div></div>
+    <button class="note-link" onclick="openPatchNotes()">업데이트 내역 <span>v${APP_VERSION}</span></button>`);
 }
 async function saveSettingsUI() {
   const r = await call('saveSettings', { goal: $('set-goal').value.trim(), libraryName: $('set-libname').value.trim(), libraryUrl: $('set-liburl').value.trim() });
@@ -1705,6 +1865,304 @@ function openReport(year) {
     ${q ? `<div class="card"><h4>올해의 문장</h4><div class="quote">${esc(q['내용'])}</div><div class="small" style="margin-top:6px">${esc(qb ? qb['제목'] : '')}${q['쪽수'] !== '' && q['쪽수'] != null ? ' · p.' + esc(q['쪽수']) : ''}</div></div>` : ''}
     <div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>
   </div>`);
+}
+
+
+/* ===================================================================
+   사진으로 필사 (카메라 · 전자책 캡처 · 하이라이트 자동 인식)
+   =================================================================== */
+S.scan = null;
+LONG_FNS.scanPage = 1;
+
+function openScan() {
+  if (!navigator.onLine) { toast('사진 읽기는 인터넷이 연결되어 있을 때 돼요'); return; }
+  const b = book(S.bookId);
+  modal(`<h3>사진으로 필사 <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span></h3>
+    <div class="small" style="line-height:1.6;margin-bottom:12px">형광펜이나 밑줄, 전자책 하이라이트가 있으면 그 부분만 옮겨요. 없으면 본문 전체를 옮겨요. 제목과 쪽수도 자동으로 붙여요.</div>
+    <div class="scan-pick">
+      <label class="btn primary grow">📷 카메라로 찍기<input type="file" accept="image/*" capture="environment" onchange="scanFiles(this.files)" hidden></label>
+      <label class="btn grow">🖼 사진 · 캡처 고르기<input type="file" accept="image/*" multiple onchange="scanFiles(this.files)" hidden></label>
+    </div>
+    <div class="small" style="margin-top:10px;color:var(--faint)">여러 장을 한 번에 고를 수 있어요. 사진은 저장하지 않고 글자만 읽어요.</div>
+    <div class="actions"><button class="btn" onclick="closeModal()">닫기</button></div>`);
+}
+
+// 사진을 적당한 크기의 JPEG로 줄이기 (글자는 또렷하게, 전송은 가볍게)
+async function shrinkImage(file, max = 2400) {
+  let img;
+  try { img = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e) {
+    img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('사진을 열지 못했어요')); i.src = URL.createObjectURL(file); });
+  }
+  const w = img.width, h = img.height;
+  const draw = (m, q) => {
+    const s = Math.min(1, m / Math.max(w, h));
+    const c = document.createElement('canvas'); c.width = Math.round(w * s); c.height = Math.round(h * s);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', q);
+  };
+  const big = draw(max, 0.85);
+  return { data: big.slice(big.indexOf(',') + 1), thumb: draw(360, 0.7) };
+}
+
+async function scanFiles(files, append) {
+  files = [...(files || [])].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|heic|webp)$/i.test(f.name));
+  if (!files.length) return;
+  const bookId = S.bookId;
+  const fresh = files.map(f => ({ name: f.name, status: 'wait', thumb: '', mode: 'page', hl: [], full: null, error: '' }));
+  if (append && S.scan && S.scan.bookId === bookId) S.scan.pages.push(...fresh);
+  else S.scan = { bookId, pages: fresh };
+  const mine = S.scan;
+  renderScan();
+  for (let i = 0; i < files.length; i++) {
+    const pg = fresh[i]; if (S.scan !== mine) return;
+    pg.status = 'reading'; renderScan();
+    try {
+      const img = await shrinkImage(files[i]);
+      pg.thumb = img.thumb; renderScan();
+      const r = await rpc('scanPage', { image: img.data, mime: 'image/jpeg', bookId });
+      if (S.scan !== mine) return;   // 도중에 닫음
+      const mk = it => ({ on: true, title: it.title || '', text: it.text || '', page: it.page || '', kw: (it.keywords || []).join(', ') });
+      pg.hl = (r.highlights || []).map(mk);
+      pg.full = r.page && r.page.text ? mk(r.page) : null;
+      pg.kind = r.kind || '';
+      pg.mode = pg.hl.length ? 'hl' : 'page';
+      pg.status = 'done';
+    } catch (e) {
+      pg.status = 'error'; pg.error = e.message || String(e);
+    }
+    renderScan();
+  }
+}
+
+function scanChunks(pg) { return pg.mode === 'hl' ? pg.hl : (pg.full ? [pg.full] : []); }
+
+function renderScan() {
+  if (!S.scan) return;
+  const pages = S.scan.pages;
+  const busy = pages.some(p => p.status === 'wait' || p.status === 'reading');
+  const count = pages.reduce((n, p) => n + (p.status === 'done' ? scanChunks(p).filter(c => c.on && c.text.trim()).length : 0), 0);
+  const sh = document.querySelector('#modal .sheet'); const top = sh ? sh.scrollTop : 0;
+  const keep = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.f
+    ? { id: document.activeElement.id, pos: document.activeElement.selectionStart } : null;
+  const body = pages.map((p, pi) => {
+    const head = `<div class="scan-head">${p.thumb ? `<img src="${p.thumb}" alt="">` : '<div class="scan-ph"></div>'}
+      <div><b>${pages.length > 1 ? (pi + 1) + '번째 사진' : '사진'}</b>${p.kind ? ` <span class="small">${esc(p.kind)}</span>` : ''}<br>
+      <span class="small">${p.status === 'wait' ? '기다리는 중' : p.status === 'reading' ? '<span class="spin"></span> 글자 읽는 중… (10~30초)' :
+        p.status === 'error' ? '⚠ ' + esc(p.error) : p.hl.length ? `하이라이트 ${p.hl.length}곳을 찾았어요` : '하이라이트가 없어 본문 전체를 옮겼어요'}</span></div></div>`;
+    if (p.status !== 'done') return `<div class="scan-page">${head}</div>`;
+    const seg = p.hl.length && p.full ? `<div class="seg scan-seg">
+      <button class="${p.mode === 'hl' ? 'on' : ''}" onclick="scanMode(${pi},'hl')">하이라이트만 (${p.hl.length})</button>
+      <button class="${p.mode === 'page' ? 'on' : ''}" onclick="scanMode(${pi},'page')">페이지 전체</button></div>` : '';
+    const list = scanChunks(p).map((c, ci) => `<div class="scan-chunk ${c.on ? '' : 'off'}">
+      <label class="scan-on"><input type="checkbox" ${c.on ? 'checked' : ''} onchange="scanSet(${pi},${ci},'on',this.checked)"> 저장</label>
+      <input class="field scan-title" id="sc-${pi}-${ci}-t" data-f="1" value="${esc(c.title)}" placeholder="제목" oninput="scanSet(${pi},${ci},'title',this.value)">
+      <textarea class="field" id="sc-${pi}-${ci}-x" data-f="1" rows="5" oninput="scanSet(${pi},${ci},'text',this.value)">${esc(c.text)}</textarea>
+      <div class="scan-row"><input class="field" id="sc-${pi}-${ci}-p" data-f="1" inputmode="decimal" placeholder="쪽수 (없으면 비움)" value="${esc(c.page)}" oninput="scanSet(${pi},${ci},'page',this.value)">
+        <input class="field" id="sc-${pi}-${ci}-k" data-f="1" placeholder="키워드" value="${esc(c.kw)}" oninput="scanSet(${pi},${ci},'kw',this.value)"></div>
+    </div>`).join('');
+    return `<div class="scan-page">${head}${seg}${list}</div>`;
+  }).join('');
+  modal(`<h3>사진으로 필사 <span style="font-weight:400;color:var(--faint);font-size:13px">${esc((book(S.scan.bookId) || {})['제목'] || '')}</span></h3>
+    <div class="small" style="margin-bottom:8px">AI가 읽은 내용이에요. 틀린 글자가 있으면 고친 뒤 저장하세요.</div>
+    ${body}
+    <div class="actions"><button class="btn" onclick="closeScan()">${busy ? '그만두기' : '취소'}</button>
+      ${busy ? '' : `<label class="btn">+ 사진 더<input type="file" accept="image/*" multiple onchange="scanMore(this.files)" hidden></label>`}
+      <button class="btn primary grow" ${count && !busy ? '' : 'disabled'} onclick="saveScan()">${busy ? '읽는 중…' : `${count}개 저장`}</button></div>`);
+  const bd = document.querySelector('#modal .backdrop'); if (bd) bd.onclick = null;
+  const sh2 = document.querySelector('#modal .sheet'); if (sh2) sh2.scrollTop = top;   // 바깥을 눌러도 닫히지 않게
+  if (keep && $(keep.id)) { const el = $(keep.id); el.focus(); try { el.setSelectionRange(keep.pos, keep.pos); } catch (e) {} }
+}
+function scanSet(pi, ci, k, v) {
+  const c = scanChunks(S.scan.pages[pi])[ci]; c[k] = v;
+  if (k === 'on') renderScan();
+  else { const b = document.querySelector('.sheet .btn.primary'); const n = S.scan.pages.reduce((n, p) => n + (p.status === 'done' ? scanChunks(p).filter(c => c.on && c.text.trim()).length : 0), 0); if (b && !b.textContent.includes('읽는')) { b.textContent = n + '개 저장'; b.disabled = !n; } }
+}
+function scanMode(pi, m) { S.scan.pages[pi].mode = m; renderScan(); }
+function closeScan() {
+  const n = S.scan ? S.scan.pages.filter(p => p.status === 'done').length : 0;
+  if (n && !confirm('읽어 온 내용을 저장하지 않고 닫을까요?')) return;
+  S.scan = null; closeModal();
+}
+function scanMore(files) { scanFiles(files, true); }
+function saveScan() {
+  const sc = S.scan; if (!sc) return;
+  const b = book(sc.bookId); let n = 0;
+  sc.pages.forEach(p => {
+    if (p.status !== 'done') return;
+    scanChunks(p).forEach(c => {
+      if (!c.on || !c.text.trim()) return;
+      const data = { ID: 'T' + uid(), '책ID': sc.bookId, '유형': '인용', '내용': c.text.trim(), '쪽수': String(c.page || '').trim().replace(/\s*p$/i, ''),
+        '제목': c.title.trim(), '키워드': normKw(c.kw), '출처': 'OCR' };
+      const local = Object.assign({ '작성일': S.today }, data, { '책제목': b ? b['제목'] : '' });
+      upsertSnipLocal(local); queue({ fn: 'saveSnippet', data, local }); n++;
+    });
+  });
+  S.scan = null; closeModal();
+  if (S.view === 'book' && S.bookId === sc.bookId) renderBook();
+  toast(`${n}개를 필사했어요`);
+}
+
+
+/* ===================================================================
+   공유로 받기 · AI 제목 · 업데이트 내역 · 디자인 고르기
+   =================================================================== */
+function toastAction(msg, fn, ms = 8000) {
+  const t = $('toast'); t.innerHTML = msg; t.classList.add('show'); t.style.pointerEvents = 'auto';
+  clearTimeout(t._h);
+  t.onclick = () => { t.classList.remove('show'); t.style.pointerEvents = ''; t.onclick = null; fn(); };
+  t._h = setTimeout(() => { t.classList.remove('show'); t.style.pointerEvents = ''; t.onclick = null; }, ms);
+}
+
+/* ----- 공유로 받기 ----- */
+// 갤럭시 텍스트 추출 · 메모 앱에서 온 글: 화면 줄바꿈은 잇고, 문단은 살리고, 끝의 "36p"는 쪽수로
+function cleanShared(meta) {
+  let t = String(meta.text || '').replace(/\r/g, '');
+  if (!t.trim()) t = [meta.title, meta.url].filter(Boolean).join('\n');
+  let page = '';
+  const m = t.match(/\n?\s*(\d{1,4}(?:\s*[,~\-]\s*\d{1,4})?)\s*p\.?\s*$/i);
+  if (m) { page = m[1].replace(/\s*[~\-]\s*/, ', ').replace(/\s*,\s*/, ', '); t = t.slice(0, m.index); }
+  const raw = t.trim();
+  t = t.split(/\n\s*\n/).map(par => par.split('\n').map(x => x.trim()).filter(Boolean)
+    .reduce((a, l) => !a ? l : /[A-Za-z]-$/.test(a) ? a.slice(0, -1) + l : a + ' ' + l, '')).filter(Boolean).join('\n\n');
+  return { text: t.trim(), page, raw: /\n/.test(raw) ? raw : '' };
+}
+async function takeShared() {
+  if (new URLSearchParams(location.search).get('share') !== '1') return;
+  history.replaceState({ view: S.view, id: S.bookId || '' }, '', location.pathname);
+  let meta = null; const files = [];
+  try {
+    const c = await caches.open('share');
+    const r = await c.match(new URL('./_share/meta', location.href).href);
+    if (r) {
+      meta = await r.json();
+      for (let i = 0; i < (meta.n || 0); i++) {
+        const x = await c.match(new URL('./_share/img/' + i, location.href).href);
+        if (x) { const bl = await x.blob(); files.push(new File([bl], decodeURIComponent(x.headers.get('X-Name') || 'image.jpg'), { type: bl.type || 'image/jpeg' })); }
+      }
+    }
+    await caches.delete('share');
+  } catch (e) {}
+  if (!meta || (!files.length && !String(meta.text || meta.title || meta.url || '').trim())) { toast('공유받은 내용이 없어요'); return; }
+  S.shared = Object.assign(cleanShared(meta), { files });
+  openSharePicker('');
+}
+function openSharePicker(q) {
+  const sh = S.shared; if (!sh) return;
+  const order = { '읽는중': 0, '읽을예정': 2, '완독': 1 };
+  const nq = String(q || '').toLowerCase().replace(/\s+/g, '');
+  const list = S.books.filter(b => !nq || (String(b['제목']) + String(b['저자'])).toLowerCase().replace(/\s+/g, '').includes(nq))
+    .sort((a, b) => (order[a['상태']] ?? 3) - (order[b['상태']] ?? 3) || String(b['시작일'] || b['등록일'] || '').localeCompare(String(a['시작일'] || a['등록일'] || '')))
+    .slice(0, 30);
+  const what = sh.files.length ? `사진 ${sh.files.length}장` : `글 ${sh.text.length.toLocaleString()}자`;
+  modal(`<h3>어느 책에 넣을까요? <span style="font-weight:400;color:var(--faint);font-size:13px">공유받은 ${what}</span></h3>
+    ${sh.text && !sh.files.length ? `<div class="share-peek">${esc(sh.text.slice(0, 140))}${sh.text.length > 140 ? '…' : ''}</div>` : ''}
+    <input class="field" id="sp-q" placeholder="책 제목 · 저자 찾기" value="${esc(q || '')}" oninput="openSharePicker(this.value);const e=$('sp-q');e.focus();e.setSelectionRange(e.value.length,e.value.length)">
+    <div class="share-list">${list.map(b => `<button class="al-item" onclick="useShared('${b.ID}')">${spine(b)}<div><b>${esc(b['제목'])}</b><span>${esc(b['저자'] || '')}${b['상태'] === '읽는중' ? ' · 읽는 중' : ''}</span></div></button>`).join('') || '<div class="al-msg">찾는 책이 없어요. 먼저 책을 추가해 주세요.</div>'}</div>
+    <div class="actions"><button class="btn" onclick="S.shared=null;closeModal()">취소</button></div>`);
+}
+function useShared(id) {
+  const sh = S.shared; S.shared = null; if (!sh) return;
+  closeModal(); go('book', id);
+  if (sh.files.length) { scanFiles(sh.files); return; }
+  openSnipForm(null);
+  $('f-txt').value = sh.text; $('f-page').value = sh.page || '';
+  if (navigator.onLine) { const b = document.querySelector('[data-ai-title]'); if (b) aiTitle(b, true, sh.raw); }
+}
+
+/* ----- AI 제목 ----- */
+async function aiTitle(btn, auto, raw) {
+  const text = $('f-txt') && $('f-txt').value.trim();
+  if (!text) { toast('내용을 먼저 입력해 주세요'); return; }
+  btn.disabled = true; btn.textContent = '짓는 중…';
+  try {
+    const r = await rpc('suggestTitle', { '책ID': S.bookId, '내용': text, raw: raw || '' });
+    if (!$('f-ttl')) return;
+    // 줄바꿈 정리본: 띄어쓰기만 달라졌을 때만 바꿔 넣음 (글자는 절대 안 바뀌게)
+    const noWs = x => String(x || '').replace(/\s+/g, '');
+    if (raw && r.text && noWs(r.text) === noWs(raw) && $('f-txt').value.trim() === text) $('f-txt').value = r.text.trim();
+    if (r.title && (!auto || !$('f-ttl').value.trim())) $('f-ttl').value = r.title;
+    const kw = $('f-kw');
+    if (kw && r.keywords && r.keywords.length) {
+      const cur = kw.value.split(',').map(x => x.trim()).filter(Boolean);
+      r.keywords.forEach(k => { if (!cur.includes(k)) cur.push(k); }); kw.value = cur.join(', ');
+    }
+  } catch (e) { if (!auto) toast('⚠ ' + (e.message || e)); }
+  finally { if (btn.isConnected) { btn.disabled = false; btn.textContent = 'AI 제목'; } }
+}
+
+/* ----- 업데이트 내역 ----- */
+const APP_VERSION = '2.2';
+const PATCH_NOTES = [
+  { v: '2.2', d: '2026.10.17', t: '공유로 받기 · 새 디자인', items: [
+    '다른 앱에서 공유 → 나의 서재: 갤럭시 텍스트 추출로 고른 글이나 사진을 바로 필사로 보내요',
+    '공유받은 글은 화면 줄바꿈을 정리하고, 끝에 적힌 "36p"는 쪽수 칸으로 옮겨요',
+    '필사 입력 창에 AI 제목 버튼: 내가 붙여 온 제목 말투로 지어요',
+    '디자인 3가지(원고지 · 형광펜 · 문고판)와 예전 디자인 중에서 고를 수 있어요 (⚙ 설정)',
+    '업데이트 내역을 설정에서 볼 수 있어요'] },
+  { v: '2.1', d: '2026.10.16', t: '사진으로 필사', items: [
+    '종이책 사진 · 전자책 캡처를 찍거나 골라서 필사',
+    '형광펜 · 밑줄 · 전자책 하이라이트만 골라 옮기고, 없으면 본문 전체',
+    '제목은 AI가 짓고, 쪽번호가 보이면 쪽수도 자동으로 (안 보이면 비워 둠)',
+    '여러 장을 한 번에, 저장 전에 고치거나 고를 수 있어요'] },
+  { v: '2.0', d: '2026.10.16', t: '설치하는 앱으로', items: [
+    '홈 화면에 설치하는 앱이 됐어요. 두 번째부터는 바로 열려요',
+    '필사 · 쪽수 · 반납일 · 별점은 누르는 즉시 저장, 시트에는 뒤에서 올라가요',
+    '인터넷이 끊겨도 쓰고, 연결되면 자동으로 올려요 (제목 옆 저장 표시)',
+    '새 버전이 올라오면 알려 줘요'] },
+  { v: '1.5', d: '2026.10.16', t: '10가지 새 기능', items: [
+    '필사 전체 검색 (#키워드로도), 오늘의 문장',
+    '도서관 반납일 D-day와 전날 메일 알림, 매주 자동 백업',
+    '읽는 중 진행률과 완독 예상일, 연간 목표',
+    '별점 · 한줄평, 읽고 싶은 책과 도서관 찾기',
+    '키워드 이름 바꾸기 · 합치기, 연말 독서 리포트'] },
+  { v: '1.4', d: '2026.10.15', t: 'AI 비서', items: [
+    '내 필사 기록을 근거로 답하는 AI 비서 (구글 Gemini 무료)',
+    '답마다 근거 문장을 눌러 원문으로 이동',
+    '필사 1,181개에 키워드를 한 번에 채움'] },
+  { v: '1.3', d: '2026.10.15', t: '키워드 그물망 · 통계', items: [
+    '책 · 키워드 · 저자 · 분야를 잇는 그물망',
+    '월별 · 분야별 독서 통계'] },
+  { v: '1.2', d: '2026.10.15', t: '책 검색', items: [
+    '제목으로 찾아 저자 · 옮긴이 · 출판사 · 쪽수 · 분류 · 표지를 자동으로'] },
+  { v: '1.1', d: '2026.10.15', t: '노트 가져오기', items: [
+    '삼성노트 txt를 폴더에 넣으면 자동으로 필사로',
+    '<제목> 한 덩어리씩, 쪽수는 쪽수 칸으로 (36, 37처럼 여러 쪽도)'] },
+  { v: '1.0', d: '2026.10.15', t: '나의 서재 시작', items: [
+    '엑셀 독서 기록 61권을 옮겨 서재 · 책 상세 · 필사 입력을 만듦'] }
+];
+function openPatchNotes() {
+  modal(`<h3>업데이트 내역 <span style="font-weight:400;color:var(--faint);font-size:13px">지금 v${APP_VERSION}</span></h3>
+    <div class="notes">${PATCH_NOTES.map((n, i) => `<div class="note ${i ? '' : 'now'}">
+      <div class="nh"><b>v${n.v}</b><span>${n.t}</span><em>${n.d}</em></div>
+      <ul>${n.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}</div>
+    <div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>`);
+}
+function checkNewVersion() {
+  const seen = LS.get('seen_ver');
+  LS.set('seen_ver', APP_VERSION);
+  if (seen && seen !== APP_VERSION) setTimeout(() => toastAction(`v${APP_VERSION}로 업데이트됐어요 · <u>바뀐 점 보기</u>`, openPatchNotes), 900);
+}
+
+/* ----- 디자인 고르기 ----- */
+const THEMES = [
+  { id: 'manuscript', name: '원고지', desc: '필사 노트처럼 줄 친 종이 위에 문장이 놓여요', sw: ['#F2F3EF', '#2D4F86', '#E9C8C0'] },
+  { id: 'marker', name: '형광펜', desc: '하얀 바탕에 제목마다 형광펜을 그어요', sw: ['#FFFFFF', '#1B1B19', '#FFE66B'] },
+  { id: 'bunko', name: '문고판', desc: '책마다 표지 색이 화면을 채워요', sw: ['#ECEEF1', '#23489A', '#B23A48'] },
+  { id: 'classic', name: '처음 디자인', desc: '지금까지 쓰던 모습', sw: ['#F6F2EA', '#3D5A4C', '#FFFDF8'] }
+];
+function curTheme() { return document.documentElement.dataset.theme || 'manuscript'; }
+function setTheme(id) {
+  document.documentElement.dataset.theme = id; LS.set('theme', id);
+  const paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim();
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', paper));
+  if (S.loaded) show(S.view);
+}
+function themePickerHtml() {
+  return `<div class="panel2" style="margin-top:18px"><h4>디자인</h4><div class="themes">${THEMES.map(t => `
+    <button class="theme-opt ${curTheme() === t.id ? 'on' : ''}" onclick="setTheme('${t.id}');openSettings()">
+      <span class="tsw">${t.sw.map(c => `<i style="background:${c}"></i>`).join('')}</span>
+      <b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div></div>`;
 }
 
 /* ===== 이벤트 · 시작 ===== */
