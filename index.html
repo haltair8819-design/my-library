@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>나의 서재</title>
+<meta name="theme-color" content="#F6F2EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap">
+<style>
+:root{
+  --paper:#F6F2EA; --card:#FFFDF8; --ink:#24211D; --sub:#6F6A61; --faint:#A39D92;
+  --line:#E3DCCF; --accent:#3D5A4C; --accent-soft:#E3EBE5; --warn:#A5442F;
+  --quote:#2C3B33; --shadow:0 1px 2px rgba(40,30,10,.06),0 4px 14px rgba(40,30,10,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --paper:#171614; --card:#211F1C; --ink:#ECE7DE; --sub:#B0A99D; --faint:#7C766C;
+    --line:#34302A; --accent:#8DB5A0; --accent-soft:#26332C; --warn:#E08A72; --quote:#D9E6DE;
+    --shadow:none; }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink)}
+body{font-family:Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  font-size:15px;line-height:1.55;padding-bottom:150px}
+button,input,textarea,select{font:inherit;color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.hidden{display:none!important}
+
+/* 헤더 */
+header{padding:22px 0 10px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{font-family:'Noto Serif KR',serif;font-weight:600;font-size:24px;margin:0;letter-spacing:-.02em}
+.stats{display:flex;gap:18px;margin:14px 0 4px}
+.stat b{display:block;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.stat span{font-size:12px;color:var(--sub)}
+
+/* 검색 · 필터 */
+.toolbar{position:sticky;top:0;z-index:5;background:var(--paper);padding:10px 0 8px}
+.search{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);outline:none}
+.search:focus{border-color:var(--accent)}
+.chips{display:flex;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 13px;font-size:13px;white-space:nowrap;cursor:pointer;color:var(--sub)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){.chip.on{color:#10140F}}
+
+/* 책 목록 */
+.list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.book{display:flex;gap:14px;align-items:stretch;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:12px;cursor:pointer;box-shadow:var(--shadow)}
+.book:active{transform:scale(.995)}
+.spine{width:46px;min-height:66px;border-radius:4px 7px 7px 4px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-family:'Noto Serif KR',serif;font-size:12px;color:rgba(255,255,255,.92);writing-mode:vertical-rl;letter-spacing:.06em;
+  overflow:hidden;padding:6px 0;box-shadow:inset 3px 0 0 rgba(0,0,0,.12)}
+.spine img{width:100%;height:100%;object-fit:cover;writing-mode:horizontal-tb}
+.binfo{flex:1;min-width:0}
+.btitle{font-weight:650;font-size:15.5px;line-height:1.35;margin:1px 0 2px;letter-spacing:-.01em}
+.bauthor{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bmeta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:7px;font-size:12px;color:var(--faint)}
+.badge{font-size:11.5px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.badge.reading{background:#F4E7CF;color:#8A5A12}
+@media (prefers-color-scheme: dark){.badge.reading{background:#3A3020;color:#E6C58A}}
+.group-label{font-size:12.5px;color:var(--sub);font-weight:600;margin:18px 2px 2px}
+.empty{color:var(--faint);text-align:center;padding:40px 0;font-size:14px}
+
+/* 책 상세 */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0 6px}
+.iconbtn{border:0;background:none;padding:8px;margin:-8px;cursor:pointer;color:var(--sub);font-size:15px}
+.detail-head{display:flex;gap:16px;margin:10px 0 16px}
+.detail-head .spine{width:72px;min-height:104px;font-size:14px}
+.dtitle{font-family:'Noto Serif KR',serif;font-size:21px;font-weight:600;line-height:1.35;margin:0 0 4px;letter-spacing:-.02em}
+.dauthor{color:var(--sub);font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.tag{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--sub)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.grid div{background:var(--card);padding:10px 8px;text-align:center}
+.grid b{display:block;font-size:14px;font-weight:650}
+.grid span{font-size:11.5px;color:var(--faint)}
+@media (max-width:420px){.grid{grid-template-columns:repeat(2,1fr)}}
+.actions{display:flex;gap:8px;margin:12px 0 4px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 14px;cursor:pointer;font-size:14px;font-weight:550}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){.btn.primary{color:#10140F}}
+.btn.danger{color:var(--warn)}
+.btn.grow{flex:1}
+
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin:26px 0 8px}
+.sec-head h2{font-size:16px;margin:0}
+.snip{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px 12px;cursor:pointer;margin-bottom:10px;box-shadow:var(--shadow)}
+.snip:active{transform:scale(.997)}
+.stitle{font-family:'Noto Serif KR',serif;font-size:15px;font-weight:600;color:var(--accent);margin:0 0 9px;line-height:1.45}
+.snip.memo .stitle{color:var(--sub)}
+.snip.quote .txt{font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.75;color:var(--quote);border-left:3px solid var(--accent);padding-left:12px}
+.snip.thought .txt{font-size:14.5px;color:var(--ink);padding-left:15px;position:relative}
+.snip.thought .txt:before{content:'ㄴ';position:absolute;left:0;color:var(--faint)}
+.snip.memo .txt{font-size:14px;color:var(--sub)}
+.snip.memo{border-style:dashed;box-shadow:none}
+.txt{white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
+.smeta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--faint);margin-top:9px;padding-left:15px}
+.smeta .pg{font-weight:600;color:var(--sub)}
+.kw{color:var(--accent)}
+
+/* 시트(입력 창) */
+.backdrop{position:fixed;inset:0;background:rgba(20,16,10,.38);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--paper);width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px 24px}
+@media (min-width:800px){.backdrop{align-items:center}.sheet{border-radius:18px;max-width:620px}}
+.sheet h3{margin:0 0 14px;font-size:17px}
+label{display:block;font-size:12.5px;color:var(--sub);margin:12px 0 5px;font-weight:550}
+.field{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);outline:none}
+.field:focus{border-color:var(--accent)}
+textarea.field{min-height:140px;resize:vertical;line-height:1.65}
+.row{display:flex;gap:10px}.row>div{flex:1;min-width:0}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{flex:1;border:0;background:none;padding:7px;border-radius:8px;cursor:pointer;color:var(--sub);font-weight:550}
+.seg button.on{background:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){.seg button.on{color:#10140F}}
+.suggest{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.suggest .chip{font-size:12px;padding:3px 10px}
+.sheet .actions{margin-top:20px}
+
+/* 책 검색 */
+.al-box{display:flex;gap:8px}
+.al-box .field{flex:1}
+.al-res{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:46vh;overflow:auto}
+.al-item{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:left;width:100%}
+.al-item:hover{border-color:var(--accent)}
+.al-item img{width:40px;height:58px;object-fit:cover;border-radius:3px;background:var(--line);flex:none}
+.al-item b{display:block;font-size:14px;line-height:1.35}
+.al-item span{font-size:12px;color:var(--sub)}
+.al-msg{font-size:13px;color:var(--faint);padding:8px 2px}
+.cover-pick{display:flex;gap:12px;align-items:center;margin:12px 0 2px;padding:10px;border-radius:10px;background:var(--accent-soft)}
+.cover-pick img{width:44px;height:64px;object-fit:cover;border-radius:3px}
+.cover-pick span{font-size:12.5px;color:var(--sub)}
+.divider{height:1px;background:var(--line);margin:16px 0 4px}
+
+/* 하단 메뉴 */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--card);border-top:1px solid var(--line);
+  display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;max-width:160px;border:0;background:none;padding:8px 0 7px;font-size:11.5px;color:var(--faint);
+  display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.nav button.on{color:var(--accent);font-weight:650}
+.nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.view-head{padding:22px 0 6px}
+.view-head p{margin:6px 0 0;color:var(--sub);font-size:13.5px}
+
+/* 그물망 */
+:root{--n-book:#2a78d6;--n-kw:#eb6834;--n-au:#1baf7a;--n-cat:#eda100}
+@media (prefers-color-scheme: dark){:root{--n-book:#3987e5;--n-kw:#d95926;--n-au:#199e70;--n-cat:#c98500}}
+.g-wrap{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:10px;touch-action:none}
+#g-canvas{display:block;width:100%;height:min(62vh,560px);cursor:grab}
+#g-canvas.dragging{cursor:grabbing}
+.g-tools{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+.g-tools button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--paper);font-size:17px;cursor:pointer;color:var(--sub)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--sub);margin:10px 2px 0}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{display:inline-block;width:11px;height:11px}
+.lg-book{background:var(--n-book);border-radius:2px;width:9px!important;height:12px!important}
+.lg-kw{background:var(--n-kw);border-radius:50%}
+.lg-au{background:var(--n-au);transform:rotate(45deg) scale(.82)}
+.lg-cat{width:0!important;height:0!important;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid var(--n-cat)}
+.notice{background:var(--accent-soft);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px;line-height:1.5}
+.kw-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.kw-chips .chip b{font-weight:650;color:var(--ink);margin-left:3px}
+#g-info{margin-top:14px}
+.info-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.info-card h3{margin:0 0 4px;font-size:16px}
+.info-card .sub{font-size:12.5px;color:var(--sub);margin-bottom:10px}
+.mini{display:block;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:10px 0;cursor:pointer}
+.mini b{display:block;font-size:13.5px;font-weight:600}
+.mini span{display:block;font-size:13px;color:var(--sub);margin-top:2px;line-height:1.5}
+.mini em{font-style:normal;font-size:11.5px;color:var(--faint)}
+
+/* 통계 */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+@media (max-width:520px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile b{display:block;font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.tile span{font-size:12px;color:var(--sub)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px 12px;margin-top:12px}
+.panel h3{margin:0 0 12px;font-size:14.5px}
+.panel h3 small{font-weight:400;color:var(--faint);font-size:12px;margin-left:6px}
+.vbars{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:18px;border-bottom:1px solid var(--line)}
+.vbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;cursor:pointer;position:relative}
+.vbar .fill{width:100%;max-width:26px;background:var(--accent);border-radius:4px 4px 0 0;min-height:0}
+.vbar .val{font-size:11px;color:var(--sub);margin-bottom:3px}
+.vbar:hover .fill,.vbar.on .fill{filter:brightness(1.15)}
+.vlabels{display:flex;gap:6px;margin-top:5px}
+.vlabels span{flex:1;text-align:center;font-size:10.5px;color:var(--faint);white-space:nowrap;letter-spacing:-.03em}
+.hbar{display:grid;grid-template-columns:minmax(70px,32%) 1fr 30px;align-items:center;gap:8px;padding:4px 0;cursor:pointer;font-size:13px}
+.hbar .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.hbar .track{height:12px}
+.hbar .fill{height:100%;background:var(--accent);border-radius:0 4px 4px 0;min-width:2px}
+.hbar .n{text-align:right;color:var(--sub);font-variant-numeric:tabular-nums}
+.hbar:hover .fill,.hbar.on .fill{filter:brightness(1.15)}
+.drill{font-size:12.5px;color:var(--sub);margin-top:10px;line-height:1.6;min-height:1em}
+.drill a{color:var(--accent);cursor:pointer;text-decoration:none}
+.facts{display:grid;grid-template-columns:1fr;gap:8px}
+.fact{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;border-top:1px solid var(--line);padding-top:8px;cursor:pointer}
+.fact:first-child{border-top:0;padding-top:0}
+.fact span{color:var(--sub);white-space:nowrap}
+.fact b{font-weight:600;text-align:right}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+.two .panel{margin-top:12px}
+
+/* AI 비서 */
+.ai-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.chat{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.msg{max-width:92%;line-height:1.65;font-size:14.5px}
+.msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-radius:16px 16px 4px 16px;padding:9px 14px;white-space:pre-wrap}
+@media (prefers-color-scheme: dark){.msg.user{color:#10140F}}
+.msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:12px 15px}
+.msg.bot p{margin:0 0 8px}.msg.bot p:last-child{margin-bottom:0}
+.msg.bot ul,.msg.bot ol{margin:4px 0 8px;padding-left:20px}
+.msg.bot li{margin:2px 0}
+.msg.err{border-color:var(--warn);color:var(--warn)}
+.cite{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:0 5px;margin:0 1px;cursor:pointer;vertical-align:1px}
+.sources{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.sources button{border:0;background:none;text-align:left;padding:2px 0;font-size:12.5px;color:var(--sub);cursor:pointer;line-height:1.45}
+.sources button b{color:var(--accent);margin-right:5px}
+.thinking{color:var(--faint)}
+.thinking:after{content:'';animation:dots 1.2s steps(4) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+.suggest-q{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.suggest-q button{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:11px 14px;cursor:pointer;font-size:14px}
+.suggest-q button:hover{border-color:var(--accent)}
+.tool{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-soft);border-radius:12px;padding:11px 14px;margin-top:14px;font-size:13.5px}
+.composer{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));z-index:14;background:var(--paper);border-top:1px solid var(--line);padding:9px 0}
+.composer .wrap{display:flex;gap:8px;align-items:flex-end}
+.composer textarea{flex:1;resize:none;min-height:44px;max-height:140px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--card);outline:none;line-height:1.45}
+.composer textarea:focus{border-color:var(--accent)}
+.composer .btn{height:44px}
+body.ai-mode{padding-bottom:230px}
+.kw-ai{border:0;background:none;color:var(--accent);font-weight:600;font-size:12.5px;cursor:pointer;padding:0 0 0 8px}
+
+/* 추가 기능 */
+.brand .iconbtn{margin:0}
+.brand-r{display:flex;align-items:center;gap:8px}
+.sync{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);cursor:pointer;white-space:nowrap}
+.sync.err{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
+.sync.quiet{background:none;color:var(--faint);cursor:default}
+body{padding-top:env(safe-area-inset-top)}
+.goal{margin:12px 0 2px;cursor:pointer}
+.goal .gl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--sub);margin-bottom:5px}
+.goal .gl b{color:var(--ink)}
+.bar{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.today{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px 12px;margin:8px 0 4px;box-shadow:var(--shadow)}
+.today .lb{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.02em;margin-bottom:8px}
+.today .lb button{border:0;background:none;color:var(--sub);font-size:12.5px;cursor:pointer;padding:2px 0}
+.today .tx{font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.75;color:var(--quote);cursor:pointer;
+  display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:keep-all}
+.today .mt{font-size:12px;color:var(--faint);margin-top:8px}
+.due{background:#FBEBE7;color:#8A3220;border-radius:12px;padding:10px 14px;font-size:13px;margin:8px 0 2px;line-height:1.6}
+@media (prefers-color-scheme: dark){.due{background:#3A221C;color:#F0B4A4}}
+.due a{color:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+.badge.due-soon{background:#F4E7CF;color:#8A5A12}
+.badge.due-late{background:#FBEBE7;color:#A5442F}
+@media (prefers-color-scheme: dark){.badge.due-late{background:#3A221C;color:#F0B4A4}}
+.mini-bar{height:4px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:8px;max-width:220px}
+.mini-bar i{display:block;height:100%;background:var(--accent)}
+.stars{color:#C9962B;letter-spacing:1px}
+.res-head{font-size:12.5px;color:var(--sub);font-weight:600;margin:20px 2px 6px}
+.hit{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:8px}
+.hit .ht{font-weight:650;font-size:14px;margin-bottom:3px}
+.hit .hx{font-size:13.5px;color:var(--ink);line-height:1.6;white-space:pre-wrap;word-break:keep-all}
+.hit .hm{font-size:12px;color:var(--faint);margin-top:5px}
+mark{background:#F6E3A1;color:inherit;border-radius:3px;padding:0 1px}
+@media (prefers-color-scheme: dark){mark{background:#5A4A1A}}
+.snip.flash{outline:2px solid var(--accent);outline-offset:2px}
+.panel2{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:12px}
+.panel2 h4{margin:0 0 8px;font-size:13.5px}
+.inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.inline .field{width:auto;flex:1;min-width:100px}
+.small{font-size:12.5px;color:var(--sub)}
+.star-pick{display:flex;gap:4px;font-size:30px;color:var(--line);cursor:pointer;margin:6px 0}
+.star-pick span.on{color:#C9962B}
+.kw-list{max-height:52vh;overflow:auto;margin-top:10px}
+.kw-row{display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-top:1px solid var(--line);cursor:pointer;font-size:14px}
+.kw-row span{color:var(--faint);font-size:12.5px}
+.report{display:flex;flex-direction:column;gap:12px}
+.report .big{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.report .big div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.report .big b{display:block;font-size:24px}
+.report .big span{font-size:12px;color:var(--sub)}
+.report .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.report .card h4{margin:0 0 6px;font-size:13px;color:var(--accent)}
+.report .quote{font-family:'Noto Serif KR',serif;line-height:1.75;color:var(--quote);white-space:pre-wrap;word-break:keep-all}
+
+/* 기타 */
+.fab{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:10;border:0;border-radius:999px;background:var(--accent);color:#fff;
+  padding:14px 20px;font-weight:650;box-shadow:0 6px 18px rgba(40,60,50,.3);cursor:pointer}
+@media (prefers-color-scheme: dark){.fab{color:#10140F}}
+.toast{position:fixed;left:50%;bottom:140px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
+  padding:9px 16px;border-radius:999px;font-size:13.5px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.loading{text-align:center;color:var(--faint);padding:80px 0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- 서재 -->
+  <section id="v-library">
+    <header>
+      <div class="brand"><h1>나의 서재</h1><div class="brand-r"><span id="sync" class="sync hidden" onclick="openSync()"></span><button class="iconbtn" onclick="openSettings()">⚙ 설정</button></div></div>
+      <div class="stats" id="stats"></div>
+      <div id="goal"></div>
+    </header>
+    <div id="top"></div>
+    <div class="toolbar">
+      <input id="q" class="search" type="search" placeholder="책 · 저자 · 문장 · #키워드 검색" autocomplete="off">
+      <div class="chips" id="filters"></div>
+    </div>
+    <div id="list" class="list"><div class="loading">서재를 불러오는 중…</div></div>
+  </section>
+
+  <!-- 책 상세 -->
+  <section id="v-book" class="hidden"></section>
+
+  <!-- 그물망 · 통계 -->
+  <section id="v-graph" class="hidden"></section>
+  <section id="v-stats" class="hidden"></section>
+  <section id="v-ai" class="hidden"></section>
+</div>
+
+<button class="fab" id="fab">+ 책 추가</button>
+<div class="composer hidden" id="composer"><div class="wrap">
+  <textarea id="ai-q" rows="1" placeholder="내 독서 기록에 대해 물어보세요" oninput="autoGrow(this)"
+    onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();askAI()}"></textarea>
+  <button class="btn primary" onclick="askAI()">보내기</button>
+</div></div>
+<nav class="nav" id="nav">
+  <button data-v="library" class="on"><svg viewBox="0 0 24 24"><path d="M4 19V5a1 1 0 0 1 1-1h3v16H5a1 1 0 0 1-1-1zM8 4h4v16H8M12 6.5l3.6-1 3.4 13.6-3.6 1z"/></svg>서재</button>
+  <button data-v="graph"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="8" r="2.4"/><circle cx="9" cy="18" r="2.4"/><circle cx="18" cy="18" r="1.8"/><path d="M8.2 7 15.8 7.6M7 8.3l1.4 7.4M16.4 9.8l-5.5 6.6M11.4 18h4.8"/></svg>그물망</button>
+  <button data-v="stats"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/></svg>통계</button>
+  <button data-v="ai"><svg viewBox="0 0 24 24"><path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/></svg>AI 비서</button>
+</nav>
+<div id="modal"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== 상태 ===== */
+const S = { books: [], snips: [], today: '', filter: '읽는중', q: '', view: 'library', bookId: null };
+const FILTERS = ['읽는중', '읽을예정', '완독', '전체'];
+const FILTER_LABEL = { '읽는중': '읽는 중', '읽을예정': '읽고 싶은' };
+
+/* ===== 서버 연결 (앱 ↔ 구글 시트) ===== */
+const LS = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+const API = { url: LS.get('api_url') || '', key: LS.get('api_key') || '' };
+const LONG_FNS = { autoKeywords: 1, askAssistant: 1 };
+const WRITE_FNS = { saveBook: 1, finishBook: 1, deleteBook: 1, saveSettings: 1, renameKeyword: 1, autoKeywords: 1 };
+
+async function rpc(fn, ...args) {
+  if (!API.url || !API.key) { const e = new Error('먼저 ⚙ 설정에서 서버를 연결해 주세요'); e.network = true; throw e; }
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), LONG_FNS[fn] ? 360000 : 60000);
+  let r;
+  try {
+    r = await fetch(API.url, {
+      method: 'POST', redirect: 'follow', signal: ctl.signal,
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ k: API.key, fn, args })
+    });
+  } catch (e) {
+    const err = new Error(navigator.onLine === false ? '인터넷에 연결되어 있지 않아요' : '서버에 연결하지 못했어요');
+    err.network = true; throw err;
+  } finally { clearTimeout(timer); }
+  let j;
+  try { j = await r.json(); } catch (e) {
+    const err = new Error('서버 답을 읽지 못했어요. 배포의 액세스 권한이 "모든 사용자"인지 확인해 주세요');
+    err.network = true; throw err;
+  }
+  if (!j.ok) throw new Error(j.error || '알 수 없는 오류');
+  return j.data;
+}
+function call(fn, ...args) {
+  return rpc(fn, ...args).then(r => { if (WRITE_FNS[fn]) setTimeout(saveCache, 30); return r; })
+    .catch(e => { toast('⚠ ' + (e.message || e)); throw e; });
+}
+function callQuiet(fn, ...args) { return rpc(fn, ...args).catch(() => null); }
+
+/* ----- 기기에 저장해 두는 데이터 (다음에 열 때 바로 보이도록) ----- */
+const CACHE_KEY = 'lib_cache_v1', OUTBOX_KEY = 'lib_outbox_v1';
+function localToday() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+function saveCache() {
+  if (!S.loaded) return;
+  LS.set(CACHE_KEY, JSON.stringify({ ver: S.ver || '', books: S.books, snippets: S.snips, settings: S.settings, at: Date.now() }));
+}
+function loadCache() { try { return JSON.parse(LS.get(CACHE_KEY) || 'null'); } catch (e) { return null; } }
+
+/* ----- 바로 저장 (먼저 화면에 반영 → 뒤에서 시트에 저장, 끊기면 다시 시도) ----- */
+S.outbox = (() => { try { return JSON.parse(LS.get(OUTBOX_KEY) || '[]'); } catch (e) { return []; } })();
+S.outbox.forEach(o => { o.sending = false; });
+S.idMap = {};
+S.syncState = '';
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const isTemp = id => /^T/.test(String(id || ''));
+const resolveId = id => (id && S.idMap[id]) || id;
+function persistOutbox() { LS.set(OUTBOX_KEY, JSON.stringify(S.outbox.map(o => Object.assign({}, o, { sending: false })))); renderSync(); }
+function normKw(k) { return uniq(String(k || '').split(/[,#\n]/).map(x => x.trim())).join(', '); }
+
+function upsertSnipLocal(s) { const i = S.snips.findIndex(x => x.ID === s.ID); if (i >= 0) S.snips[i] = s; else S.snips.push(s); }
+function queue(op) {
+  op.cid = op.cid || uid();
+  if (op.fn === 'saveSnippet') {
+    const ex = S.outbox.find(o => o.fn === 'saveSnippet' && o.data.ID === op.data.ID && !o.sending);
+    if (ex) { ex.data = op.data; ex.local = op.local; ex.error = ''; persistOutbox(); saveCache(); flush(); return; }
+  }
+  if (op.fn === 'deleteSnippet' && isTemp(op.id) && !S.outbox.some(o => o.sending && o.data && o.data.ID === op.id)) {
+    S.outbox = S.outbox.filter(o => !(o.data && o.data.ID === op.id));
+    persistOutbox(); saveCache(); return;
+  }
+  if (op.fn === 'updateBookFields') {
+    const ex = S.outbox.find(o => o.fn === 'updateBookFields' && o.id === op.id && !o.sending);
+    if (ex) { Object.assign(ex.patch, op.patch); ex.error = ''; persistOutbox(); saveCache(); flush(); return; }
+  }
+  S.outbox.push(op); persistOutbox(); saveCache(); flush();
+}
+// 서버에서 새로 받은 데이터 위에, 아직 저장 못 한 변경을 다시 얹기
+function applyPending() {
+  S.outbox.forEach(o => {
+    if (o.fn === 'saveSnippet') upsertSnipLocal(Object.assign({}, o.local));
+    else if (o.fn === 'deleteSnippet') S.snips = S.snips.filter(x => x.ID !== o.id);
+    else if (o.fn === 'updateBookFields') { const b = book(o.id); if (b) Object.assign(b, o.patch); }
+  });
+}
+function remapId(from, to) {
+  S.idMap[from] = to;
+  S.outbox.forEach(o => {
+    if (o.data && o.data.ID === from) { o.data.ID = to; if (o.local) o.local.ID = to; }
+    if (o.id === from) o.id = to;
+  });
+}
+
+let flushing = false, flushTimer = null;
+async function flush() {
+  if (flushing || !API.url || !S.outbox.length) { renderSync(); return; }
+  flushing = true; S.syncState = 'saving'; renderSync();
+  let changedIds = false;
+  try {
+    while (S.outbox.length) {
+      const op = S.outbox[0];
+      if (op.error) break;   // 실패한 건 사용자가 다시 시도할 때까지 멈춤
+      op.sending = true;
+      try {
+        if (op.fn === 'saveSnippet') {
+          const d = Object.assign({}, op.data, { _cid: op.cid });
+          const temp = isTemp(d.ID); if (temp) d.ID = '';
+          const saved = await rpc('saveSnippet', d);
+          S.snips = S.snips.filter(x => x.ID !== op.data.ID && x.ID !== saved.ID);
+          S.snips.push(saved);
+          if (temp) { remapId(op.data.ID, saved.ID); changedIds = true; }
+        } else if (op.fn === 'deleteSnippet') {
+          await rpc('deleteSnippet', op.id);
+        } else if (op.fn === 'updateBookFields') {
+          const saved = await rpc('updateBookFields', op.id, op.patch);
+          updateBook(saved);
+          S.outbox.slice(1).forEach(o => { if (o.fn === 'updateBookFields' && o.id === op.id) Object.assign(saved, o.patch); });
+        }
+      } catch (e) {
+        op.sending = false;
+        if (!e.network) { op.error = e.message || String(e); toast('⚠ 저장하지 못한 기록이 있어요: ' + op.error); }
+        break;
+      }
+      S.outbox.shift(); persistOutbox(); saveCache();
+    }
+  } finally {
+    flushing = false;
+    S.syncState = S.outbox.length ? (S.outbox[0].error ? 'error' : 'waiting') : '';
+    renderSync();
+    clearTimeout(flushTimer);
+    if (S.syncState === 'waiting') flushTimer = setTimeout(flush, 30000);
+    if (changedIds && S.view === 'book' && !$('modal').innerHTML) renderBook();
+  }
+}
+function renderSync() {
+  const el = $('sync'); if (!el) return;
+  const n = S.outbox.length;
+  let t = '', cls = '';
+  if (n && S.outbox.some(o => o.error)) { t = `저장 실패 ${n}`; cls = 'err'; }
+  else if (n && navigator.onLine === false) { t = `오프라인 · 대기 ${n}`; }
+  else if (n) { t = flushing ? '저장 중…' : `저장 대기 ${n}`; }
+  else if (S.refreshing) { t = '새로 고치는 중…'; cls = 'quiet'; }
+  el.textContent = t; el.className = 'sync ' + cls; el.classList.toggle('hidden', !t);
+}
+function openSync() {
+  if (!S.outbox.length) return;
+  const name = o => o.fn === 'saveSnippet' ? '문장 저장: ' + String(o.local && (o.local['제목'] || o.local['내용']) || '').slice(0, 24)
+    : o.fn === 'deleteSnippet' ? '문장 삭제' : '책 정보: ' + ((book(o.id) || {})['제목'] || '');
+  modal(`<h3>아직 시트에 저장되지 않은 기록</h3>
+    <div class="small" style="margin-bottom:10px">이 기기에는 저장되어 있어요. 인터넷이 연결되면 자동으로 올라가요.</div>
+    ${S.outbox.map((o, i) => `<div class="kw-row"><b style="font-weight:500">${esc(name(o))}</b><span>${o.error ? '⚠ ' + esc(o.error) : '대기 중'}</span>
+      ${o.error ? `<button class="btn" style="padding:4px 10px;font-size:13px" onclick="dropOp(${i})">버리기</button>` : ''}</div>`).join('')}
+    <div class="actions"><button class="btn" onclick="closeModal()">닫기</button>
+      <button class="btn primary grow" onclick="retrySync()">지금 다시 시도</button></div>`);
+}
+function retrySync() { S.outbox.forEach(o => { o.error = ''; }); persistOutbox(); closeModal(); flush(); }
+function dropOp(i) {
+  if (!confirm('이 기록을 버릴까요? 되돌릴 수 없어요.')) return;
+  const o = S.outbox.splice(i, 1)[0];
+  if (o && o.fn === 'saveSnippet' && isTemp(o.data.ID)) S.snips = S.snips.filter(x => x.ID !== o.data.ID);
+  persistOutbox(); saveCache(); closeModal(); if (S.outbox.length) openSync(); show(S.view);
+}
+
+/* ----- 시트와 맞추기 ----- */
+async function refresh(first) {
+  S.refreshing = true; renderSync();
+  try {
+    const d = await rpc('sync', first ? '' : (S.ver || ''));
+    if (d.settings) S.settings = d.settings;
+    if (!d.same) {
+      S.books = d.books; S.snips = d.snippets; S.ver = d.ver;
+      applyPending();
+      S.loaded = true; saveCache();
+      if (!$('modal').innerHTML || first) rerender();
+    } else { S.ver = d.ver; saveCache(); if (S.view === 'library') renderStats(); }
+    return true;
+  } catch (e) {
+    if (first) {
+      $('list').innerHTML = `<div class="empty">${esc(e.message || e)}<br><br><button class="btn" onclick="refresh(true)">다시 시도</button> <button class="btn" onclick="openConnect()">서버 연결</button></div>`;
+    }
+    return false;
+  } finally { S.refreshing = false; renderSync(); }
+}
+function rerender() {
+  if (S.view === 'book' && !book(S.bookId)) S.view = 'library';
+  if (S.view === 'graph' || S.view === 'ai') return;   // 그물망 · 대화는 보던 화면 유지
+  show(S.view);
+}
+
+/* ----- 처음 연결 ----- */
+function openConnect() {
+  modal(`<h3>서버 연결</h3>
+    <div class="small" style="line-height:1.6;margin-bottom:6px">Apps Script의 <b>웹 앱 URL</b>과 setupApi 실행 로그의 <b>연결 키</b>를 붙여넣으세요. 이 기기에 한 번만 넣으면 돼요.</div>
+    <label>웹 앱 URL</label><input class="field" id="c-url" value="${esc(API.url)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+    <label>연결 키</label><input class="field" id="c-key" value="${esc(API.key)}" placeholder="40자리 키" autocomplete="off">
+    <div id="c-msg" class="small" style="margin-top:8px"></div>
+    <div class="actions">${API.url ? '<button class="btn" onclick="closeModal()">취소</button>' : ''}
+      <button class="btn primary grow" id="c-go" onclick="saveConnect()">연결하기</button></div>`);
+}
+async function saveConnect() {
+  const url = $('c-url').value.trim(), key = $('c-key').value.trim();
+  if (!/^https:\/\/script\.google(usercontent)?\.com\/.+\/exec/.test(url)) { $('c-msg').textContent = 'URL은 https://script.google.com/macros/s/…/exec 모양이에요'; return; }
+  if (!key) { $('c-msg').textContent = '연결 키를 넣어 주세요'; return; }
+  const old = { url: API.url, key: API.key };
+  API.url = url; API.key = key; $('c-go').disabled = true; $('c-msg').textContent = '확인하는 중…';
+  try {
+    await rpc('ping');
+    LS.set('api_url', url); LS.set('api_key', key);
+    if (old.url && old.url !== url) { LS.del(CACHE_KEY); S.ver = ''; }
+    closeModal(); toast('연결됐어요');
+    if (!S.loaded) $('list').innerHTML = '<div class="empty">처음 한 번 불러오는 중이에요…</div>';
+    await refresh(true); flush();
+  } catch (e) {
+    API.url = old.url; API.key = old.key; $('c-go').disabled = false;
+    $('c-msg').textContent = '⚠ ' + (e.message || e);
+  }
+}
+function resetLocal() {
+  if (S.outbox.length && !confirm(`아직 시트에 안 올라간 기록 ${S.outbox.length}개가 있어요. 그래도 비울까요?`)) return;
+  LS.del(CACHE_KEY); LS.del(OUTBOX_KEY); S.outbox = []; S.ver = '';
+  closeModal(); $('list').innerHTML = '<div class="empty">새로 불러오는 중…</div>'; refresh(true);
+}
+
+/* ----- 앱 시작 ----- */
+function boot() {
+  S.today = localToday();
+  const startBook = new URLSearchParams(location.search).get('book');
+  const route = () => {
+    if (startBook && book(startBook)) { S.bookId = startBook; S.view = 'book'; }
+    history.replaceState({ view: S.view, id: S.bookId || '' }, '');
+    show(S.view);
+  };
+  renderSync();
+  if (!API.url || !API.key) { show('library'); $('list').innerHTML = '<div class="empty">서버를 연결하면 서재가 열려요.</div>'; openConnect(); return; }
+  const c = loadCache();
+  if (c && c.books) {
+    S.books = c.books; S.snips = c.snippets || []; S.ver = c.ver || ''; if (c.settings) S.settings = c.settings;
+    S.loaded = true; route();
+    refresh(false).then(() => flush());
+  } else {
+    show('library'); $('list').innerHTML = '<div class="empty">처음 한 번 불러오는 중이에요…</div>';
+    refresh(true).then(ok => { if (ok) route(); flush(); });
+  }
+}
+window.addEventListener('online', () => { renderSync(); flush(); });
+window.addEventListener('offline', renderSync);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !S.loaded) return;
+  flush();
+  if (Date.now() - (S.lastRefresh || 0) > 60000) { S.lastRefresh = Date.now(); refresh(false); }
+});
+
+/* ----- 새 버전 알림 (서비스 워커) ----- */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.type === 'updated') {
+      const t = $('toast'); t.innerHTML = '새 버전이 있어요 · <u>눌러서 적용</u>'; t.classList.add('show');
+      clearTimeout(t._h); t.onclick = () => location.reload(); t._h = setTimeout(() => { t.classList.remove('show'); t.onclick = null; }, 8000);
+    }
+  });
+  try { navigator.serviceWorker.startMessages(); } catch (e) {}
+}
+
+
+/* ===== 도우미 ===== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
+const PALETTE = ['#5B7A6A','#8C5E4A','#4F6684','#8A7347','#6E5A80','#3F7378','#94604F','#5E6E45','#7A4E64','#55657A'];
+function spineColor(b) { const k = b['대분류'] || b['제목'] || ''; let h = 0; for (const c of k) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length]; }
+function spine(b) {
+  if (b['표지URL']) return `<div class="spine" style="background:${spineColor(b)}"><img src="${esc(b['표지URL'])}" alt=""></div>`;
+  return `<div class="spine" style="background:${spineColor(b)}">${esc(String(b['제목']).slice(0, 8))}</div>`;
+}
+const snipsOf = id => S.snips.filter(s => s['책ID'] === id);
+const book = id => S.books.find(b => b.ID === id);
+function uniq(arr) { return [...new Set(arr.filter(Boolean))]; }
+function period(b) {
+  if (!b['시작일']) return '';
+  const s = b['시작일'].slice(5).replace('-', '.');
+  if (!b['완독일']) return s + ' ~';
+  return s + ' ~ ' + b['완독일'].slice(5).replace('-', '.');
+}
+
+/* ===== 서재 화면 ===== */
+function renderStats() {
+  const y = S.today.slice(0, 4);
+  const done = S.books.filter(b => b['상태'] === '완독' && String(b['완독일']).startsWith(y)).length;
+  const reading = S.books.filter(b => b['상태'] === '읽는중').length;
+  $('stats').innerHTML =
+    `<div class="stat"><b>${done}</b><span>${y}년 완독</span></div>` +
+    `<div class="stat"><b>${reading}</b><span>읽는 중</span></div>` +
+    `<div class="stat"><b>${S.snips.length}</b><span>필사 문장</span></div>`;
+  $('goal').innerHTML = goalHtml();
+}
+function renderFilters() {
+  $('filters').innerHTML = FILTERS.map(f => `<button class="chip ${S.filter === f ? 'on' : ''}" data-f="${f}">${FILTER_LABEL[f] || f}</button>`).join('');
+}
+function bookCard(b) {
+  const n = snipsOf(b.ID).length;
+  const cat = [b['대분류'], b['개인분류']].filter(Boolean).join(' · ');
+  return `<div class="book" data-id="${b.ID}">
+    ${spine(b)}
+    <div class="binfo">
+      <div class="btitle">${esc(b['제목'])}</div>
+      <div class="bauthor">${esc(b['저자'])}</div>
+      <div class="bmeta">
+        ${b['상태'] === '읽는중' ? '<span class="badge reading">읽는 중</span>' : ''}
+        ${b['상태'] === '읽을예정' ? '<span class="badge">읽고 싶은</span>' : ''}
+        ${dueBadge(b)}
+        ${b['별점'] ? `<span class="stars">${'★'.repeat(Number(b['별점']) || 0)}</span>` : ''}
+        ${n ? `<span class="badge">필사 ${n}</span>` : ''}
+        ${cat ? `<span>${esc(cat)}</span>` : ''}
+        ${period(b) ? `<span>${period(b)}</span>` : ''}
+      </div>
+      ${(() => { const p = b['상태'] === '읽는중' ? progressOf(b) : null; return p ? `<div class="mini-bar" title="${p.pct}%"><i style="width:${p.pct}%"></i></div>` : ''; })()}
+    </div></div>`;
+}
+function renderList() {
+  const q = S.q.trim().toLowerCase();
+  $('top').innerHTML = q ? '' : libraryTopHtml();
+  let rows = S.books.filter(b => q || S.filter === '전체' || b['상태'] === S.filter);   // 검색할 때는 모든 책에서
+  if (q) rows = q.startsWith('#') ? [] : rows.filter(b => ['제목','저자','옮긴이','출판사','대분류','중분류','개인분류','한줄평'].some(k => String(b[k] || '').toLowerCase().includes(q)));
+  rows.sort((a, b) => String(b['완독일'] || b['시작일']).localeCompare(String(a['완독일'] || a['시작일'])));
+  if (q) {
+    $('list').innerHTML = (rows.length ? `<div class="res-head">책 ${rows.length}권</div>` + rows.slice(0, 20).map(bookCard).join('') : '') + hitsHtml(S.q)
+      || '<div class="empty">검색 결과가 없어요</div>';
+    return;
+  }
+  if (!rows.length) { $('list').innerHTML = `<div class="empty">${S.filter === '읽을예정' ? '읽고 싶은 책을 + 책 추가에서 상태 ‘읽을예정’으로 담아 보세요' : '아직 책이 없어요'}</div>`; return; }
+  if (S.filter === '완독' && !q) {
+    // 월별로 묶어 보기
+    let html = '', cur = '';
+    rows.forEach(b => {
+      const m = String(b['완독일']).slice(0, 7);
+      if (m !== cur) { cur = m; html += `<div class="group-label">${m ? m.replace('-', '년 ') + '월' : '날짜 없음'}</div>`; }
+      html += bookCard(b);
+    });
+    $('list').innerHTML = html;
+  } else {
+    $('list').innerHTML = rows.map(bookCard).join('');
+  }
+}
+function renderLibrary() { renderStats(); renderFilters(); renderList(); }
+
+/* ===== 책 상세 화면 ===== */
+function renderBook() {
+  const b = book(S.bookId);
+  if (!b) { go('library'); return; }
+  // 노트 파일에서 가져온 문장 → 노트에 적힌 순서, 직접 입력한 문장 → 그 뒤에 쪽수 순서
+  const fileOrder = s => s['출처'] === '노트파일' || s['출처'] === 'PDF' ? 0 : 1;
+  const snips = snipsOf(b.ID).sort((x, y) =>
+    fileOrder(x) - fileOrder(y) ||
+    (fileOrder(x) ? (Number(x['쪽수']) || 99999) - (Number(y['쪽수']) || 99999) : 0) ||
+    String(x.ID).localeCompare(String(y.ID)));
+  const tags = [b['대분류'], b['중분류'], b['개인분류'], b['플랫폼'], b['경로']].filter(Boolean);
+  $('v-book').innerHTML = `
+    <div class="topbar">
+      <button class="iconbtn" onclick="go('library')">← 서재</button>
+      <button class="iconbtn" onclick="openBookForm('${b.ID}')">정보 수정</button>
+    </div>
+    <div class="detail-head">
+      ${spine(b)}
+      <div>
+        <div class="dtitle">${esc(b['제목'])}</div>
+        <div class="dauthor">${esc(b['저자'])}${b['옮긴이'] ? ' 지음 · ' + esc(b['옮긴이']) + ' 옮김' : ''}${b['출판사'] ? ' · ' + esc(b['출판사']) : ''}</div>
+        <div class="tags">${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+      </div>
+    </div>
+    <div class="grid">
+      <div><b>${b['분량'] ? esc(b['분량']) + '쪽' : '–'}</b><span>분량</span></div>
+      <div><b>${esc(b['시작일'] || '–')}</b><span>시작</span></div>
+      <div><b>${esc(b['완독일'] || '–')}</b><span>완독</span></div>
+      <div><b>${b['완독일수'] ? esc(b['완독일수']) + '일' : (b['상태'] === '읽는중' ? '읽는 중' : '–')}</b><span>기간</span></div>
+    </div>
+    ${b['상태'] === '읽는중' || b['상태'] === '중단' ? `<div class="actions"><button class="btn primary grow" onclick="finish('${b.ID}')">오늘 완독했어요</button></div>` : ''}
+    ${bookExtrasHtml(b)}
+    <div class="sec-head"><h2>필사 노트 <span style="color:var(--faint);font-weight:500">${snips.length}</span></h2>
+      <button class="btn" onclick="openSnipForm(null)">+ 문장 추가</button></div>
+    ${snips.length ? snips.map(snipHtml).join('')
+    : '<div class="empty">아직 필사한 문장이 없어요.<br>‘+ 문장 추가’로 시작해 보세요.</div>'}
+  `;
+}
+function snipHtml(s) {
+  const cls = s['유형'] === '생각' ? 'thought' : s['유형'] === '메모' ? 'memo' : 'quote';
+  const kws = String(s['키워드'] || '').split(',').map(k => k.trim()).filter(Boolean);
+  const meta = [s['쪽수'] !== '' && s['쪽수'] != null ? `<span class="pg">p.${esc(s['쪽수'])}</span>` : '', ...kws.map(k => `<span class="kw">#${esc(k)}</span>`)].filter(Boolean);
+  return `<div class="snip ${cls}" id="s-${s.ID}" onclick="openSnipForm('${s.ID}')">
+    ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}
+    <div class="txt">${esc(s['내용'])}</div>
+    ${meta.length ? `<div class="smeta">${meta.join('')}</div>` : ''}
+  </div>`;
+}
+
+/* ===== 화면 전환 ===== */
+function show(view) {
+  S.view = view;
+  ['library', 'book', 'graph', 'stats', 'ai'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
+  $('composer').classList.toggle('hidden', view !== 'ai');
+  document.body.classList.toggle('ai-mode', view === 'ai');
+  $('fab').classList.toggle('hidden', view !== 'library');
+  const tab = view === 'book' ? 'library' : view;
+  document.querySelectorAll('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
+  if (view === 'library') renderLibrary();
+  else if (view === 'book') renderBook();
+  else if (view === 'graph') renderGraphView();
+  else if (view === 'ai') renderAIView();
+  else renderStatsView();
+}
+function go(view, id) {
+  if (view === 'book') S.bookId = id;
+  try { history.pushState({ view, id: id || '' }, '', view === 'book' ? '?book=' + encodeURIComponent(id) : location.pathname); } catch (e) {}
+  show(view); window.scrollTo(0, 0);
+}
+function goBack() { try { history.back(); } catch (e) { go('library'); } }
+window.addEventListener('popstate', e => {
+  if ($('modal').innerHTML) closeModal();
+  const st = e.state || {};
+  if (st.view === 'book' && st.id && book(st.id)) { S.bookId = st.id; show('book'); }
+  else show(['graph', 'stats', 'ai'].includes(st.view) ? st.view : 'library');
+});
+
+/* ===== 입력 창 ===== */
+function closeModal() { $('modal').innerHTML = ''; }
+function modal(html) {
+  $('modal').innerHTML = `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="sheet">${html}</div></div>`;
+}
+function datalist(id, values) { return `<datalist id="${id}">${uniq(values).map(v => `<option value="${esc(v)}">`).join('')}</datalist>`; }
+
+/* 필사 입력 */
+let snipType = '인용';
+function openSnipForm(id) {
+  id = resolveId(id);
+  const s = id ? S.snips.find(x => x.ID === id) : null;
+  const b = book(S.bookId);
+  snipType = s ? (s['유형'] || '인용') : snipType;
+  const allKw = uniq(S.snips.flatMap(x => String(x['키워드'] || '').split(',').map(k => k.trim())));
+  const bookKw = uniq(snipsOf(b.ID).flatMap(x => String(x['키워드'] || '').split(',').map(k => k.trim())));
+  const kwSuggest = uniq([...bookKw, ...allKw]).slice(0, 14);
+  modal(`
+    <h3>${s ? '문장 수정' : '문장 추가'} <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span></h3>
+    <div class="seg" id="seg">${['인용','생각','메모'].map(t => `<button data-t="${t}" class="${snipType === t ? 'on' : ''}">${t === '인용' ? '인용 (책 문장)' : t === '생각' ? '내 생각' : '메모'}</button>`).join('')}</div>
+    <label>제목 <span style="font-weight:400;color:var(--faint)">내가 붙이는 표제</span></label>
+    <input class="field" id="f-ttl" value="${esc(s ? s['제목'] : '')}" placeholder="예: 과학은 믿음을 싫어한다">
+    <label>내용</label>
+    <textarea class="field" id="f-txt" placeholder="책 속 문장이나 생각을 적어 주세요">${esc(s ? s['내용'] : '')}</textarea>
+    <label>쪽수 <span style="font-weight:400;color:var(--faint)">여러 쪽이면 36, 37</span></label>
+    <input class="field" id="f-page" inputmode="decimal" style="max-width:160px" value="${esc(s ? s['쪽수'] : '')}">
+    <label>키워드 <span style="font-weight:400;color:var(--faint)">쉼표로 구분</span><button type="button" class="kw-ai" onclick="aiKeywords(this)">AI 추천</button></label>
+    <input class="field" id="f-kw" value="${esc(s ? s['키워드'] : '')}" placeholder="예: 자유, 사랑">
+    ${kwSuggest.length ? `<div class="suggest">${kwSuggest.map(k => `<button class="chip" data-kw="${esc(k)}">#${esc(k)}</button>`).join('')}</div>` : ''}
+    <div class="actions">
+      ${s ? `<button class="btn danger" onclick="removeSnip('${s.ID}')">삭제</button>` : ''}
+      <button class="btn" onclick="closeModal()">취소</button>
+      ${s ? '' : `<button class="btn grow" onclick="submitSnip(null,true)">저장 후 이어서</button>`}
+      <button class="btn primary grow" onclick="submitSnip(${s ? `'${s.ID}'` : 'null'},false)">저장</button>
+    </div>`);
+  $('seg').onclick = e => { const t = e.target.closest('button'); if (!t) return; snipType = t.dataset.t; [...$('seg').children].forEach(x => x.classList.toggle('on', x === t)); };
+  document.querySelectorAll('[data-kw]').forEach(c => c.onclick = () => {
+    const cur = $('f-kw').value.split(',').map(x => x.trim()).filter(Boolean);
+    if (!cur.includes(c.dataset.kw)) cur.push(c.dataset.kw);
+    $('f-kw').value = cur.join(', ');
+  });
+  setTimeout(() => { const el = s ? $('f-txt') : $('f-ttl'); if (el) el.focus(); }, 50);
+}
+function submitSnip(id, keepOpen) {
+  id = resolveId(id);
+  const data = { ID: id || ('T' + uid()), '책ID': S.bookId, '유형': snipType, '내용': $('f-txt').value.trim(),
+    '쪽수': $('f-page').value.trim().replace(/\s*p$/i, ''), '제목': $('f-ttl').value.trim(), '키워드': normKw($('f-kw').value) };
+  if (!data['내용']) { toast('내용을 입력해 주세요'); return; }
+  const prev = S.snips.find(x => x.ID === data.ID);
+  const local = Object.assign({ '출처': '직접입력', '작성일': S.today }, prev || {}, data, { '책제목': (book(S.bookId) || {})['제목'] || '' });
+  upsertSnipLocal(local);
+  queue({ fn: 'saveSnippet', data, local });
+  toast('저장했어요');
+  renderBook();
+  if (keepOpen) { openSnipForm(null); } else closeModal();
+}
+function removeSnip(id) {
+  if (!confirm('이 문장을 삭제할까요?')) return;
+  id = resolveId(id);
+  S.snips = S.snips.filter(x => x.ID !== id);
+  queue({ fn: 'deleteSnippet', id });
+  closeModal(); renderBook(); toast('삭제했어요');
+}
+
+/* 책 추가 · 수정 */
+const BOOK_FIELDS = [
+  ['제목', 'text', true], ['저자', 'text'], ['옮긴이', 'text'], ['출판사', 'text'],
+  ['플랫폼', 'list'], ['경로', 'list'], ['대분류', 'list'], ['중분류', 'list'], ['개인분류', 'list'],
+  ['분량', 'number'], ['시작일', 'date'], ['완독일', 'date'], ['상태', 'select'], ['표지URL', 'text'], ['ISBN', 'hidden'],
+  ['반납일', 'date'], ['별점', 'stars'], ['한줄평', 'text']
+];
+function openBookForm(id) {
+  const b = id ? book(id) : { '시작일': S.today, '상태': '읽는중', '플랫폼': '종이책' };
+  const field = ([k, type, req]) => {
+    const v = esc(b[k] ?? '');
+    let input;
+    if (type === 'hidden') return `<input type="hidden" id="b-${k}" value="${v}">`;
+    if (type === 'stars') input = `<select class="field" id="b-${k}"><option value="">–</option>${[5,4,3,2,1].map(n => `<option value="${n}" ${String(b[k]) === String(n) ? 'selected' : ''}>${'★'.repeat(n)}</option>`).join('')}</select>`;
+    else if (type === 'select') input = `<select class="field" id="b-${k}">${['읽는중','완독','중단','읽을예정'].map(o => `<option ${b[k] === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+    else if (type === 'list') input = `<input class="field" id="b-${k}" list="dl-${k}" value="${v}">` + datalist('dl-' + k, S.books.map(x => x[k]));
+    else input = `<input class="field" id="b-${k}" type="${type === 'number' ? 'text' : type}" ${type === 'number' ? 'inputmode="numeric"' : ''} value="${v}">`;
+    return `<div><label>${k}${req ? ' *' : ''}</label>${input}</div>`;
+  };
+  const f = Object.fromEntries(BOOK_FIELDS.map(x => [x[0], field(x)]));
+  modal(`
+    <h3>${id ? '책 정보 수정' : '새 책 추가'}</h3>
+    <div class="al-box">
+      <input class="field" id="al-q" type="search" placeholder="책 검색: 제목 · 저자 · ISBN" value="${id ? esc(String(b['제목']).replace(/\(.*?\)/g, '').trim()) : ''}" onkeydown="if(event.key==='Enter'){event.preventDefault();alSearch()}">
+      <button class="btn primary" onclick="alSearch()">검색</button>
+    </div>
+    <div id="al-res" class="al-res"></div>
+    <div id="cover-pick">${b['표지URL'] ? coverPick(b['표지URL'], '현재 표지') : ''}</div>
+    <div class="divider"></div>
+    ${f['제목']}
+    <div class="row">${f['저자']}${f['옮긴이']}</div>
+    <div class="row">${f['출판사']}${f['분량']}</div>
+    <div class="row">${f['플랫폼']}${f['경로']}</div>
+    <div class="row">${f['대분류']}${f['중분류']}</div>
+    <div class="row">${f['개인분류']}${f['상태']}</div>
+    <div class="row">${f['시작일']}${f['완독일']}</div>
+    <div class="row">${f['반납일']}${f['별점']}</div>
+    ${f['한줄평']}
+    ${f['표지URL']}${f['ISBN']}
+    <div class="actions">
+      ${id ? `<button class="btn danger" onclick="removeBook('${id}')">삭제</button>` : ''}
+      <button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn primary grow" onclick="submitBook(${id ? `'${id}'` : 'null'})">저장</button>
+    </div>`);
+  if (!id) setTimeout(() => $('al-q').focus(), 50);
+}
+/* 책 검색 (카카오 + 국립중앙도서관) */
+let alList = [];
+function coverPick(url, note) { return `<div class="cover-pick"><img src="${esc(url)}" alt=""><span>${esc(note)}</span></div>`; }
+async function alSearch() {
+  const q = $('al-q').value.trim();
+  if (!q) { $('al-q').focus(); return; }
+  $('al-res').innerHTML = '<div class="al-msg">찾는 중…</div>';
+  try {
+    const list = await call('bookSearch', q);
+    alList = list;
+    $('al-res').innerHTML = list.length ? list.map((x, i) => `
+      <button class="al-item" data-i="${i}">
+        <img src="${esc(x.cover)}" alt="">
+        <div><b>${esc(x.title)}</b><span>${esc(x.author)}${x.translator ? ' · ' + esc(x.translator) + ' 옮김' : ''} · ${esc(x.publisher)}${x.year ? ' · ' + esc(x.year) : ''}</span></div>
+      </button>`).join('') : '<div class="al-msg">검색 결과가 없어요. 제목을 조금 줄여서 다시 찾아보세요.</div>';
+    $('al-res').querySelectorAll('.al-item').forEach(el => el.onclick = () => alPick(alList[Number(el.dataset.i)]));
+  } catch (e) { $('al-res').innerHTML = `<div class="al-msg">${esc(e.message || e)}</div>`; }
+}
+async function alPick(item) {
+  $('al-res').innerHTML = '<div class="al-msg">쪽수 · 분류를 가져오는 중…</div>';
+  try {
+    const d = await call('bookDetail', item);
+    // 검색 정보로 채우기 (개인분류 · 날짜 · 상태 · 플랫폼 · 경로는 그대로)
+    ['제목','저자','출판사','대분류','중분류','분량','표지URL','ISBN'].forEach(k => { if (d[k] !== '' && d[k] != null) $('b-' + k).value = d[k]; });
+    $('b-옮긴이').value = d['옮긴이'] || '';   // 고른 책 기준으로 (옮긴이 없는 책이면 비움)
+    $('al-res').innerHTML = '';
+    $('cover-pick').innerHTML = d['표지URL'] ? coverPick(d['표지URL'], '검색 정보로 채웠어요' + (d['분류출처'] ? ' · ' + d['분류출처'] : '') + (d['분량'] ? '' : ' · 쪽수는 직접 입력해 주세요')) : '';
+    toast('책 정보를 채웠어요. 확인 후 저장하세요');
+  } catch (e) { $('al-res').innerHTML = `<div class="al-msg">${esc(e.message || e)}</div>`; }
+}
+
+async function submitBook(id) {
+  const data = { ID: id || '' };
+  BOOK_FIELDS.forEach(([k]) => data[k] = $('b-' + k).value.trim());
+  if (!data['제목']) { toast('제목을 입력해 주세요'); return; }
+  if (data['분량'] && isNaN(Number(data['분량']))) { toast('분량은 숫자로 입력해 주세요'); return; }
+  if (data['분량']) data['분량'] = Number(data['분량']);
+  document.querySelectorAll('.sheet .btn').forEach(b => b.disabled = true);
+  try {
+    const saved = await call('saveBook', data);
+    const i = S.books.findIndex(x => x.ID === saved.ID);
+    if (i >= 0) S.books[i] = saved; else S.books.push(saved);
+    closeModal(); toast('저장했어요');
+    if (id) renderBook(); else go('book', saved.ID);
+  } catch (e) { document.querySelectorAll('.sheet .btn').forEach(b => b.disabled = false); }
+}
+async function removeBook(id) {
+  const n = snipsOf(id).length;
+  if (!confirm(`이 책을 삭제할까요?${n ? `\n필사 문장 ${n}개도 함께 삭제됩니다.` : ''}`)) return;
+  await call('deleteBook', id);
+  S.books = S.books.filter(x => x.ID !== id);
+  S.snips = S.snips.filter(x => x['책ID'] !== id);
+  closeModal(); go('library'); toast('삭제했어요');
+}
+async function finish(id) {
+  if (!confirm('오늘 날짜로 완독 처리할까요?')) return;
+  const saved = await call('finishBook', id);
+  S.books[S.books.findIndex(x => x.ID === id)] = saved;
+  renderBook(); toast(`완독! ${saved['완독일수'] ? saved['완독일수'] + '일 걸렸어요' : ''}`);
+  setTimeout(() => openRating(id), 400);
+}
+
+/* ===================================================================
+   6단계: 키워드 그물망 · 통계
+   =================================================================== */
+const splitKw = v => String(v || '').split(',').map(k => k.trim()).filter(Boolean);
+const splitAuthors = v => String(v || '').split(/\s*,\s*/).map(a => a.replace(/\(.*?\)/g, '').trim()).filter(Boolean);
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------- 그물망 ---------- */
+const G = { nodes: [], edges: [], byId: {}, nb: {}, scale: 1, ox: 0, oy: 0, sel: null,
+  opt: { kw: true, au: true, cat: false, init: false }, ptr: new Map(), drag: null, moved: 0,
+  cfg: { rep: 1200, grav: 0.03, len: 34, k: 0.05, cut: 110 } };
+
+function renderGraphView() {
+  const hasKw = S.snips.some(s => splitKw(s['키워드']).length);
+  if (!G.opt.init) { G.opt.cat = !hasKw; G.opt.init = true; }
+  const kwStats = keywordStats();
+  $('v-graph').innerHTML = `
+    <div class="view-head ai-head"><div><h1>그물망</h1><p>책과 키워드, 저자, 분류가 어떻게 이어지는지 보여줘요.</p></div><button class="btn" onclick="openKwManager()">키워드 정리</button></div>
+    <div class="chips" id="g-opts">
+      ${[['kw','키워드'],['au','저자'],['cat','개인분류']].map(([k, t]) => `<button class="chip ${G.opt[k] ? 'on' : ''}" data-o="${k}">${t}</button>`).join('')}
+    </div>
+    ${hasKw ? '' : `<div class="notice">아직 키워드가 달린 문장이 없어서 저자 · 개인분류로만 연결했어요.
+      필사 문장을 눌러 키워드를 달거나, <a style="color:var(--accent);font-weight:600;cursor:pointer" onclick="go('ai')">AI 비서 탭에서 키워드를 한꺼번에 달면</a> 그물망이 채워져요.</div>`}
+    <div class="g-wrap">
+      <canvas id="g-canvas" aria-label="책과 키워드 연결 그물망"></canvas>
+      <div class="g-tools">
+        <button onclick="gZoom(1.25)" aria-label="확대">＋</button>
+        <button onclick="gZoom(0.8)" aria-label="축소">－</button>
+        <button onclick="gFit()" aria-label="전체 보기">⤢</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="lg-book"></i>책</span><span><i class="lg-kw"></i>키워드</span>
+      <span><i class="lg-au"></i>저자 (2권 이상)</span><span><i class="lg-cat"></i>개인분류</span>
+    </div>
+    ${kwStats.length ? `<div class="kw-chips">${kwStats.slice(0, 20).map(k =>
+      `<button class="chip" data-kw="${esc(k.kw)}">#${esc(k.kw)}<b>${k.n}</b></button>`).join('')}</div>` : ''}
+    <div id="g-info"></div>`;
+  $('g-opts').onclick = e => {
+    const c = e.target.closest('[data-o]'); if (!c) return;
+    G.opt[c.dataset.o] = !G.opt[c.dataset.o];
+    c.classList.toggle('on', G.opt[c.dataset.o]);
+    buildGraph(); gFit(); gInfo(null);
+  };
+  document.querySelectorAll('#v-graph [data-kw]').forEach(c => c.onclick = () => {
+    if (!G.opt.kw) { G.opt.kw = true; $('g-opts').querySelector('[data-o="kw"]').classList.add('on'); buildGraph(); gFit(); }
+    gSelect(G.byId['k:' + c.dataset.kw] || null, true);
+  });
+  setupCanvas();
+  buildGraph(); gFit(); gInfo(G.sel);
+}
+
+function keywordStats() {
+  const m = {};
+  S.snips.forEach(s => splitKw(s['키워드']).forEach(k => {
+    m[k] = m[k] || { kw: k, n: 0, books: new Set() };
+    m[k].n++; m[k].books.add(s['책ID']);
+  }));
+  return Object.values(m).sort((a, b) => b.n - a.n || b.books.size - a.books.size);
+}
+
+function seeded(str) { let h = 2166136261; for (const c of str) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)) >>> 0) / 4294967296; }
+
+function buildGraph() {
+  const nodes = {}, edges = [];
+  const add = (id, type, label, ref) => nodes[id] || (nodes[id] = { id, type, label, ref, w: 0 });
+  const link = (a, b, w) => { edges.push({ a, b, w: w || 1 }); nodes[a].w += w || 1; nodes[b].w += w || 1; };
+  const bookIds = new Set(S.books.map(b => b.ID));
+
+  if (G.opt.kw) {
+    const pair = {};
+    S.snips.forEach(s => {
+      if (!bookIds.has(s['책ID'])) return;
+      splitKw(s['키워드']).forEach(k => { const key = s['책ID'] + '\u0001' + k; pair[key] = (pair[key] || 0) + 1; });
+    });
+    Object.entries(pair).forEach(([key, n]) => {
+      const [bid, k] = key.split('\u0001');
+      const b = book(bid);
+      add('b:' + bid, 'book', b['제목'], bid); add('k:' + k, 'kw', '#' + k, k);
+      link('b:' + bid, 'k:' + k, n);
+    });
+  }
+  if (G.opt.au) {
+    const m = {};
+    S.books.forEach(b => splitAuthors(b['저자']).forEach(a => (m[a] = m[a] || []).push(b)));
+    Object.entries(m).filter(([, bs]) => bs.length >= 2).forEach(([a, bs]) => bs.forEach(b => {
+      add('b:' + b.ID, 'book', b['제목'], b.ID); add('a:' + a, 'au', a, a); link('b:' + b.ID, 'a:' + a, 1);
+    }));
+  }
+  if (G.opt.cat) {
+    const m = {};
+    S.books.forEach(b => { const c = String(b['개인분류'] || '').trim(); if (c) (m[c] = m[c] || []).push(b); });
+    Object.entries(m).filter(([, bs]) => bs.length >= 2).forEach(([c, bs]) => bs.forEach(b => {
+      add('b:' + b.ID, 'book', b['제목'], b.ID); add('c:' + c, 'cat', c, c); link('b:' + b.ID, 'c:' + c, 1);
+    }));
+  }
+
+  // 이전 위치는 유지하고, 새 노드만 자리를 잡음
+  const old = G.byId;
+  const list = Object.values(nodes);
+  const R = Math.sqrt(list.length) * 40;
+  list.forEach(n => {
+    const o = old[n.id];
+    if (o) { n.x = o.x; n.y = o.y; }
+    else { const r = seeded(n.id); const a = r() * Math.PI * 2, d = Math.sqrt(r()) * R; n.x = Math.cos(a) * d; n.y = Math.sin(a) * d; }
+    n.r = n.type === 'book' ? 7 : n.type === 'kw' ? 5 + Math.min(14, Math.sqrt(n.w) * 2.6) : 6 + Math.min(10, Math.sqrt(n.w) * 2.2);
+  });
+  G.nodes = list; G.edges = edges.map(e => ({ a: nodes[e.a], b: nodes[e.b], w: e.w }));
+  G.byId = nodes; G.nb = {};
+  G.edges.forEach(e => { (G.nb[e.a.id] = G.nb[e.a.id] || new Set()).add(e.b.id); (G.nb[e.b.id] = G.nb[e.b.id] || new Set()).add(e.a.id); });
+  if (G.sel && !nodes[G.sel.id]) G.sel = null; else if (G.sel) G.sel = nodes[G.sel.id];
+  simulate(list.some(n => !old[n.id]) ? 320 : 60);
+}
+
+function simulate(iters) {
+  const N = G.nodes, E = G.edges, n = N.length;
+  if (!n) return;
+  for (let it = 0; it < iters; it++) {
+    const alpha = 1 - it / iters;
+    const C = G.cfg;
+    N.forEach(p => { p.fx = -p.x * C.grav; p.fy = -p.y * C.grav; });
+    for (let i = 0; i < n; i++) {
+      const a = N[i];
+      for (let j = i + 1; j < n; j++) {
+        const b = N[j];
+        let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy;
+        if (d2 > C.cut * C.cut) continue;
+        if (d2 < 1) { dx = Math.random() - 0.5; dy = Math.random() - 0.5; d2 = 1; }
+        const f = C.rep / d2;
+        a.fx += dx * f; a.fy += dy * f; b.fx -= dx * f; b.fy -= dy * f;
+      }
+    }
+    E.forEach(e => {
+      const dx = e.b.x - e.a.x, dy = e.b.y - e.a.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const L = C.len + e.a.r + e.b.r, k = C.k * Math.min(3, 1 + Math.log(e.w));
+      const f = (d - L) * k / d;
+      e.a.fx += dx * f; e.a.fy += dy * f; e.b.fx -= dx * f; e.b.fy -= dy * f;
+    });
+    N.forEach(p => {
+      if (p === G.drag) return;
+      const m = Math.max(1.5, 22 * alpha);
+      p.x += Math.max(-m, Math.min(m, p.fx)); p.y += Math.max(-m, Math.min(m, p.fy));
+    });
+  }
+}
+
+/* 캔버스 · 그리기 */
+function setupCanvas() {
+  const cv = $('g-canvas');
+  const fit = () => { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; cv.width = r.width * dpr; cv.height = r.height * dpr; drawGraph(); };
+  G.resize = fit;
+  fit();
+  const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const world = p => ({ x: (p.x - G.ox) / G.scale, y: (p.y - G.oy) / G.scale });
+  const hit = p => {
+    const w = world(p); let best = null, bd = Infinity;
+    G.nodes.forEach(n => { const d = Math.hypot(n.x - w.x, n.y - w.y) * G.scale; if (d < nodeR(n) + 9 && d < bd) { bd = d; best = n; } });
+    return best;
+  };
+  cv.onpointerdown = e => {
+    cv.setPointerCapture(e.pointerId);
+    G.ptr.set(e.pointerId, pos(e)); G.moved = 0;
+    if (G.ptr.size === 1) { G.drag = hit(pos(e)); G.last = pos(e); cv.classList.add('dragging'); }
+    else { G.drag = null; G.pinch = pinchState(); }
+  };
+  cv.onpointermove = e => {
+    if (!G.ptr.has(e.pointerId)) return;
+    const p = pos(e); G.ptr.set(e.pointerId, p);
+    if (G.ptr.size >= 2 && G.pinch) {
+      const s = pinchState(), k = s.d / G.pinch.d;
+      zoomAt(s.c, k); G.ox += s.c.x - G.pinch.c.x; G.oy += s.c.y - G.pinch.c.y; G.pinch = s; G.moved = 99; drawGraph(); return;
+    }
+    const dx = p.x - G.last.x, dy = p.y - G.last.y; G.moved += Math.abs(dx) + Math.abs(dy); G.last = p;
+    if (G.drag && G.moved > 3) { G.drag.x += dx / G.scale; G.drag.y += dy / G.scale; simulate(2); }
+    else if (!G.drag) { G.ox += dx; G.oy += dy; }
+    drawGraph();
+  };
+  cv.onpointerup = cv.onpointercancel = e => {
+    const wasTap = G.ptr.size === 1 && G.moved < 6;
+    G.ptr.delete(e.pointerId); cv.classList.remove('dragging');
+    if (wasTap) gSelect(hit(pos(e)), false);
+    if (G.ptr.size < 2) G.pinch = null;
+    if (!G.ptr.size) G.drag = null;
+  };
+  cv.onwheel = e => { e.preventDefault(); zoomAt(pos(e), e.deltaY < 0 ? 1.12 : 0.89); drawGraph(); };
+  function pinchState() {
+    const [a, b] = [...G.ptr.values()];
+    return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, c: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
+  }
+}
+function zoomAt(p, k) {
+  const s = Math.max(0.2, Math.min(4, G.scale * k)); k = s / G.scale;
+  G.ox = p.x - (p.x - G.ox) * k; G.oy = p.y - (p.y - G.oy) * k; G.scale = s;
+}
+function gZoom(k) { const cv = $('g-canvas'), r = cv.getBoundingClientRect(); zoomAt({ x: r.width / 2, y: r.height / 2 }, k); drawGraph(); }
+function gFit() {
+  const cv = $('g-canvas'); if (!cv) return;
+  const r = cv.getBoundingClientRect();
+  if (!G.nodes.length) { G.scale = 1; G.ox = r.width / 2; G.oy = r.height / 2; drawGraph(); return; }
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  G.nodes.forEach(n => { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); });
+  const pad = 46, w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0);
+  G.scale = Math.max(0.2, Math.min(2, Math.min((r.width - pad * 2) / w, (r.height - pad * 2) / h)));
+  G.ox = r.width / 2 - (x0 + w / 2) * G.scale; G.oy = r.height / 2 - (y0 + h / 2) * G.scale;
+  drawGraph();
+}
+
+function nodeR(n) { return n.r * Math.max(0.75, Math.min(1.35, Math.sqrt(G.scale / 0.6))); }   // 화면 기준 크기
+function drawGraph() {
+  const cv = $('g-canvas'); if (!cv) return;
+  const ctx = cv.getContext('2d'), dpr = window.devicePixelRatio || 1;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cv.width / dpr, cv.height / dpr);
+  const W = cv.width / dpr, H = cv.height / dpr;
+  const col = { book: cssVar('--n-book'), kw: cssVar('--n-kw'), au: cssVar('--n-au'), cat: cssVar('--n-cat') };
+  const line = cssVar('--line'), ink = cssVar('--ink'), sub = cssVar('--sub'), card = cssVar('--card');
+  const sel = G.sel, near = sel ? (G.nb[sel.id] || new Set()) : null;
+  const lit = n => !sel || n === sel || near.has(n.id);
+  if (!G.nodes.length) {
+    ctx.fillStyle = sub; ctx.font = '14px Pretendard, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('보여줄 연결이 없어요. 위에서 다른 항목을 켜 보세요.', W / 2, H / 2); return;
+  }
+  const sx = n => n.x * G.scale + G.ox, sy = n => n.y * G.scale + G.oy;
+  // 선
+  G.edges.forEach(e => {
+    const on = sel && (e.a === sel || e.b === sel);
+    ctx.globalAlpha = sel ? (on ? 0.85 : 0.1) : 0.6;
+    ctx.strokeStyle = on ? col[sel.type] : line;
+    ctx.lineWidth = on ? 2 : Math.min(2.4, 0.8 + Math.log(e.w + 1) * 0.6);
+    ctx.beginPath(); ctx.moveTo(sx(e.a), sy(e.a)); ctx.lineTo(sx(e.b), sy(e.b)); ctx.stroke();
+  });
+  // 점
+  G.nodes.forEach(n => {
+    const x = sx(n), y = sy(n), r = nodeR(n);
+    if (x < -30 || y < -30 || x > W + 30 || y > H + 30) return;
+    ctx.globalAlpha = lit(n) ? 1 : 0.16;
+    ctx.fillStyle = col[n.type]; ctx.strokeStyle = card; ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (n.type === 'book') roundRect(ctx, x - r * 0.72, y - r, r * 1.44, r * 2, 2);
+    else if (n.type === 'kw') ctx.arc(x, y, r, 0, Math.PI * 2);
+    else if (n.type === 'au') { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); }
+    else { ctx.moveTo(x, y - r); ctx.lineTo(x + r * 0.95, y + r * 0.75); ctx.lineTo(x - r * 0.95, y + r * 0.75); ctx.closePath(); }
+    ctx.fill(); ctx.stroke();
+    if (n === sel) { ctx.lineWidth = 2.5; ctx.strokeStyle = ink; ctx.stroke(); }
+  });
+  // 이름표: 선택 > 키워드·저자·분류(많이 이어진 순) > 책. 겹치면 건너뜀
+  const order = G.nodes.slice().sort((a, b) => pri(b) - pri(a));
+  function pri(n) {
+    if (n === sel) return 1e6;
+    if (sel && near.has(n.id)) return 1e5 + n.w;
+    if (sel) return -1;
+    return (n.type === 'book' ? 0 : 1000) + n.w;
+  }
+  const boxes = [];
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  order.forEach(n => {
+    const p = pri(n);
+    if (p < 0) return;
+    if (n.type === 'book' && p < 1e5 && G.scale < 0.85) return;
+    const t = n.label.length > 12 ? n.label.slice(0, 11) + '…' : n.label;
+    const fsz = n === sel ? 13 : (n.type === 'book' ? 11 : 12);
+    ctx.font = `${n.type === 'book' ? 400 : 650} ${fsz}px Pretendard, -apple-system, sans-serif`;
+    const w = ctx.measureText(t).width, x = sx(n), y = sy(n) + nodeR(n) + 3;
+    const box = [x - w / 2 - 2, y - 1, x + w / 2 + 2, y + fsz + 2];
+    if (box[2] < 0 || box[0] > W || box[3] < 0 || box[1] > H) return;
+    if (boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) return;
+    boxes.push(box);
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 3.5; ctx.strokeStyle = card; ctx.strokeText(t, x, y);
+    ctx.fillStyle = n.type === 'book' ? sub : ink; ctx.fillText(t, x, y);
+  });
+  ctx.globalAlpha = 1;
+}
+function roundRect(ctx, x, y, w, h, r) { ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+function gSelect(n, center) {
+  G.sel = n && G.sel === n && !center ? null : n;
+  if (G.sel && center) {
+    const r = $('g-canvas').getBoundingClientRect();
+    G.ox = r.width / 2 - G.sel.x * G.scale; G.oy = r.height / 2 - G.sel.y * G.scale;
+  }
+  drawGraph(); gInfo(G.sel);
+}
+
+function gInfo(n) {
+  const box = $('g-info'); if (!box) return;
+  if (!n) { box.innerHTML = `<div class="drill">점을 누르면 이어진 책과 문장을 보여줘요. 두 손가락이나 휠로 확대, 끌어서 이동할 수 있어요.</div>`; return; }
+  const bookBtn = b => `<button class="mini" onclick="go('book','${b.ID}')"><b>${esc(b['제목'])}</b><span>${esc(b['저자'])}</span></button>`;
+  if (n.type === 'kw') {
+    const list = S.snips.filter(s => splitKw(s['키워드']).includes(n.ref));
+    const nb = new Set(list.map(s => s['책ID']));
+    box.innerHTML = `<div class="info-card"><h3>#${esc(n.ref)}</h3><div class="sub">문장 ${list.length}개 · 책 ${nb.size}권</div>
+      ${list.slice(0, 40).map(s => `<button class="mini" onclick="go('book','${s['책ID']}')">
+        <b>${esc(s['제목'] || (book(s['책ID']) || {})['제목'] || '')}</b>
+        <span>${esc(String(s['내용']).slice(0, 110))}${String(s['내용']).length > 110 ? '…' : ''}</span>
+        <em>${esc((book(s['책ID']) || {})['제목'] || '')}${s['쪽수'] !== '' ? ' · p.' + esc(s['쪽수']) : ''}</em></button>`).join('')}</div>`;
+  } else if (n.type === 'book') {
+    const b = book(n.ref);
+    const kws = keywordStats().filter(k => k.books.has(b.ID));
+    box.innerHTML = `<div class="info-card"><h3>${esc(b['제목'])}</h3><div class="sub">${esc(b['저자'])}${b['개인분류'] ? ' · ' + esc(b['개인분류']) : ''}</div>
+      ${kws.length ? `<div class="kw-chips" style="margin:0 0 10px">${kws.map(k => `<span class="chip">#${esc(k.kw)}</span>`).join('')}</div>` : ''}
+      <button class="btn primary" onclick="go('book','${b.ID}')">책 열기</button></div>`;
+  } else {
+    const books = [...(G.nb[n.id] || [])].map(id => G.byId[id]).filter(x => x && x.type === 'book').map(x => book(x.ref));
+    box.innerHTML = `<div class="info-card"><h3>${esc(n.label)}</h3><div class="sub">${n.type === 'au' ? '저자' : '개인분류'} · 책 ${books.length}권</div>
+      ${books.map(bookBtn).join('')}</div>`;
+  }
+}
+window.addEventListener('resize', () => { if (S.view === 'graph' && G.resize) G.resize(); });
+
+/* ---------- 통계 ---------- */
+let statYear = null;
+function renderStatsView() {
+  const years = [...new Set(S.books.map(b => String(b['완독일']).slice(0, 4)).filter(y => /^\d{4}$/.test(y)))].sort().reverse();
+  if (statYear === null) statYear = years.includes(S.today.slice(0, 4)) ? S.today.slice(0, 4) : (years[0] || '전체');
+  const all = statYear === '전체';
+  const done = S.books.filter(b => b['상태'] === '완독' && b['완독일'] && (all || String(b['완독일']).startsWith(statYear)));
+  const pages = done.reduce((t, b) => t + (Number(b['분량']) || 0), 0);
+  const daysList = done.map(b => Number(b['완독일수'])).filter(n => n > 0);
+  const avgDays = daysList.length ? (daysList.reduce((a, b) => a + b, 0) / daysList.length) : 0;
+  const ids = new Set(done.map(b => b.ID));
+  const snipN = S.snips.filter(s => ids.has(s['책ID'])).length;
+
+  // 월별 (또는 연도별)
+  const buckets = all
+    ? years.slice().reverse().map(y => ({ label: y.slice(2) + '년', key: y, books: done.filter(b => String(b['완독일']).startsWith(y)) }))
+    : Array.from({ length: 12 }, (_, i) => { const m = String(i + 1).padStart(2, '0'); return { label: (i + 1) + '월', key: statYear + '-' + m, books: done.filter(b => String(b['완독일']).slice(0, 7) === statYear + '-' + m) }; });
+  const maxB = Math.max(1, ...buckets.map(x => x.books.length));
+
+  const groupBy = (key, split) => {
+    const m = {};
+    done.forEach(b => (split ? split(b[key]) : [String(b[key] || '').trim() || '미분류']).forEach(v => (m[v] = m[v] || []).push(b)));
+    return Object.entries(m).map(([k, bs]) => ({ k, bs })).sort((a, b) => b.bs.length - a.bs.length || a.k.localeCompare(b.k));
+  };
+  const hbars = (id, rows, limit) => {
+    const max = Math.max(1, ...rows.map(r => r.bs.length));
+    return rows.slice(0, limit).map((r, i) => `<div class="hbar" data-g="${id}" data-i="${i}" title="${esc(r.k)} · ${r.bs.length}권">
+      <span class="name">${esc(r.k)}</span><span class="track"><span class="fill" style="display:block;width:${r.bs.length / max * 100}%"></span></span><span class="n">${r.bs.length}</span></div>`).join('');
+  };
+  const G2 = { cat: groupBy('대분류'), my: groupBy('개인분류'), route: groupBy('경로'), au: groupBy('저자', splitAuthors).filter(r => r.bs.length >= 2) };
+  statGroups = { ...G2, month: buckets.map(x => ({ k: x.label, bs: x.books })) };
+
+  const by = (arr, f, dir) => arr.filter(b => Number(f(b)) > 0).sort((a, b) => dir * (Number(f(b)) - Number(f(a))))[0];
+  const fast = by(done, b => b['완독일수'], -1), slow = by(done, b => b['완독일수'], 1), thick = by(done, b => b['분량'], 1);
+  const snipCount = {}; S.snips.forEach(s => { if (ids.has(s['책ID'])) snipCount[s['책ID']] = (snipCount[s['책ID']] || 0) + 1; });
+  const mostSnip = Object.entries(snipCount).sort((a, b) => b[1] - a[1])[0];
+
+  $('v-stats').innerHTML = `
+    <div class="view-head ai-head"><div><h1>독서 통계</h1><p>완독일 기준이에요.</p></div><button class="btn" onclick="openReport(statYear)">📖 독서 리포트</button></div>
+    <div class="chips" id="st-years">${[...years, '전체'].map(y => `<button class="chip ${statYear === y ? 'on' : ''}" data-y="${y}">${y === '전체' ? '전체' : y + '년'}</button>`).join('')}</div>
+    <div class="tiles">
+      <div class="tile"><b>${done.length}</b><span>완독한 책 (권)</span></div>
+      <div class="tile"><b>${pages.toLocaleString()}</b><span>읽은 쪽수</span></div>
+      <div class="tile"><b>${avgDays ? avgDays.toFixed(1) : '–'}</b><span>한 권 평균 (일)</span></div>
+      <div class="tile"><b>${snipN.toLocaleString()}</b><span>필사 덩어리</span></div>
+    </div>
+    ${(() => { const g = Number(S.settings.goal) || 0, y = S.today.slice(0, 4); if (all || statYear !== y) return '';
+      return `<div class="panel" onclick="openSettings()" style="cursor:pointer"><h3>${y}년 목표<small>${g ? '' : '눌러서 정하기'}</small></h3>${g ? `<div class="gl small" style="display:flex;justify-content:space-between;margin-bottom:6px"><span>${done.length} / ${g}권</span><span>${Math.min(100, Math.round(done.length / g * 100))}% · ${done.length >= g ? '달성! 🎉' : '남은 ' + (g - done.length) + '권'}</span></div><div class="bar"><i style="width:${Math.min(100, done.length / g * 100)}%"></i></div>` : ''}</div>`; })()}
+    <div class="panel"><h3>${all ? '연도별 완독' : '월별 완독'}<small>막대를 누르면 책 목록</small></h3>
+      <div class="vbars">${buckets.map((x, i) => `<div class="vbar" data-g="month" data-i="${i}" title="${x.label} · ${x.books.length}권">
+        <span class="val">${x.books.length || ''}</span><span class="fill" style="height:${x.books.length / maxB * 100}%"></span></div>`).join('')}</div>
+      <div class="vlabels">${buckets.map(x => `<span>${x.label}</span>`).join('')}</div>
+      <div class="drill" id="drill-month"></div>
+    </div>
+    <div class="two">
+      <div class="panel"><h3>대분류</h3>${hbars('cat', G2.cat, 10)}<div class="drill" id="drill-cat"></div></div>
+      <div class="panel"><h3>개인분류<small>상위 10</small></h3>${hbars('my', G2.my, 10)}<div class="drill" id="drill-my"></div></div>
+      <div class="panel"><h3>어디서 읽었나</h3>${hbars('route', G2.route, 8)}<div class="drill" id="drill-route"></div></div>
+      <div class="panel"><h3>여러 권 읽은 저자</h3>${G2.au.length ? hbars('au', G2.au, 10) : '<div class="drill">아직 없어요</div>'}<div class="drill" id="drill-au"></div></div>
+    </div>
+    ${(() => { const rated = done.filter(b => Number(b['별점'])).sort((a, b) => b['별점'] - a['별점'] || String(b['완독일']).localeCompare(String(a['완독일']))).slice(0, 5);
+      return rated.length ? `<div class="panel"><h3>별점 높은 책</h3><div class="facts">${rated.map(b => `<div class="fact" onclick="go('book','${b.ID}')"><span class="stars">${starText(b['별점'])}</span><b>${esc(b['제목'])}</b></div>`).join('')}</div></div>` : ''; })()}
+    <div class="panel"><h3>기록</h3><div class="facts">
+      ${fast ? `<div class="fact" onclick="go('book','${fast.ID}')"><span>가장 빨리 읽은 책</span><b>${esc(fast['제목'])} · ${fast['완독일수']}일</b></div>` : ''}
+      ${slow ? `<div class="fact" onclick="go('book','${slow.ID}')"><span>가장 오래 읽은 책</span><b>${esc(slow['제목'])} · ${slow['완독일수']}일</b></div>` : ''}
+      ${thick ? `<div class="fact" onclick="go('book','${thick.ID}')"><span>가장 두꺼운 책</span><b>${esc(thick['제목'])} · ${thick['분량']}쪽</b></div>` : ''}
+      ${mostSnip ? `<div class="fact" onclick="go('book','${mostSnip[0]}')"><span>필사를 가장 많이 한 책</span><b>${esc((book(mostSnip[0]) || {})['제목'] || '')} · ${mostSnip[1]}개</b></div>` : ''}
+    </div></div>`;
+  $('st-years').onclick = e => { const c = e.target.closest('[data-y]'); if (!c) return; statYear = c.dataset.y; renderStatsView(); };
+  $('v-stats').querySelectorAll('[data-g]').forEach(el => el.onclick = () => statDrill(el));
+}
+let statGroups = {};
+function statDrill(el) {
+  const g = el.dataset.g, row = statGroups[g][Number(el.dataset.i)];
+  const box = $('drill-' + g); if (!box) return;
+  const was = el.classList.contains('on');
+  $('v-stats').querySelectorAll(`[data-g="${g}"]`).forEach(x => x.classList.remove('on'));
+  if (was) { box.innerHTML = ''; return; }
+  el.classList.add('on');
+  box.innerHTML = `<b>${esc(row.k)}</b> · ${row.bs.length}권<br>` + (row.bs.length
+    ? row.bs.map(b => `<a onclick="go('book','${b.ID}')">${esc(b['제목'])}</a>`).join(' · ') : '없음');
+}
+
+/* ===================================================================
+   7단계: AI 독서 비서
+   =================================================================== */
+S.chat = [];
+const AI_SUGGEST = [
+  '올해 내 독서를 한눈에 요약해줘',
+  '내 필사에서 ‘자유’에 대한 문장을 찾아줘',
+  '에리히 프롬 책들에서 공통으로 다루는 주제를 정리해줘',
+  '내 기록을 보고 다음에 읽을 책을 추천해줘'
+];
+function renderAIView() {
+  const emptyKw = S.snips.filter(s => !String(s['키워드'] || '').trim()).length;
+  $('v-ai').innerHTML = `
+    <div class="view-head ai-head"><div><h1>AI 비서</h1><p>내 서재와 필사 노트를 찾아보고 답해요. 근거가 된 필사는 번호로 표시해요.</p></div>
+      ${S.chat.length ? `<button class="btn" onclick="S.chat=[];renderAIView()">새 대화</button>` : ''}</div>
+    ${emptyKw ? `<div class="tool"><span>키워드가 빈 필사 <b>${emptyKw.toLocaleString()}</b>개</span>
+      <button class="btn primary" id="kw-all" onclick="runAutoKeywords()">AI로 키워드 달기</button></div>` : ''}
+    <div class="chat" id="chat">${S.chat.length ? S.chat.map(chatHtml).join('') :
+      `<div class="suggest-q">${AI_SUGGEST.map(q => `<button onclick="askAI(this.textContent)">${esc(q)}</button>`).join('')}</div>`}</div>`;
+  scrollChat();
+}
+function chatHtml(m) {
+  if (m.role === 'user') return `<div class="msg user">${esc(m.text)}</div>`;
+  if (m.pending) return `<div class="msg bot"><span class="thinking">내 기록을 찾아보는 중</span></div>`;
+  if (m.error) return `<div class="msg bot err">${esc(m.error)}</div>`;
+  const order = (m.cites || []).map(c => c.id);
+  const body = mdLite(m.text).replace(/\[(S\d{6})\]/g, (all, id) => {
+    const i = order.indexOf(id);
+    return i < 0 ? '' : `<span class="cite" onclick="openCite('${id}')">${i + 1}</span>`;
+  });
+  return `<div class="msg bot">${body}
+    ${order.length ? `<div class="sources">${m.cites.map((c, i) => `<button onclick="openCite('${c.id}')"><b>${i + 1}</b>${esc(c.book)}${c.page !== '' && c.page != null ? ' · p.' + esc(c.page) : ''}${c.title ? ' · ' + esc(c.title) : ''}</button>`).join('')}</div>` : ''}</div>`;
+}
+function mdLite(t) {
+  const lines = esc(String(t || '')).split('\n');
+  let html = '', list = null;
+  const close = () => { if (list) { html += `</${list}>`; list = null; } };
+  lines.forEach(l => {
+    const ul = l.match(/^\s*[-*•]\s+(.*)$/), ol = l.match(/^\s*\d+[.)]\s+(.*)$/);
+    if (ul || ol) {
+      const tag = ul ? 'ul' : 'ol';
+      if (list !== tag) { close(); html += `<${tag}>`; list = tag; }
+      html += `<li>${(ul || ol)[1]}</li>`;
+    } else if (!l.trim()) close();
+    else { close(); html += `<p>${l.replace(/^#+\s*/, '')}</p>`; }
+  });
+  close();
+  return html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+}
+function scrollChat() { if (S.view === 'ai' && S.chat.length) setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 30); }
+function openCite(id) { const s = S.snips.find(x => x.ID === id); if (s) go('book', s['책ID']); }
+
+async function askAI(q) {
+  q = String(q || $('ai-q').value).trim();
+  if (!q || S.chat.some(m => m.pending)) return;
+  $('ai-q').value = ''; autoGrow($('ai-q'));
+  const history = S.chat.filter(m => !m.pending && !m.error).map(m => ({ role: m.role, text: m.text }));
+  S.chat.push({ role: 'user', text: q });
+  const bot = { role: 'assistant', pending: true };
+  S.chat.push(bot);
+  renderAIView();
+  try {
+    const r = await rpc('askAssistant', q, history);
+    Object.assign(bot, { pending: false, text: r.answer, cites: r.cites });
+  } catch (e) {
+    Object.assign(bot, { pending: false, error: '답을 받지 못했어요: ' + (e.message || e) });
+  }
+  if (S.view === 'ai') renderAIView();
+}
+function autoGrow(el) { el.style.height = 'auto'; el.style.height = Math.min(140, el.scrollHeight) + 'px'; }
+
+async function runAutoKeywords() {
+  const b = $('kw-all'); if (b) { b.disabled = true; b.textContent = '키워드 다는 중… (몇 분 걸려요)'; }
+  try {
+    const r = await call('autoKeywords');
+    await refresh(true);
+    toast(r.message);
+    if (S.view === 'ai') renderAIView();
+  } catch (e) { if (b) { b.disabled = false; b.textContent = 'AI로 키워드 달기'; } }
+}
+
+// 문장 입력 창: AI 키워드 추천
+async function aiKeywords(btn) {
+  const text = $('f-txt').value.trim();
+  if (!text) { toast('내용을 먼저 입력해 주세요'); return; }
+  btn.disabled = true; btn.textContent = '추천 중…';
+  try {
+    const ks = await call('suggestKeywords', { '책ID': S.bookId, '제목': $('f-ttl').value, '내용': text });
+    const cur = $('f-kw').value.split(',').map(x => x.trim()).filter(Boolean);
+    ks.forEach(k => { if (!cur.includes(k)) cur.push(k); });
+    $('f-kw').value = cur.join(', ');
+    if (!ks.length) toast('추천할 키워드를 찾지 못했어요');
+  } finally { btn.disabled = false; btn.textContent = 'AI 추천'; }
+}
+
+/* ===================================================================
+   추가 기능: 문장 검색 · 오늘의 문장 · 반납일 · 진행률 · 목표 · 별점 ·
+             읽고 싶은 책 · 키워드 정리 · 독서 리포트 · 설정
+   =================================================================== */
+S.settings = { goal: '', libraryUrl: '', libraryName: '' };
+S.todayShift = 0; S.hitLimit = 30; S.focusSnip = null;
+
+function dayDiff(dateStr) {
+  if (!dateStr) return null;
+  const a = new Date(S.today + 'T00:00:00'), b = new Date(String(dateStr).slice(0, 10) + 'T00:00:00');
+  return Math.round((b - a) / 86400000);
+}
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate() + Math.round(n));
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function starText(n) { n = Number(n) || 0; return n ? '★'.repeat(n) + '☆'.repeat(5 - n) : ''; }
+function dueBadge(b) {
+  const d = dayDiff(b['반납일']);
+  if (d === null) return '';
+  if (d < 0) return `<span class="badge due-late">반납 ${-d}일 지남</span>`;
+  if (d === 0) return `<span class="badge due-late">오늘 반납</span>`;
+  return `<span class="badge ${d <= 3 ? 'due-soon' : ''}">반납 D-${d}</span>`;
+}
+function progressOf(b) {
+  const total = Number(b['분량']) || 0, cur = Number(b['현재쪽수']) || 0;
+  if (!total || !cur) return null;
+  const pct = Math.min(100, Math.round(cur / total * 100));
+  let eta = '';
+  if (b['시작일'] && cur < total) {
+    const days = Math.max(1, (dayDiff(b['시작일']) * -1) + 1);
+    const pace = cur / days;
+    if (pace > 0) eta = addDays(S.today, (total - cur) / pace);
+  }
+  return { total, cur, pct, eta };
+}
+function patchBook(id, patch) { const b = book(id); if (b) Object.assign(b, patch); queue({ fn: 'updateBookFields', id, patch: Object.assign({}, patch) }); }
+function updateBook(saved) { const i = S.books.findIndex(x => x.ID === saved.ID); if (i >= 0) S.books[i] = saved; else S.books.push(saved); }
+
+/* ---------- 서재: 목표 · 오늘의 문장 · 반납 알림 ---------- */
+function libraryTopHtml() {
+  let html = '';
+  // 반납 임박
+  const due = S.books.filter(b => { const d = dayDiff(b['반납일']); return d !== null && d <= 3; })
+    .sort((a, b) => dayDiff(a['반납일']) - dayDiff(b['반납일']));
+  if (due.length) html += `<div class="due">📚 반납 챙기세요: ${due.map(b => {
+    const d = dayDiff(b['반납일']);
+    return `<a onclick="go('book','${b.ID}')">${esc(b['제목'])}</a> (${d < 0 ? -d + '일 지남' : d === 0 ? '오늘' : 'D-' + d})`;
+  }).join(', ')}</div>`;
+  // 오늘의 문장
+  const pool = S.snips.filter(s => s['유형'] !== '메모' && String(s['내용']).length >= 30 && String(s['내용']).length <= 600);
+  if (pool.length && !S.q.trim()) {
+    let h = 0; for (const c of S.today) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    const s = pool[(h + S.todayShift * 7919) % pool.length];
+    const b = book(s['책ID']) || {};
+    html += `<div class="today">
+      <div class="lb"><span>오늘의 문장</span><button onclick="S.todayShift++;renderList()">다른 문장 ↻</button></div>
+      <div class="tx" onclick="openSnipInBook('${s.ID}')">${esc(s['내용'])}</div>
+      <div class="mt">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}${s['제목'] ? ' · ' + esc(s['제목']) : ''}</div>
+    </div>`;
+  }
+  return html;
+}
+function goalHtml() {
+  const y = S.today.slice(0, 4);
+  const done = S.books.filter(b => b['상태'] === '완독' && String(b['완독일']).startsWith(y)).length;
+  const g = Number(S.settings.goal) || 0;
+  if (!g) return `<div class="goal small" onclick="openSettings()">＋ ${y}년 독서 목표 정하기</div>`;
+  return `<div class="goal" onclick="openSettings()"><div class="gl"><span>${y}년 목표</span><span><b>${done}</b> / ${g}권 · ${Math.min(100, Math.round(done / g * 100))}%</span></div>
+    <div class="bar"><i style="width:${Math.min(100, done / g * 100)}%"></i></div></div>`;
+}
+
+/* ---------- 문장 검색 ---------- */
+function searchSnips(q) {
+  q = q.trim();
+  if (!q) return [];
+  if (q.startsWith('#')) {
+    const k = q.slice(1).trim();
+    return k ? S.snips.filter(s => splitKw(s['키워드']).some(x => x === k || x.includes(k))) : [];
+  }
+  if (q.length < 2) return [];
+  const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  return S.snips.filter(s => {
+    const hay = (s['제목'] + ' ' + s['내용'] + ' ' + s['키워드'] + ' ' + ((book(s['책ID']) || {})['제목'] || '')).toLowerCase();
+    return terms.every(t => hay.includes(t));
+  });
+}
+function highlight(text, q) {
+  const terms = q.replace(/^#/, '').toLowerCase().split(/\s+/).filter(t => t.length >= 1);
+  const src = String(text || '');
+  const low = src.toLowerCase();
+  let pos = -1;
+  terms.forEach(t => { const i = low.indexOf(t); if (i >= 0 && (pos < 0 || i < pos)) pos = i; });
+  let start = Math.max(0, pos - 40), piece = src.slice(start, start + 160);
+  let html = esc(piece);
+  terms.forEach(t => { if (!t) return; const re = new RegExp(esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); html = html.replace(re, m => `<mark>${m}</mark>`); });
+  return (start > 0 ? '…' : '') + html + (start + 160 < src.length ? '…' : '');
+}
+function hitsHtml(q) {
+  const hits = searchSnips(q);
+  if (!hits.length) return q.trim().length >= 2 || q.startsWith('#') ? `<div class="res-head">필사에서 찾은 문장 0개</div>` : '';
+  return `<div class="res-head">필사에서 찾은 문장 ${hits.length}개</div>` +
+    hits.slice(0, S.hitLimit).map(s => {
+      const b = book(s['책ID']) || {};
+      return `<div class="hit" onclick="openSnipInBook('${s.ID}')">
+        ${s['제목'] ? `<div class="ht">${highlight(s['제목'], q)}</div>` : ''}
+        <div class="hx">${highlight(s['내용'], q)}</div>
+        <div class="hm">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}${s['키워드'] ? ' · #' + esc(splitKw(s['키워드']).join(' #')) : ''}</div>
+      </div>`;
+    }).join('') +
+    (hits.length > S.hitLimit ? `<button class="btn" style="width:100%" onclick="S.hitLimit+=30;renderList()">더 보기 (${hits.length - S.hitLimit}개 남음)</button>` : '');
+}
+function openSnipInBook(id) {
+  const s = S.snips.find(x => x.ID === id); if (!s) return;
+  S.focusSnip = id; go('book', s['책ID']);
+  setTimeout(() => {
+    const el = document.getElementById('s-' + id);
+    if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2200); }
+    S.focusSnip = null;
+  }, 80);
+}
+
+/* ---------- 책 상세: 진행률 · 반납 · 별점 · 읽고 싶은 책 ---------- */
+function bookExtrasHtml(b) {
+  let h = '';
+  if (b['상태'] === '읽을예정') {
+    h += `<div class="panel2"><h4>읽고 싶은 책</h4><div class="inline">
+      <button class="btn primary" onclick="startReading('${b.ID}')">오늘부터 읽기 시작</button>
+      <button class="btn" onclick="findInLibrary('${b.ID}')">${esc(S.settings.libraryName || '도서관')}에서 찾기 ↗</button></div></div>`;
+  }
+  if (b['상태'] === '읽는중') {
+    const p = progressOf(b);
+    h += `<div class="panel2"><h4>읽는 중</h4>
+      ${p ? `<div class="gl small" style="display:flex;justify-content:space-between;margin-bottom:5px"><span>p.${p.cur} / ${p.total}</span><span><b>${p.pct}%</b>${p.eta ? ' · 이 속도면 ' + p.eta.slice(5).replace('-', '.') + ' 완독' : ''}</span></div>
+        <div class="bar"><i style="width:${p.pct}%"></i></div>` : `<div class="small">지금 읽고 있는 쪽을 넣으면 진행률과 예상 완독일을 보여줘요.</div>`}
+      <div class="inline" style="margin-top:10px"><input class="field" id="cur-page" inputmode="numeric" placeholder="지금 몇 쪽?" value="${esc(b['현재쪽수'] || '')}">
+        <button class="btn" onclick="savePage('${b.ID}')">저장</button></div></div>`;
+  }
+  if (b['반납일'] || b['상태'] === '읽는중') {
+    const d = dayDiff(b['반납일']);
+    h += `<div class="panel2"><h4>도서관 반납</h4><div class="inline">
+      <input class="field" type="date" id="due-date" value="${esc(b['반납일'] || '')}" onchange="saveDue('${b.ID}', this.value)">
+      ${b['반납일'] ? `<span class="small">${d < 0 ? (-d) + '일 지남' : d === 0 ? '오늘 반납' : 'D-' + d}</span>
+        <button class="btn" onclick="saveDue('${b.ID}','')">반납했어요</button>` : `<span class="small">빌린 책이면 반납일을 넣어 두세요. 전날 메일로 알려드려요.</span>`}
+    </div></div>`;
+  }
+  if (b['상태'] === '완독') {
+    h += `<div class="panel2" onclick="openRating('${b.ID}')" style="cursor:pointer"><h4>별점 · 한줄평</h4>
+      ${b['별점'] || b['한줄평'] ? `<div><span class="stars">${starText(b['별점'])}</span></div>${b['한줄평'] ? `<div style="margin-top:4px">${esc(b['한줄평'])}</div>` : ''}`
+        : `<div class="small">눌러서 별점과 한 줄 감상을 남겨 보세요.</div>`}</div>`;
+  }
+  return h;
+}
+async function savePage(id) {
+  const v = $('cur-page').value.trim();
+  if (v && isNaN(Number(v))) { toast('숫자로 입력해 주세요'); return; }
+  patchBook(id, { '현재쪽수': v === '' ? '' : Number(v) });
+  renderBook(); toast('저장했어요');
+}
+async function saveDue(id, v) {
+  patchBook(id, { '반납일': v });
+  renderBook(); toast(v ? '반납일을 저장했어요' : '반납 완료!');
+}
+async function startReading(id) {
+  patchBook(id, { '상태': '읽는중', '시작일': S.today });
+  renderBook(); toast('읽기 시작! 오늘부터 기록해요');
+}
+function findInLibrary(id) {
+  const b = book(id); const q = String(b['제목']).replace(/\(.*?\)/g, '').trim();
+  const tpl = S.settings.libraryUrl;
+  const url = tpl && tpl.includes('{q}') ? tpl.replace('{q}', encodeURIComponent(q))
+    : 'https://search.naver.com/search.naver?query=' + encodeURIComponent(q + ' 도서관 소장');
+  window.open(url, '_blank');
+}
+let ratingPick = 0;
+function openRating(id) {
+  const b = book(id); ratingPick = Number(b['별점']) || 0;
+  modal(`<h3>별점 · 한줄평 <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span></h3>
+    <div class="star-pick" id="star-pick">${[1,2,3,4,5].map(n => `<span data-n="${n}" class="${n <= ratingPick ? 'on' : ''}">★</span>`).join('')}</div>
+    <label>한줄평</label><input class="field" id="one-line" value="${esc(b['한줄평'] || '')}" placeholder="이 책을 한 줄로 남긴다면?">
+    <div class="actions"><button class="btn" onclick="closeModal()">나중에</button>
+      <button class="btn primary grow" onclick="saveRating('${id}')">저장</button></div>`);
+  $('star-pick').onclick = e => { const t = e.target.closest('[data-n]'); if (!t) return; ratingPick = Number(t.dataset.n);
+    [...$('star-pick').children].forEach(x => x.classList.toggle('on', Number(x.dataset.n) <= ratingPick)); };
+}
+async function saveRating(id) {
+  patchBook(id, { '별점': ratingPick || '', '한줄평': $('one-line').value.trim() });
+  closeModal(); renderBook(); toast('저장했어요');
+}
+
+/* ---------- 설정 ---------- */
+function openSettings() {
+  const st = S.settings;
+  modal(`<h3>설정</h3>
+    <label>${S.today.slice(0, 4)}년 독서 목표 (권)</label><input class="field" id="set-goal" inputmode="numeric" value="${esc(st.goal)}" placeholder="예: 60">
+    <label>자주 가는 도서관 이름</label><input class="field" id="set-libname" value="${esc(st.libraryName)}" placeholder="예: 강남구 통합도서관">
+    <label>도서관 검색 주소 <span style="font-weight:400;color:var(--faint)">검색어 자리에 {q}</span></label>
+    <input class="field" id="set-liburl" value="${esc(st.libraryUrl)}" placeholder="https://…?searchKeyword={q}">
+    <div class="small" style="margin-top:6px;line-height:1.6">도서관 누리집에서 아무 책이나 검색한 뒤, 주소창의 주소를 복사해 붙여넣고 검색어 부분만 {q}로 바꾸세요. 비워 두면 네이버 검색으로 찾아요.</div>
+    <div class="actions"><button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn primary grow" onclick="saveSettingsUI()">저장</button></div>
+    <div class="panel2" style="margin-top:18px"><h4>서버 연결</h4>
+      <div class="small" style="line-height:1.6">${API.url ? '연결됨 · 마지막으로 받은 데이터는 이 기기에 저장돼 있어 바로 열려요.' : '아직 연결 안 됨'}${S.outbox.length ? `<br>시트에 올라가길 기다리는 기록 ${S.outbox.length}개` : ''}</div>
+      <div class="actions" style="margin-top:8px"><button class="btn" onclick="openConnect()">연결 바꾸기</button>
+        <button class="btn" onclick="resetLocal()">새로 불러오기</button></div></div>`);
+}
+async function saveSettingsUI() {
+  const r = await call('saveSettings', { goal: $('set-goal').value.trim(), libraryName: $('set-libname').value.trim(), libraryUrl: $('set-liburl').value.trim() });
+  S.settings = r; closeModal(); toast('저장했어요');
+  if (S.view === 'library') renderLibrary(); else if (S.view === 'stats') renderStatsView(); else if (S.view === 'book') renderBook();
+}
+
+/* ---------- 키워드 정리 ---------- */
+function openKwManager(filter) {
+  const list = keywordStats().filter(k => !filter || k.kw.includes(filter));
+  modal(`<h3>키워드 정리 <span style="font-weight:400;color:var(--faint);font-size:13px">${keywordStats().length}개</span></h3>
+    <input class="field" id="kw-filter" placeholder="키워드 찾기" value="${esc(filter || '')}" oninput="openKwManager(this.value);setTimeout(()=>{const e=$('kw-filter');e.focus();e.setSelectionRange(e.value.length,e.value.length)},0)">
+    <div class="kw-list">${list.map(k => `<div class="kw-row" data-k="${esc(k.kw)}"><b>#${esc(k.kw)}</b><span>문장 ${k.n} · 책 ${k.books.size}</span></div>`).join('') || '<div class="small" style="padding:10px">없어요</div>'}</div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+  document.querySelectorAll('.kw-row').forEach(r => r.onclick = () => openKwEdit(r.dataset.k));
+}
+function openKwEdit(k) {
+  const others = keywordStats().map(x => x.kw).filter(x => x !== k);
+  modal(`<h3>#${esc(k)}</h3>
+    <label>바꿀 이름 · 합칠 키워드 <span style="font-weight:400;color:var(--faint)">기존 키워드를 고르면 합쳐져요</span></label>
+    <input class="field" id="kw-to" list="kw-all" placeholder="예: 고독">${datalist('kw-all', others)}
+    <div class="actions">
+      <button class="btn danger" onclick="applyKw('${esc(k)}','')">키워드 지우기</button>
+      <button class="btn" onclick="openKwManager()">뒤로</button>
+      <button class="btn primary grow" onclick="applyKw('${esc(k)}', $('kw-to').value)">바꾸기</button></div>`);
+  setTimeout(() => $('kw-to').focus(), 50);
+}
+async function applyKw(from, to) {
+  to = String(to || '').replace(/^#/, '').trim();
+  if (!to && !confirm(`#${from} 키워드를 모든 문장에서 지울까요?`)) return;
+  const n = await call('renameKeyword', from, to);
+  S.snips.forEach(s => {
+    const ks = splitKw(s['키워드']); if (!ks.includes(from)) return;
+    const next = []; ks.forEach(x => { const v = x === from ? to : x; if (v && !next.includes(v)) next.push(v); });
+    s['키워드'] = next.join(', ');
+  });
+  toast(to ? `#${from} → #${to} (${n}개 문장)` : `#${from} 삭제 (${n}개 문장)`);
+  G.byId = {}; openKwManager();
+  if (S.view === 'graph') renderGraphView();
+}
+
+/* ---------- 독서 리포트 ---------- */
+function openReport(year) {
+  year = year && year !== '전체' ? year : S.today.slice(0, 4);
+  const done = S.books.filter(b => b['상태'] === '완독' && String(b['완독일']).startsWith(year));
+  if (!done.length) { toast(year + '년에 완독한 책이 없어요'); return; }
+  const ids = new Set(done.map(b => b.ID));
+  const sn = S.snips.filter(s => ids.has(s['책ID']));
+  const pages = done.reduce((t, b) => t + (Number(b['분량']) || 0), 0);
+  const cnt = (arr, f) => { const m = {}; arr.forEach(x => [].concat(f(x)).forEach(k => { if (k) m[k] = (m[k] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  const months = cnt(done, b => String(b['완독일']).slice(5, 7));
+  const kws = cnt(sn, s => splitKw(s['키워드'])).slice(0, 6);
+  const cats = cnt(done, b => b['대분류']).slice(0, 3);
+  const best = done.filter(b => Number(b['별점'])).sort((a, b) => b['별점'] - a['별점'])[0];
+  const fast = done.filter(b => Number(b['완독일수'])).sort((a, b) => a['완독일수'] - b['완독일수'])[0];
+  const quotePool = sn.filter(s => s['유형'] === '인용' && String(s['내용']).length > 40 && String(s['내용']).length < 400 && (!best || s['책ID'] === best.ID));
+  const q = (quotePool.length ? quotePool : sn.filter(s => String(s['내용']).length > 40 && String(s['내용']).length < 400))[0];
+  const qb = q ? book(q['책ID']) : null;
+  modal(`<div class="report">
+    <h3 style="font-family:'Noto Serif KR',serif;font-size:20px;margin:0">${year}년, 나의 독서</h3>
+    <div class="big"><div><b>${done.length}</b><span>권 완독</span></div><div><b>${pages.toLocaleString()}</b><span>쪽</span></div><div><b>${sn.length}</b><span>필사 덩어리</span></div></div>
+    ${months.length ? `<div class="card"><h4>가장 많이 읽은 달</h4>${Number(months[0][0])}월 · ${months[0][1]}권</div>` : ''}
+    ${kws.length ? `<div class="card"><h4>가장 많이 붙든 주제</h4>${kws.map(([k, n]) => `#${esc(k)} <span class="small">${n}</span>`).join(' &nbsp;')}</div>` : ''}
+    ${cats.length ? `<div class="card"><h4>많이 읽은 분야</h4>${cats.map(([k, n]) => `${esc(k)} ${n}권`).join(' · ')}</div>` : ''}
+    ${best ? `<div class="card"><h4>가장 좋았던 책</h4>${esc(best['제목'])} <span class="stars">${starText(best['별점'])}</span>${best['한줄평'] ? `<div class="small" style="margin-top:4px">“${esc(best['한줄평'])}”</div>` : ''}</div>` : ''}
+    ${fast ? `<div class="card"><h4>단숨에 읽은 책</h4>${esc(fast['제목'])} · ${fast['완독일수']}일</div>` : ''}
+    ${q ? `<div class="card"><h4>올해의 문장</h4><div class="quote">${esc(q['내용'])}</div><div class="small" style="margin-top:6px">${esc(qb ? qb['제목'] : '')}${q['쪽수'] !== '' && q['쪽수'] != null ? ' · p.' + esc(q['쪽수']) : ''}</div></div>` : ''}
+    <div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>
+  </div>`);
+}
+
+/* ===== 이벤트 · 시작 ===== */
+$('nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) go(b.dataset.v); };
+$('q').addEventListener('input', e => { S.q = e.target.value; S.hitLimit = 30; renderList(); });
+$('filters').addEventListener('click', e => { const c = e.target.closest('[data-f]'); if (!c) return; S.filter = c.dataset.f; renderFilters(); renderList(); });
+$('list').addEventListener('click', e => { const c = e.target.closest('.book'); if (c) go('book', c.dataset.id); });
+$('fab').onclick = () => openBookForm(null);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+boot();
+</script>
+</body>
+</html>
