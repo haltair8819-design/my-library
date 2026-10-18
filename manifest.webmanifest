@@ -59,9 +59,9 @@
       ]
     },
     {
-      "name": "할 일",
-      "short_name": "할 일",
-      "url": "./?quick=todo",
+      "name": "음성 메모",
+      "short_name": "음성",
+      "url": "./?quick=voice",
       "icons": [
         {
           "src": "icon-192.png",
@@ -70,9 +70,20 @@
       ]
     },
     {
-      "name": "필사 쓰기",
-      "short_name": "필사",
-      "url": "./?quick=snip",
+      "name": "새 글",
+      "short_name": "새 글",
+      "url": "./?quick=note",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "할 일",
+      "short_name": "할 일",
+      "url": "./?quick=todo",
       "icons": [
         {
           "src": "icon-192.png",

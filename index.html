@@ -116,7 +116,7 @@ label{display:block;font-size:12.5px;color:var(--sub);margin:12px 0 5px;font-wei
 textarea.field{min-height:140px;resize:vertical;line-height:1.65}
 .row{display:flex;gap:10px}.row>div{flex:1;min-width:0}
 .seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px}
-.seg button{flex:1;border:0;background:none;padding:7px;border-radius:8px;cursor:pointer;color:var(--sub);font-weight:550}
+.seg button{white-space:nowrap;flex:1;border:0;background:none;padding:7px;border-radius:8px;cursor:pointer;color:var(--sub);font-weight:550}
 .seg button.on{background:var(--accent);color:#fff}
 html[data-mode="dark"] .seg button.on{color:#10140F}
 .suggest{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
@@ -336,7 +336,7 @@ html[data-mode="dark"] .todo.fin .tick{color:#10140F}
 .tt{font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
 .todo.fin .tt{color:var(--faint);text-decoration:line-through}
 .tm{font-size:12.5px;color:var(--faint);margin-top:2px}
-.tm .late{color:var(--warn);font-weight:650}.tm .today{color:var(--accent);font-weight:650}
+.tm .late{color:var(--warn);font-weight:650}.tm .due-now{color:var(--accent);font-weight:650}
 .memo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
 @media (max-width:360px){.memo-grid{grid-template-columns:1fr}}
 .memo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;min-height:76px;display:flex;flex-direction:column;justify-content:space-between}
@@ -393,6 +393,72 @@ html[data-mode="dark"] .todo.fin .tick{color:#10140F}
 .bl-card .bl-m{margin-top:2px;font-size:11.5px}
 .bl-card .stars{font-size:11.5px}
 .mode-seg button{font-size:13px}
+
+/* ===== v2.4 ===== */
+.ftools{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.ftool{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 11px;font-size:12.5px;color:var(--sub);cursor:pointer;font-weight:550;margin:0}
+.ftool.rec-on,.vbtn.rec-on{background:var(--warn);border-color:var(--warn);color:#fff}
+.vbtns{display:inline-flex;gap:4px}
+.vbtn{width:34px;height:32px;border:1px solid var(--line);background:var(--paper);border-radius:999px;cursor:pointer;font-size:15px;line-height:1;padding:0}
+#rec .rec-sheet{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(92vw,520px);z-index:45;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+#rec .rec-sheet.busy{display:flex;gap:10px;align-items:center;font-size:14px}
+.rec-top{display:flex;align-items:center;gap:10px}.rec-top b{font-size:20px;font-variant-numeric:tabular-nums;flex:1}
+.rec-dot{width:12px;height:12px;border-radius:50%;background:var(--warn);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.rec-bar{height:6px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:10px}.rec-bar i{display:block;height:100%;width:0;background:var(--warn);transition:width .15s}
+.pick-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:48vh;overflow:auto}
+.pick-list button{text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 11px;cursor:pointer;font-size:13.5px;line-height:1.55;display:flex;flex-direction:column;gap:2px}
+/* 노트 목록 */
+.n-group{width:auto;padding:5px 10px;font-size:13px;border-radius:999px}
+.seed{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0 6px}
+.seed .lb{display:flex;justify-content:space-between;font-size:12px;color:var(--accent);font-weight:700;margin-bottom:6px}
+.seed .lb button{border:0;background:none;color:var(--sub);font-size:12.5px;cursor:pointer}
+.seed .tx{font-family:var(--serif,'Noto Serif KR'),serif;line-height:1.75;font-size:14.5px;color:var(--quote);white-space:pre-wrap;word-break:keep-all}
+.seed .mt{font-size:12px;color:var(--faint);margin-top:6px}
+.note-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.note-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
+.nc-top{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+.nst{font-size:11.5px;font-weight:650;padding:1px 8px;border-radius:999px;background:var(--line);color:var(--sub)}
+.nst.st-1{background:var(--accent-soft);color:var(--accent)}.nst.st-2{background:var(--accent);color:var(--card)}.nst.st-3{background:var(--ink);color:var(--paper)}
+.nc-t{font-weight:700;font-size:16px;line-height:1.4}
+.nc-x{font-size:13.5px;color:var(--sub);line-height:1.6;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all}
+.nc-m{font-size:12px;color:var(--faint);margin-top:6px}
+/* 노트 쓰기 */
+.ne-top-r{display:flex;gap:6px;align-items:center}
+.ne-state{width:auto;padding:5px 10px;font-size:13px}
+.ne-mode{margin:4px 0 10px;max-width:220px}
+.ne-title{width:100%;border:0;background:none;outline:none;font-family:var(--serif,'Noto Serif KR'),serif;font-size:24px;font-weight:700;padding:6px 0;color:var(--ink)}
+.ne-tools{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding:6px 0 8px;position:sticky;top:0;background:var(--paper);z-index:4;border-bottom:1px solid var(--line);margin-bottom:8px}
+.ne-tools>button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--ink)}
+.ne-body{width:100%;border:0;background:none;outline:none;resize:none;font-family:var(--serif,'Noto Serif KR'),serif;font-size:16.5px;line-height:1.95;color:var(--ink);min-height:260px;word-break:keep-all;padding:0}
+.ne-count{font-size:12px;color:var(--faint);margin:6px 0 10px}
+.ne-saved{text-align:right;color:var(--faint);margin-top:6px}
+.ne-read{font-family:var(--serif,'Noto Serif KR'),serif;font-size:16.5px;line-height:1.95;word-break:keep-all;color:var(--ink)}
+.ne-read h1{font-size:25px;line-height:1.35;margin:6px 0 18px}
+.ne-read h2{font-size:18.5px;margin:26px 0 8px}
+.ne-read p{margin:0 0 14px}
+.ne-read blockquote{margin:14px 0;padding:4px 0 4px 16px;border-left:3px solid var(--accent);color:var(--quote);font-size:15.5px}
+.ne-read ul{padding-left:20px;margin:0 0 14px}
+.wlink{color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.wlink.dead{color:var(--faint);text-decoration-style:dotted}
+.nspine{background:var(--accent)!important;writing-mode:horizontal-tb!important;font-size:12px!important}
+.rel-list{max-height:56vh;overflow:auto;margin-top:8px}
+.fix{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--line);padding:9px 0;font-size:14px}
+.fix.done{opacity:.45}.fix s{color:var(--warn)}
+.ver{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--line);padding:10px 0}
+.ver .btn{flex:none;font-size:12.5px;padding:6px 10px}
+/* 더보기 · 잠금 */
+.more-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.more-list button{display:grid;grid-template-columns:34px 1fr;grid-template-rows:auto auto;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:13px 15px;cursor:pointer;column-gap:8px}
+.more-list .mi{grid-row:1/3;font-size:22px;align-self:center}
+.more-list b{font-size:15.5px}.more-list span:not(.mi){font-size:12.5px;color:var(--sub)}
+.lock{position:fixed;inset:0;z-index:100;background:var(--paper);display:flex;align-items:center;justify-content:center}
+.lock-box{width:min(80vw,300px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.lock-ic{font-size:36px}.lock-box b{font-size:18px;margin-bottom:6px}
+.pin-in{text-align:center;font-size:22px;letter-spacing:.4em}
+.pin-in::placeholder{letter-spacing:0;font-size:16px}
+#print-area{display:none}
+@media print{body>*:not(#print-area){display:none!important}#print-area{display:block!important;padding:0 8mm}body{background:#fff!important;padding:0!important}}
 
 /* ===== 업데이트 내역 · 공유 · 디자인 고르기 ===== */
 .share-peek{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--sub);line-height:1.6;margin-bottom:10px;white-space:pre-wrap;word-break:keep-all}
@@ -568,22 +634,27 @@ html[data-theme="bunko"] .chip{border-radius:6px}
   <section id="v-ai" class="hidden"></section>
   <section id="v-memo" class="hidden"></section>
   <section id="v-blist" class="hidden"></section>
+  <section id="v-notes" class="hidden"></section>
+  <section id="v-note" class="hidden"></section>
+  <section id="v-more" class="hidden"></section>
 </div>
 
 <button class="fab" id="fab" aria-label="빠르게 남기기">＋</button>
 <div class="composer hidden" id="composer"><div class="wrap">
-  <textarea id="ai-q" rows="1" placeholder="내 독서 기록에 대해 물어보세요" oninput="autoGrow(this)"
+  <textarea id="ai-q" rows="1" placeholder="내 필사 · 글 · 메모에 대해 물어보세요" oninput="autoGrow(this)"
     onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();askAI()}"></textarea>
   <button class="btn primary" onclick="askAI()">보내기</button>
 </div></div>
 <nav class="nav" id="nav">
   <button data-v="library" class="on"><svg viewBox="0 0 24 24"><path d="M4 19V5a1 1 0 0 1 1-1h3v16H5a1 1 0 0 1-1-1zM8 4h4v16H8M12 6.5l3.6-1 3.4 13.6-3.6 1z"/></svg>서재</button>
+  <button data-v="notes"><svg viewBox="0 0 24 24"><path d="M5 20l1.2-4.2L16.5 5.5a2 2 0 0 1 2.8 0l.2.2a2 2 0 0 1 0 2.8L9.2 18.8z"/><path d="M14.5 7.5l2.8 2.8M5 20h14"/></svg>노트</button>
   <button data-v="memo"><svg viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="16" rx="2"/><path d="M8 9.5l1.5 1.5L12.5 8M8 15h8"/></svg>메모</button>
   <button data-v="graph"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="8" r="2.4"/><circle cx="9" cy="18" r="2.4"/><circle cx="18" cy="18" r="1.8"/><path d="M8.2 7 15.8 7.6M7 8.3l1.4 7.4M16.4 9.8l-5.5 6.6M11.4 18h4.8"/></svg>그물망</button>
-  <button data-v="stats"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/></svg>통계</button>
-  <button data-v="ai"><svg viewBox="0 0 24 24"><path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/></svg>AI 비서</button>
+  <button data-v="more"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></svg>더보기</button>
 </nav>
 <div id="modal"></div>
+<div id="rec"></div>
+<div id="lock"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -657,7 +728,7 @@ function saveCache() {
   if (!S.loaded) return;
   clearTimeout(cacheTimer);
   cacheTimer = setTimeout(() => {
-    IDB.set(CACHE_KEY, { ver: S.ver || '', books: S.books, snippets: S.snips, memos: S.memos, settings: S.settings, at: Date.now() });
+    IDB.set(CACHE_KEY, { ver: S.ver || '', books: S.books, snippets: S.snips, memos: S.memos, notes: S.notes, settings: S.settings, at: Date.now() });
   }, 250);
 }
 async function loadCache() {
@@ -678,8 +749,8 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const isTemp = id => /^T/.test(String(id || ''));
 S.memos = [];
 // 바로 저장되는 종류: 저장 함수 → 목록 이름
-const OPS = { saveSnippet: { list: 'snips', del: 'deleteSnippet' }, saveMemo: { list: 'memos', del: 'deleteMemo' } };
-const DEL_OPS = { deleteSnippet: 'snips', deleteMemo: 'memos' };
+const OPS = { saveSnippet: { list: 'snips', del: 'deleteSnippet' }, saveMemo: { list: 'memos', del: 'deleteMemo' }, saveNote: { list: 'notes', del: 'deleteNote' } };
+const DEL_OPS = { deleteSnippet: 'snips', deleteMemo: 'memos', deleteNote: 'notes' };
 const resolveId = id => (id && S.idMap[id]) || id;
 function persistOutbox() { LS.set(OUTBOX_KEY, JSON.stringify(S.outbox.map(o => Object.assign({}, o, { sending: false })))); renderSync(); }
 function normKw(k) { return uniq(String(k || '').split(/[,#\n]/).map(x => x.trim())).join(', '); }
@@ -690,7 +761,7 @@ function queue(op) {
   op.cid = op.cid || uid();
   if (OPS[op.fn]) {
     const ex = S.outbox.find(o => o.fn === op.fn && o.data.ID === op.data.ID && !o.sending);
-    if (ex) { ex.data = op.data; ex.local = op.local; ex.error = ''; persistOutbox(); saveCache(); flush(); return; }
+    if (ex) { ex.data = op.data; ex.local = op.local; ex.error = ''; if (op.args && op.args[0]) ex.args = op.args; persistOutbox(); saveCache(); flush(); return; }
   }
   if (DEL_OPS[op.fn] && isTemp(op.id) && !S.outbox.some(o => o.sending && o.data && o.data.ID === op.id)) {
     S.outbox = S.outbox.filter(o => !(o.data && o.data.ID === op.id));
@@ -733,7 +804,7 @@ async function flush() {
           const list = OPS[op.fn].list;
           const d = Object.assign({}, op.data, { _cid: op.cid });
           const temp = isTemp(d.ID); if (temp) d.ID = '';
-          const saved = await rpc(op.fn, d);
+          const saved = await rpc(op.fn, d, ...(op.args || []));
           S[list] = S[list].filter(x => x.ID !== op.data.ID && x.ID !== saved.ID);
           S[list].push(saved);
           if (temp) { remapId(op.data.ID, saved.ID); changedIds = true; }
@@ -757,7 +828,8 @@ async function flush() {
     renderSync();
     clearTimeout(flushTimer);
     if (S.syncState === 'waiting') flushTimer = setTimeout(flush, 30000);
-    if (changedIds && !$('modal').innerHTML) { if (S.view === 'book') renderBook(); else if (S.view === 'memo') renderMemoView(); }
+    if (changedIds && !$('modal').innerHTML) { if (S.view === 'book') renderBook(); else if (S.view === 'memo') renderMemoView(); else if (S.view === 'notes') renderNoteList(); }
+    if (changedIds && S.noteId && S.idMap[S.noteId]) { S.noteId = S.idMap[S.noteId]; try { history.replaceState({ view: S.view, id: S.noteId }, ''); } catch (e) {} }
   }
 }
 function renderSync() {
@@ -813,22 +885,24 @@ async function refresh(first) {
 // 전체 또는 바뀐 것만 받은 결과를 합치기
 function mergeSync(d) {
   if (d.full || !S.loaded) {
-    S.books = d.books || []; S.snips = d.snippets || []; S.memos = d.memos || [];
+    const keepTemp = (S.notes || []).filter(n => isTemp(n.ID));   // 막 만든, 아직 안 올라간 글은 지키기
+    S.books = d.books || []; S.snips = d.snippets || []; S.memos = d.memos || []; S.notes = (d.notes || []).concat(keepTemp);
   } else {
+    // 지운 것 먼저, 그다음 새로 받은 것 (같은 번호가 다시 생겼을 때를 위해)
+    const TAB = { '책': 'books', '필사': 'snips', '메모': 'memos', '노트': 'notes' };
+    (d.deleted || []).forEach(x => { const k = TAB[x.t]; if (k) S[k] = S[k].filter(r => r.ID !== x.id); });
     const merge = (key, rows) => {
       const arr = S[key], idx = new Map(arr.map((x, i) => [x.ID, i]));
       (rows || []).forEach(r => { const i = idx.get(r.ID); if (i != null) arr[i] = r; else { idx.set(r.ID, arr.length); arr.push(r); } });
     };
-    merge('books', d.books); merge('snips', d.snippets); merge('memos', d.memos);
-    const TAB = { '책': 'books', '필사': 'snips', '메모': 'memos' };
-    (d.deleted || []).forEach(x => { const k = TAB[x.t]; if (k) S[k] = S[k].filter(r => r.ID !== x.id); });
+    merge('books', d.books); merge('snips', d.snippets); merge('memos', d.memos); merge('notes', d.notes);
   }
   S.ver = d.ver;
   applyPending();
 }
 function rerender() {
   if (S.view === 'book' && !book(S.bookId)) S.view = 'library';
-  if (S.view === 'graph' || S.view === 'ai') return;   // 그물망 · 대화는 보던 화면 유지
+  if (S.view === 'graph' || S.view === 'ai' || S.view === 'note') return;   // 그물망 · 대화 · 쓰는 글은 보던 화면 유지
   show(S.view);
 }
 
@@ -869,10 +943,12 @@ function resetLocal() {
 /* ----- 앱 시작 ----- */
 async function boot() {
   S.today = localToday();
+  showLock();
   const startBook = new URLSearchParams(location.search).get('book');
   const route = () => {
     const st = history.state;   // 새로고침해도 보던 탭 그대로
-    if (!startBook && st && ['memo', 'graph', 'stats'].includes(st.view)) S.view = st.view;
+    if (!startBook && st && ['memo', 'graph', 'stats', 'notes', 'more'].includes(st.view)) S.view = st.view;
+    if (!startBook && st && st.view === 'note' && st.id && noteOf(st.id)) { S.view = 'note'; S.noteId = resolveId(st.id); }
     if (startBook && book(startBook)) { S.bookId = startBook; S.view = 'book'; }
     history.replaceState({ view: S.view, id: S.bookId || '' }, '');
     show(S.view);
@@ -881,9 +957,9 @@ async function boot() {
   if (!API.url || !API.key) { show('library'); $('list').innerHTML = '<div class="empty">서버를 연결하면 서재가 열려요.</div>'; openConnect(); return; }
   const c = await loadCache();
   if (c && c.books) {
-    S.books = c.books; S.snips = c.snippets || []; S.memos = c.memos || []; S.ver = c.ver || ''; if (c.settings) S.settings = c.settings;
+    S.books = c.books; S.snips = c.snippets || []; S.memos = c.memos || []; S.notes = c.notes || []; S.ver = c.ver || ''; if (c.settings) S.settings = c.settings;
     applyPending();
-    S.loaded = true; route(); takeShared(); takeQuick(); checkNewVersion();
+    S.loaded = true; route(); takeShared(); takeQuick(); checkNewVersion(); setTimeout(processVoiceQueue, 2500);
     refresh(false).then(() => flush());
   } else {
     show('library'); $('list').innerHTML = '<div class="empty">처음 한 번 불러오는 중이에요…</div>';
@@ -973,7 +1049,7 @@ function renderList() {
   if (q) rows = q.startsWith('#') ? [] : rows.filter(b => ['제목','저자','옮긴이','출판사','대분류','중분류','개인분류','한줄평'].some(k => String(b[k] || '').toLowerCase().includes(q)));
   rows.sort((a, b) => String(b['완독일'] || b['시작일']).localeCompare(String(a['완독일'] || a['시작일'])));
   if (q) {
-    $('list').innerHTML = (rows.length ? `<div class="res-head">책 ${rows.length}권</div>` + rows.slice(0, 20).map(bookCard).join('') : '') + hitsHtml(S.q)
+    $('list').innerHTML = (rows.length ? `<div class="res-head">책 ${rows.length}권</div>` + rows.slice(0, 20).map(bookCard).join('') : '') + hitsHtml(S.q) + otherHitsHtml(S.q)
       || '<div class="empty">검색 결과가 없어요</div>';
     return;
   }
@@ -1046,22 +1122,27 @@ function snipHtml(s) {
 /* ===== 화면 전환 ===== */
 function show(view) {
   S.view = view;
-  ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
+  if (S.view === 'note' && view !== 'note' && typeof collectNote === 'function') { const n = collectNote(); if (n && S.noteDirty) saveNoteNow(true); stopDictate(); }
+  ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
   $('composer').classList.toggle('hidden', view !== 'ai');
   document.body.classList.toggle('ai-mode', view === 'ai');
-  $('fab').classList.toggle('hidden', !['library', 'memo', 'stats'].includes(view));
-  const tab = view === 'book' ? 'library' : view === 'blist' ? 'stats' : view;
+  $('fab').classList.toggle('hidden', !['library', 'memo', 'notes', 'stats'].includes(view));
+  const tab = { book: 'library', note: 'notes', blist: 'more', stats: 'more', ai: 'more' }[view] || view;
   document.querySelectorAll('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
   if (view === 'library') renderLibrary();
   else if (view === 'book') renderBook();
   else if (view === 'graph') renderGraphView();
   else if (view === 'ai') renderAIView();
-  else if (view === 'memo') renderMemoView();
+  else if (view === 'memo') { renderMemoView(); renderVoiceQueue(); processVoiceQueue(); }
+  else if (view === 'notes') renderNoteList();
+  else if (view === 'note') renderNoteEditor();
+  else if (view === 'more') renderMoreView();
   else if (view === 'blist') renderBookList();
   else renderStatsView();
 }
 function go(view, id) {
   if (view === 'book') S.bookId = id;
+  if (view === 'note') S.noteId = id;
   try { history.pushState({ view, id: id || '' }, '', view === 'book' ? '?book=' + encodeURIComponent(id) : location.pathname); } catch (e) {}
   show(view); window.scrollTo(0, 0);
 }
@@ -1071,11 +1152,12 @@ window.addEventListener('popstate', e => {
   const st = e.state || {};
   if (st.view === 'book' && st.id && book(st.id)) { S.bookId = st.id; show('book'); }
   else if (st.view === 'blist' && S.blist) show('blist');
-  else show(['graph', 'stats', 'ai', 'memo'].includes(st.view) ? st.view : 'library');
+  else if (st.view === 'note' && st.id && noteOf(st.id)) { S.noteId = resolveId(st.id); show('note'); }
+  else show(['graph', 'stats', 'ai', 'memo', 'notes', 'more'].includes(st.view) ? st.view : 'library');
 });
 
 /* ===== 입력 창 ===== */
-function closeModal() { $('modal').innerHTML = ''; S.moveMemoId = null; }
+function closeModal() { $('modal').innerHTML = ''; S.moveMemoId = null; if (typeof stopDictate === 'function') stopDictate(); }
 function modal(html) {
   $('modal').innerHTML = `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="sheet">${html}</div></div>`;
 }
@@ -1096,7 +1178,11 @@ function openSnipForm(id) {
     <div class="seg" id="seg">${['인용','생각','메모'].map(t => `<button data-t="${t}" class="${snipType === t ? 'on' : ''}">${t === '인용' ? '인용 (책 문장)' : t === '생각' ? '내 생각' : '메모'}</button>`).join('')}</div>
     <label>제목 <span style="font-weight:400;color:var(--faint)">내가 붙이는 표제</span><button type="button" class="kw-ai" data-ai-title onclick="aiTitle(this)">AI 제목</button></label>
     <input class="field" id="f-ttl" value="${esc(s ? s['제목'] : '')}" placeholder="예: 과학은 믿음을 싫어한다">
-    <label>내용 <span style="font-weight:400;color:var(--faint)">복사한 글은 붙여넣으면 줄바꿈이 정리돼요</span><button type="button" class="kw-ai" onclick="pasteClip(this)">붙여넣기</button></label>
+    <label>내용</label>
+    <div class="ftools"><label class="ftool">📷 사진에서<input type="file" accept="image/*" hidden onchange="snipPhoto(this)"></label>
+      <button type="button" class="ftool" onclick="toggleDictate(this,'f-txt')">🎤 받아쓰기</button>
+      <button type="button" class="ftool" onclick="startRecording('snip', recSnipDone)">🎙 읽어서 넣기</button>
+      <button type="button" class="ftool" onclick="pasteClip(this)">📋 붙여넣기</button></div>
     <textarea class="field" id="f-txt" placeholder="책 속 문장이나 생각을 적어 주세요">${esc(s ? s['내용'] : '')}</textarea>
     <label>쪽수 <span style="font-weight:400;color:var(--faint)">여러 쪽이면 36, 37</span></label>
     <input class="field" id="f-page" inputmode="decimal" style="max-width:160px" value="${esc(s ? s['쪽수'] : '')}">
@@ -1187,14 +1273,14 @@ function openBookForm(id) {
       <button class="btn" onclick="closeModal()">취소</button>
       <button class="btn primary grow" onclick="submitBook(${id ? `'${id}'` : 'null'})">저장</button>
     </div>`);
-  if (!id) setTimeout(() => $('al-q').focus(), 50);
+  if (!id) setTimeout(() => ($('al-q') && $('al-q').focus()), 50);
 }
 /* 책 검색 (카카오 + 국립중앙도서관) */
 let alList = [];
 function coverPick(url, note) { return `<div class="cover-pick"><img src="${esc(url)}" alt=""><span>${esc(note)}</span></div>`; }
 async function alSearch() {
   const q = $('al-q').value.trim();
-  if (!q) { $('al-q').focus(); return; }
+  if (!q) { ($('al-q') && $('al-q').focus()); return; }
   $('al-res').innerHTML = '<div class="al-msg">찾는 중…</div>';
   try {
     const list = await call('bookSearch', q);
@@ -1856,7 +1942,7 @@ function chatHtml(m) {
   if (m.pending) return `<div class="msg bot"><span class="thinking">내 기록을 찾아보는 중</span></div>`;
   if (m.error) return `<div class="msg bot err">${esc(m.error)}</div>`;
   const order = (m.cites || []).map(c => c.id);
-  const body = mdLite(m.text).replace(/\[(S\d{6})\]/g, (all, id) => {
+  const body = mdLite(m.text).replace(/\[([SNM]\d{6})\]/g, (all, id) => {
     const i = order.indexOf(id);
     return i < 0 ? '' : `<span class="cite" onclick="openCite('${id}')">${i + 1}</span>`;
   });
@@ -1880,7 +1966,11 @@ function mdLite(t) {
   return html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 }
 function scrollChat() { if (S.view === 'ai' && S.chat.length) setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 30); }
-function openCite(id) { const s = S.snips.find(x => x.ID === id); if (s) go('book', s['책ID']); }
+function openCite(id) {
+  if (id[0] === 'N') { if (noteOf(id)) openNote(id); else toast('그 글을 찾지 못했어요'); return; }
+  if (id[0] === 'M') { if (S.memos.some(m => m.ID === id)) { go('memo'); setTimeout(() => openMemo(id), 60); } return; }
+  if (S.snips.some(x => x.ID === id)) openSnipInBook(id);
+}
 
 async function askAI(q) {
   q = String(q || $('ai-q').value).trim();
@@ -2158,7 +2248,7 @@ function openKwEdit(k) {
       <button class="btn danger" onclick="applyKw('${esc(k)}','')">키워드 지우기</button>
       <button class="btn" onclick="openKwManager()">뒤로</button>
       <button class="btn primary grow" onclick="applyKw('${esc(k)}', $('kw-to').value)">바꾸기</button></div>`);
-  setTimeout(() => $('kw-to').focus(), 50);
+  setTimeout(() => ($('kw-to') && $('kw-to').focus()), 50);
 }
 async function applyKw(from, to) {
   to = String(to || '').replace(/^#/, '').trim();
@@ -2450,7 +2540,7 @@ async function pasteClip(btn) {
     if (!txt.trim()) { toast('복사한 글이 없어요'); return; }
     fillPasted(txt);
   } catch (e) {
-    $('f-txt').focus();
+    ($('f-txt') && $('f-txt').focus());
     toast('내용 칸을 길게 눌러 붙여넣기 해 주세요');
   }
 }
@@ -2477,8 +2567,20 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.4';
 const PATCH_NOTES = [
+  { v: '2.4', d: '2026.10.18', t: '나만의 노트 · 음성 · 링크', items: [
+    '노트 탭: 내 글을 모아 두고 써요. 상태(메모 · 초안 · 완성 · 발행), 묶음, 키워드, 발행 링크, 글자 수 · 원고지 매수',
+    '쓰는 동안 자동 저장, 저장 버튼을 누를 때마다 고친 내역이 남아 되돌릴 수 있어요',
+    '📚 필사 넣기: 쓰는 글과 맞는 내 필사를 찾아 출처(책 · 쪽수)와 함께 인용으로 넣어요',
+    '[[책 제목]] · [[글 제목]]으로 잇고, 책 화면과 글에서 "이 글을 언급한 곳"을 보여줘요',
+    '✨ AI 제안: 제목 후보 · 맞춤법 · 소개글. 내 문장은 그대로 두고 고르는 건 내가 해요',
+    '글감, 블로그용 복사, PDF 저장',
+    '🎤 받아쓰기 · 🎙 녹음 후 정리: 메모(할 일도 뽑아 줌) · 필사(쪽수도) · 노트에서. 인터넷이 없을 때 녹음은 보관했다가 메모로 정리',
+    '필사 입력 창에 📷 사진에서 가져오기: 고칠 때도 사진으로 읽어 바꾸거나 덧붙여요',
+    '서재 검색이 글과 메모까지 찾고, AI 비서도 글과 메모를 근거로 답해요',
+    '더보기: 통계 · AI 비서 · 전체 내보내기(마크다운 백업) · 앱 잠금 · 설정',
+    '할 일에 날짜 · 시간을 넣으면 글자가 가려지던 문제, 앨범 버튼 글자가 두 줄로 나뉘던 문제를 고쳤어요'] },
   { v: '2.3', d: '2026.10.18', t: '메모 · 할 일 · 새 그물망', items: [
     '아래 메뉴에 메모가 생겼어요. "내일 3시 치과", "- 책 반납하기"처럼 쓰면 할 일로, 그냥 쓰면 메모로 들어가요',
     '할 일은 지난 일 · 오늘 · 내일 · 이번 주 · 나중에로 나눠 보이고, 동그라미를 누르면 끝낸 일로 가요',
@@ -2643,7 +2745,7 @@ function renderMemoView() {
   if (nodue.length) todoHtml += `<div class="group-label">날짜 없음 <span>${nodue.length}</span></div>${nodue.map(todoRow).join('')}`;
   $('v-memo').innerHTML = `
     <div class="view-head"><h1>메모</h1><p>${todos.length ? `할 일 ${todos.length}개 남았어요` : '할 일을 다 끝냈어요'}${memos.length ? ` · 메모 ${memos.length}개` : ''}</p></div>
-    ${quickBox('mq', '')}
+    ${quickBox('mq', '')}<div id="voiceq"></div>
     <div class="chips" id="memo-f">${['전체', '할 일', '메모', '끝낸 일'].map(x => `<button class="chip ${f === x ? 'on' : ''}" data-f="${x}">${x}</button>`).join('')}</div>
     ${f === '전체' || f === '할 일' ? (todoHtml ? `<div class="todo-list">${todoHtml}</div>` : (f === '할 일' ? '<div class="empty">할 일이 없어요. 위 칸에 "- 책 반납하기"처럼 적어 보세요.</div>' : '')) : ''}
     ${f === '전체' || f === '메모' ? (memos.length ? `${f === '전체' ? '<div class="group-label">메모</div>' : ''}<div class="memo-grid">${memos.map(memoCard).join('')}</div>` : (f === '메모' ? '<div class="empty">메모가 없어요.</div>' : '')) : ''}
@@ -2659,7 +2761,7 @@ function todoRow(m) {
   return `<div class="todo ${fin ? 'fin' : ''}" data-id="${m.ID}">
     <button class="tick" onclick="toggleTodo('${m.ID}')" aria-label="${fin ? '안 끝낸 일로' : '끝냈어요'}">${fin ? '✓' : ''}</button>
     <div class="tbody" onclick="openMemo('${m.ID}')"><div class="tt">${esc(m['내용'])}</div>
-      ${(m['마감일'] && !fin) || b || fin ? `<div class="tm">${fin ? (m['완료일'] ? String(m['완료일']).slice(5).replace('-', '/') + ' 끝냄' : '끝냄') : `<span class="${d < 0 ? 'late' : d === 0 ? 'today' : ''}">${dueLabel(m['마감일'], m['마감시간'])}</span>`}${b ? ` · 📖 ${esc(b['제목'])}` : ''}</div>` : ''}</div>
+      ${(m['마감일'] && !fin) || b || fin ? `<div class="tm">${fin ? (m['완료일'] ? String(m['완료일']).slice(5).replace('-', '/') + ' 끝냄' : '끝냄') : `<span class="${d < 0 ? 'late' : d === 0 ? 'due-now' : ''}">${dueLabel(m['마감일'], m['마감시간'])}</span>`}${b ? ` · 📖 ${esc(b['제목'])}` : ''}</div>` : ''}</div>
   </div>`;
 }
 function memoCard(m) {
@@ -2672,7 +2774,7 @@ function memoCard(m) {
 function quickBox(id, force) {
   return `<div class="quick" id="${id}-box" data-force="${force}">
     <textarea id="${id}" rows="1" placeholder="${force === '할일' ? '해야 할 일 (예: 금요일까지 책 반납)' : '메모나 할 일 (예: 내일 3시 치과, - 책 반납하기)'}"></textarea>
-    <div class="qbar"><button class="qtype" id="${id}-type" type="button"></button><span id="${id}-due" class="qdue"></span>
+    <div class="qbar"><button class="qtype" id="${id}-type" type="button"></button><span id="${id}-due" class="qdue"></span>${voiceBtns(id, 'memo')}
       <button class="btn primary" id="${id}-go" type="button">저장</button></div></div>`;
 }
 function bindQuick(id, after) {
@@ -2793,6 +2895,8 @@ function openQuickMenu() {
   modal(`<h3>무엇을 남길까요?</h3>
     <div class="qmenu">
       <button onclick="openQuickSheet('')"><b>✎ 메모</b><span>떠오른 생각을 바로</span></button>
+      <button onclick="closeModal();startRecording('memo')"><b>🎙 음성 메모</b><span>말하면 메모 · 할 일로 정리</span></button>
+      <button onclick="closeModal();newNote()"><b>✍ 새 글</b><span>나만의 노트에 쓰기</span></button>
       <button onclick="openQuickSheet('할일')"><b>☑ 할 일</b><span>"금요일까지 반납"처럼 날짜도</span></button>
       <button onclick="quickSnip(false)"><b>❝ 필사 쓰기</b><span>책을 고르고 문장 적기</span></button>
       <button onclick="quickSnip(true)"><b>📷 사진으로 필사</b><span>책을 고르고 사진 찍기</span></button>
@@ -2814,7 +2918,7 @@ function quickSnip(photo) {
 function takeQuick() {
   const q = new URLSearchParams(location.search).get('quick'); if (!q) return;
   history.replaceState({ view: S.view, id: S.bookId || '' }, '', location.pathname);
-  if (q === 'memo') openQuickSheet(''); else if (q === 'todo') openQuickSheet('할일'); else if (q === 'snip') quickSnip(false);
+  if (q === 'memo') openQuickSheet(''); else if (q === 'todo') openQuickSheet('할일'); else if (q === 'snip') quickSnip(false); else if (q === 'note') newNote(); else if (q === 'voice') startRecording('memo');
 }
 
 /* ===================================================================
@@ -2890,6 +2994,747 @@ try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () =
 function modePickerHtml() {
   return `<div class="seg mode-seg" style="margin-top:10px">${MODES.map(([k, t]) => `<button class="${curMode() === k ? 'on' : ''}" onclick="setMode('${k}');openSettings()">${t}</button>`).join('')}</div>`;
 }
+
+
+/* ===================================================================
+   음성 (v2.4): 🎤 받아쓰기(말하는 대로 바로) · 🎙 녹음 후 정리(Gemini)
+   =================================================================== */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+LONG_FNS.transcribeAudio = 1; LONG_FNS.noteAssist = 1;
+let dict = null;   // 지금 받아쓰는 중인 것
+
+// 🎤 받아쓰기: target 칸의 커서 자리에 넣음. 다시 누르면 멈춤
+function toggleDictate(btn, targetId) {
+  if (dict) { stopDictate(); return; }
+  if (!SR) { toast('이 브라우저는 받아쓰기를 지원하지 않아요. 키보드의 🎤를 써 주세요'); return; }
+  const ta = $(targetId); if (!ta) return;
+  const rec = new SR();
+  rec.lang = 'ko-KR'; rec.interimResults = true; rec.continuous = true;
+  let base = ta.value, at = ta.selectionStart ?? base.length, committed = '';
+  const put = interim => {
+    const glue = (s) => s && at > 0 && !/\s$/.test(base.slice(0, at)) ? ' ' + s : s;
+    const mid = glue((committed + interim).trim());
+    ta.value = base.slice(0, at) + mid + base.slice(at);
+    ta.dispatchEvent(new Event('input'));
+  };
+  rec.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) committed += (committed && !/\s$/.test(committed) ? ' ' : '') + t.trim();
+      else interim += t;
+    }
+    put(interim ? (committed ? ' ' : '') + interim : '');
+  };
+  rec.onerror = e => { if (e.error === 'not-allowed') toast('마이크 사용을 허용해 주세요'); else if (e.error === 'network') toast('받아쓰기는 인터넷이 필요해요'); };
+  rec.onend = () => { if (dict && dict.rec === rec && dict.keep) { try { rec.start(); } catch (err) { stopDictate(); } } };   // 말을 멈추면 끊기는 것 이어 붙이기
+  dict = { rec, btn, keep: true };
+  btn.classList.add('rec-on'); btn.setAttribute('aria-pressed', 'true');
+  try { rec.start(); toast('말하세요. 다시 누르면 멈춰요'); } catch (e) { stopDictate(); }
+}
+function stopDictate() {
+  if (!dict) return;
+  const d = dict; dict = null; d.keep = false;
+  try { d.rec.stop(); } catch (e) {}
+  d.btn.classList.remove('rec-on'); d.btn.setAttribute('aria-pressed', 'false');
+}
+
+/* ----- 🎙 녹음 → WAV(16kHz) → Gemini 정리 ----- */
+const REC_MAX_SEC = 300;
+let recr = null;
+async function startRecording(mode, onDone) {
+  stopDictate();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('이 기기에서는 녹음을 할 수 없어요'); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } }); }
+  catch (e) { toast('마이크 사용을 허용해 주세요'); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx; try { ctx = new AC({ sampleRate: 16000 }); } catch (e) { ctx = new AC(); }
+  const src = ctx.createMediaStreamSource(stream);
+  const proc = ctx.createScriptProcessor(4096, 1, 1);
+  const chunks = []; let level = 0;
+  proc.onaudioprocess = e => {
+    const d = e.inputBuffer.getChannelData(0); chunks.push(new Float32Array(d));
+    let s = 0; for (let i = 0; i < d.length; i += 16) s = Math.max(s, Math.abs(d[i])); level = s;
+  };
+  src.connect(proc); proc.connect(ctx.destination);
+  recr = { stream, ctx, proc, src, chunks, mode, onDone, t0: Date.now(), rate: ctx.sampleRate };
+  const label = { memo: '말한 내용을 메모로 정리해요. 할 일이 있으면 따로 뽑아요.', snip: '책 문장을 읽어 주세요. "48쪽"처럼 쪽수도 말하면 쪽수 칸에 넣어요.', note: '말한 그대로 글로 옮겨요.' }[mode] || '';
+  $('rec').innerHTML = `<div class="rec-sheet" role="dialog" aria-label="녹음 중">
+    <div class="rec-top"><span class="rec-dot"></span><b id="rec-t">0:00</b><span class="small">최대 5분</span></div>
+    <div class="rec-bar"><i id="rec-lv"></i></div>
+    <div class="small" style="margin:8px 0 14px;line-height:1.55">${label}</div>
+    <div class="actions" style="margin:0"><button class="btn" onclick="cancelRecording()">취소</button>
+      <button class="btn primary grow" onclick="finishRecording()">녹음 끝 · 정리하기</button></div></div>`;
+  recr.timer = setInterval(() => {
+    const sec = Math.floor((Date.now() - recr.t0) / 1000);
+    const t = $('rec-t'); if (t) t.textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+    const lv = $('rec-lv'); if (lv) lv.style.width = Math.min(100, level * 260) + '%';
+    if (sec >= REC_MAX_SEC) finishRecording();
+  }, 200);
+}
+function endRecorder() {
+  const r = recr; recr = null; if (!r) return null;
+  clearInterval(r.timer);
+  try { r.proc.disconnect(); r.src.disconnect(); } catch (e) {}
+  r.stream.getTracks().forEach(t => t.stop());
+  try { r.ctx.close(); } catch (e) {}
+  $('rec').innerHTML = '';
+  return r;
+}
+function cancelRecording() { endRecorder(); toast('녹음을 지웠어요'); }
+async function finishRecording() {
+  const r = endRecorder(); if (!r) return;
+  const wav = encodeWav(r.chunks, r.rate, 16000);
+  if ((Date.now() - r.t0) < 800) { toast('녹음이 너무 짧아요'); return; }
+  if (!navigator.onLine) {
+    await voiceQueueAdd(wav, r.mode);
+    toast('인터넷이 연결되면 메모로 정리해 둘게요');
+    return;
+  }
+  await transcribeWav(wav, r.mode, r.onDone);
+}
+async function transcribeWav(wav, mode, onDone) {
+  const b64 = await blobToB64(wav);
+  showBusy('녹음을 글로 옮기는 중… (10~40초)');
+  try {
+    const res = await rpc('transcribeAudio', { audio: b64, mime: 'audio/wav', mode });
+    hideBusy();
+    if (onDone) onDone(res); else voiceToMemo(res);
+  } catch (e) {
+    hideBusy();
+    if (e.network) { await voiceQueueAdd(wav, mode); toast('연결이 끊겨 녹음을 보관했어요. 연결되면 메모로 정리해요'); }
+    else toast('⚠ ' + (e.message || e));
+  }
+}
+// 녹음 결과 → 메모(+ 할 일)
+function voiceToMemo(res) {
+  if (res.text) addMemo({ '종류': '메모', '내용': (res.title ? res.title + '\n' : '') + res.text });
+  (res.todos || []).forEach(t => { const p = parseQuick(t, '할일'); addMemo({ '종류': '할일', '내용': p.text, '마감일': p.due, '마감시간': p.time }); });
+  toast(`메모${res.todos && res.todos.length ? ` + 할 일 ${res.todos.length}개` : ''}로 정리했어요`);
+  if (S.view === 'memo') renderMemoView();
+}
+// 16kHz 모노 16비트 WAV로 (Gemini가 읽을 수 있는 형식)
+function encodeWav(chunks, inRate, outRate) {
+  let len = chunks.reduce((t, c) => t + c.length, 0);
+  const pcm = new Float32Array(len); let o = 0; chunks.forEach(c => { pcm.set(c, o); o += c.length; });
+  let data = pcm;
+  if (inRate !== outRate) {
+    const ratio = inRate / outRate, n = Math.floor(pcm.length / ratio); data = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const a = Math.floor(i * ratio), b = Math.min(pcm.length, Math.floor((i + 1) * ratio)); let s = 0; for (let j = a; j < b; j++) s += pcm[j]; data[i] = s / Math.max(1, b - a); }
+  }
+  const buf = new ArrayBuffer(44 + data.length * 2), v = new DataView(buf);
+  const w = (p, s) => { for (let i = 0; i < s.length; i++) v.setUint8(p + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + data.length * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, outRate, true);
+  v.setUint32(28, outRate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, data.length * 2, true);
+  for (let i = 0; i < data.length; i++) { const s = Math.max(-1, Math.min(1, data[i])); v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); }
+  return new Blob([buf], { type: 'audio/wav' });
+}
+function blobToB64(blob) { return new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.readAsDataURL(blob); }); }
+
+/* 오프라인 녹음 보관함 → 연결되면 메모로 정리 */
+async function voiceQueueAdd(wav, mode) {
+  const q = (await IDB.get('voiceq')) || [];
+  q.push({ id: uid(), at: Date.now(), mode, wav });
+  await IDB.set('voiceq', q); renderVoiceQueue();
+}
+let voiceBusy = false;
+async function processVoiceQueue() {
+  if (voiceBusy || !navigator.onLine || !API.url) return;
+  const q = (await IDB.get('voiceq')) || []; if (!q.length) return;
+  voiceBusy = true;
+  try {
+    while (q.length) {
+      const it = q[0];
+      try { voiceToMemo(await rpc('transcribeAudio', { audio: await blobToB64(it.wav), mime: 'audio/wav', mode: 'memo' })); }
+      catch (e) { break; }
+      q.shift(); await IDB.set('voiceq', q);
+    }
+  } finally { voiceBusy = false; renderVoiceQueue(); }
+}
+async function renderVoiceQueue() {
+  const el = $('voiceq'); if (!el) return;
+  const q = (await IDB.get('voiceq')) || [];
+  el.innerHTML = q.length ? `<div class="notice">🎙 정리를 기다리는 녹음 ${q.length}개 · 인터넷이 연결되면 메모로 정리돼요</div>` : '';
+}
+window.addEventListener('online', () => setTimeout(processVoiceQueue, 1500));
+
+/* 잠깐 기다리는 표시 */
+function showBusy(t) { $('rec').innerHTML = `<div class="rec-sheet busy"><span class="spin"></span> ${esc(t)}</div>`; }
+function hideBusy() { $('rec').innerHTML = ''; }
+
+/* 칸 옆에 붙이는 🎤 🎙 버튼 */
+function voiceBtns(targetId, mode, after) {
+  return `<span class="vbtns"><button type="button" class="vbtn" title="받아쓰기" aria-label="받아쓰기" onclick="toggleDictate(this,'${targetId}')">🎤</button>` +
+    `<button type="button" class="vbtn" title="녹음 후 정리" aria-label="녹음 후 정리" onclick="startRecording('${mode}', ${after || 'null'})">🎙</button></span>`;
+}
+
+/* ===================================================================
+   필사 입력 창: 📷 사진에서 가져오기 · 🎙 읽어서 넣기 (v2.4)
+   =================================================================== */
+function snipPhoto(input) {
+  const f = input.files && input.files[0]; input.value = '';
+  if (!f) return;
+  if (!navigator.onLine) { toast('사진 읽기는 인터넷이 필요해요'); return; }
+  (async () => {
+    showBusy('사진에서 글자 읽는 중… (10~30초)');
+    try {
+      const img = await shrinkImage(f);
+      const r = await rpc('scanPage', { image: img.data, mime: 'image/jpeg', bookId: S.bookId });
+      hideBusy();
+      const opts = (r.highlights || []).concat(r.page && r.page.text ? [Object.assign({ whole: true }, r.page)] : []);
+      if (!opts.length) { toast('글자를 찾지 못했어요'); return; }
+      if (opts.length === 1) { fillSnipFrom(opts[0]); return; }
+      S.snipOpts = opts;
+      $('rec').innerHTML = `<div class="rec-sheet"><b>어느 부분을 넣을까요?</b>
+        <div class="pick-list">${opts.map((o, i) => `<button onclick="fillSnipFrom(S.snipOpts[${i}]);$('rec').innerHTML=''"><span class="small">${o.whole ? '페이지 전체' : '하이라이트 ' + (i + 1)}${o.page ? ' · p.' + esc(o.page) : ''}</span>${esc(o.text.slice(0, 120))}${o.text.length > 120 ? '…' : ''}</button>`).join('')}</div>
+        <div class="actions" style="margin:8px 0 0"><button class="btn grow" onclick="$('rec').innerHTML=''">취소</button></div></div>`;
+    } catch (e) { hideBusy(); toast('⚠ ' + (e.message || e)); }
+  })();
+}
+function fillSnipFrom(o) {
+  const ta = $('f-txt'); if (!ta) return;
+  const cur = ta.value.trim();
+  if (!cur || confirm('지금 내용을 사진에서 읽은 글로 바꿀까요?\n취소를 누르면 뒤에 덧붙여요.')) ta.value = o.text;
+  else ta.value = cur + '\n\n' + o.text;
+  if (o.page && !$('f-page').value.trim()) $('f-page').value = o.page;
+  if (o.title && !$('f-ttl').value.trim()) $('f-ttl').value = o.title;
+  if (o.keywords && o.keywords.length) { const kw = $('f-kw'); const c = kw.value.split(',').map(x => x.trim()).filter(Boolean); o.keywords.forEach(k => { if (!c.includes(k)) c.push(k); }); kw.value = c.join(', '); }
+  toast('사진에서 읽은 글을 넣었어요. 확인 후 저장하세요');
+}
+function recSnipDone(res) {
+  const ta = $('f-txt'); if (!ta) { voiceToMemo(res); return; }
+  ta.value = ta.value.trim() ? ta.value.trim() + '\n' + res.text : res.text;
+  if (res.page && !$('f-page').value.trim()) $('f-page').value = res.page;
+  if (res.title && !$('f-ttl').value.trim()) $('f-ttl').value = res.title;
+  if (res.thought) { addMemo({ '종류': '메모', '내용': res.thought, '책ID': S.bookId || '' }); toast('덧붙인 생각은 메모로 따로 저장했어요'); }
+}
+
+/* ===================================================================
+   나만의 노트 (v2.4): 글 보관함 · 쓰기 · 연결된 필사 · [[링크]]
+   =================================================================== */
+S.notes = []; S.noteFilter = '전체'; S.noteGroup = ''; S.noteQ = ''; S.noteId = null; S.noteRead = false;
+const NOTE_STATES = ['메모', '초안', '완성', '발행'];
+const noteOf = id => S.notes.find(n => n.ID === resolveId(id));
+function wordStats(t) {
+  t = String(t || '');
+  const all = t.replace(/\n/g, '').length, nows = t.replace(/\s/g, '').length;
+  return { all, nows, ms: Math.ceil(all / 200), min: Math.max(1, Math.round(nows / 500)) };
+}
+
+function renderNoteList() {
+  const q = S.noteQ.trim().toLowerCase();
+  const groups = uniq(S.notes.map(n => String(n['묶음'] || '').trim())).sort();
+  let list = S.notes.filter(n => (S.noteFilter === '전체' || n['상태'] === S.noteFilter) && (!S.noteGroup || n['묶음'] === S.noteGroup));
+  if (q) list = list.filter(n => (String(n['제목']) + ' ' + n['본문'] + ' ' + n['키워드']).toLowerCase().includes(q.replace(/^#/, '')));
+  list.sort((a, b) => Number(b['수정시각'] || 0) - Number(a['수정시각'] || 0) || String(b['수정일'] || '').localeCompare(String(a['수정일'] || '')));
+  const seed = writingSeed();
+  $('v-notes').innerHTML = `
+    <div class="view-head ai-head"><div><h1>노트</h1><p>${S.notes.length ? `글 ${S.notes.length}편` : '내 글을 모아 두는 곳이에요'}</p></div>
+      <button class="btn primary" onclick="newNote()">✍ 새 글</button></div>
+    <input class="field" id="n-q" placeholder="제목 · 내용 · #키워드 찾기" value="${esc(S.noteQ)}" style="margin:10px 0 8px">
+    <div class="chips" id="n-f">${['전체', ...NOTE_STATES].map(x => `<button class="chip ${S.noteFilter === x ? 'on' : ''}" data-f="${x}">${x}</button>`).join('')}
+      ${groups.length ? `<select class="field n-group" id="n-g"><option value="">모든 묶음</option>${groups.map(g => `<option ${S.noteGroup === g ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>` : ''}</div>
+    ${seed && !q ? `<div class="seed"><div class="lb"><span>글감</span><button onclick="S.seedShift=(S.seedShift||0)+1;renderNoteList()">다른 글감 ↻</button></div>
+      <div class="tx">${esc(String(seed['내용']).slice(0, 220))}${String(seed['내용']).length > 220 ? '…' : ''}</div>
+      <div class="mt">${esc((book(seed['책ID']) || {})['제목'] || '')}${seed['쪽수'] ? ' · p.' + esc(seed['쪽수']) : ''}</div>
+      <button class="btn" style="margin-top:10px" onclick="newNote('${seed.ID}')">이 문장으로 글쓰기</button></div>` : ''}
+    <div class="note-list">${list.map(n => `<div class="note-card" onclick="openNote('${n.ID}')">
+        <div class="nc-top"><span class="nst st-${NOTE_STATES.indexOf(n['상태'])}">${esc(n['상태'] || '초안')}</span>${n['묶음'] ? `<span class="small">${esc(n['묶음'])}</span>` : ''}</div>
+        <div class="nc-t">${esc(n['제목'] || '제목 없음')}</div>
+        <div class="nc-x">${esc(plainText(n['본문']).slice(0, 140))}</div>
+        <div class="nc-m">${esc(String(n['수정일'] || n['작성일'] || '').slice(0, 10))} · ${wordStats(n['본문']).nows.toLocaleString()}자${n['키워드'] ? ' · ' + splitKw(n['키워드']).slice(0, 3).map(k => '#' + esc(k)).join(' ') : ''}</div>
+      </div>`).join('') || `<div class="empty">${q || S.noteFilter !== '전체' ? '찾는 글이 없어요' : '아직 쓴 글이 없어요. ✍ 새 글로 시작해 보세요.'}</div>`}</div>`;
+  $('n-q').oninput = e => { S.noteQ = e.target.value; renderNoteList(); const el = $('n-q'); el.focus(); el.setSelectionRange(S.noteQ.length, S.noteQ.length); };
+  $('n-f').onclick = e => { const c = e.target.closest('[data-f]'); if (!c) return; S.noteFilter = c.dataset.f; renderNoteList(); };
+  if ($('n-g')) $('n-g').onchange = e => { S.noteGroup = e.target.value; renderNoteList(); };
+}
+// 글감: 날짜마다 바뀌는, 오래 묵은 필사 하나
+function writingSeed() {
+  const pool = S.snips.filter(s => String(s['내용']).length > 60 && String(s['내용']).length < 600);
+  if (!pool.length) return null;
+  pool.sort((a, b) => String(a['작성일'] || '').localeCompare(String(b['작성일'] || '')));
+  const old = pool.slice(0, Math.max(30, Math.floor(pool.length / 2)));
+  let h = 0; for (const c of S.today + (S.seedShift || 0)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return old[h % old.length];
+}
+function plainText(t) { return String(t || '').replace(/^#{1,3}\s+/gm, '').replace(/^>\s?/gm, '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/\[\[(.+?)\]\]/g, '$1'); }
+
+/* ----- 새 글 · 열기 ----- */
+function newNote(seedId) {
+  const s = seedId ? S.snips.find(x => x.ID === seedId) : null;
+  const body = s ? quoteBlock(s) + '\n\n' : '';
+  const n = { ID: 'T' + uid(), '제목': '', '본문': body, '상태': '초안', '묶음': '', '키워드': s ? s['키워드'] || '' : '', '발행링크': '', '작성일': S.today, '수정일': S.today, '수정시각': Date.now() };
+  S.notes.push(n);
+  S.noteRead = false; S.noteDirty = false;
+  go('note', n.ID);
+  setTimeout(() => { const t = $('ne-title'); if (t) t.focus(); }, 60);
+}
+function openNote(id) { S.noteRead = !!(noteOf(id) && String(noteOf(id)['본문']).length > 0); go('note', resolveId(id)); }
+
+function renderNoteEditor() {
+  const n = noteOf(S.noteId);
+  if (!n) { show('notes'); return; }
+  const back = notesLinkingHere(n);
+  const ws = wordStats(n['본문']);
+  $('v-note').innerHTML = `
+    <div class="topbar"><button class="iconbtn" onclick="leaveNote()">← 노트</button>
+      <div class="ne-top-r"><select class="field ne-state" id="ne-state">${NOTE_STATES.map(x => `<option ${n['상태'] === x ? 'selected' : ''}>${x}</option>`).join('')}</select>
+      <button class="iconbtn" onclick="noteMenu()" aria-label="더 보기">⋯</button></div></div>
+    <div class="seg ne-mode"><button class="${S.noteRead ? '' : 'on'}" onclick="setNoteRead(false)">✎ 쓰기</button><button class="${S.noteRead ? 'on' : ''}" onclick="setNoteRead(true)">📖 읽기</button></div>
+    ${S.noteRead ? `<article class="ne-read" id="ne-read"><h1>${esc(n['제목'] || '제목 없음')}</h1>${renderMd(n['본문'])}</article>` : `
+    <input class="ne-title" id="ne-title" placeholder="제목" value="${esc(n['제목'])}">
+    <div class="ne-tools" id="ne-tools">
+      <button onclick="mdWrap('## ','')" title="소제목">소제목</button><button onclick="mdWrap('> ','')" title="인용">❝ 인용</button>
+      <button onclick="mdWrap('**','**')" title="굵게"><b>굵게</b></button><button onclick="mdWrap('- ','')" title="목록">• 목록</button>
+      <button onclick="openLinkPicker()" title="책이나 글 잇기">[[ ]] 잇기</button><button onclick="openRelated()" title="연결된 필사">📚 필사 넣기</button>
+      ${voiceBtns('ne-body', 'note', 'recNoteDone')}</div>
+    <textarea class="ne-body" id="ne-body" placeholder="쓰고 싶은 이야기를 적어 보세요.&#10;[[책 제목]]처럼 쓰면 책과 이어져요.">${esc(n['본문'])}</textarea>`}
+    <div class="ne-count" id="ne-count">${ws.nows.toLocaleString()}자 (공백 포함 ${ws.all.toLocaleString()}) · 원고지 ${ws.ms}매 · 읽는 데 ${ws.min}분</div>
+    <div class="panel2"><h4>키워드 <button class="kw-ai" onclick="noteKw(this)">AI 추천</button></h4>
+      <input class="field" id="ne-kw" value="${esc(n['키워드'])}" placeholder="예: 사랑, 자유">
+      <div class="row" style="margin-top:8px"><div><label style="margin-top:0">묶음</label><input class="field" id="ne-group" list="ne-groups" value="${esc(n['묶음'])}" placeholder="예: 독서 에세이"></div>
+        <div><label style="margin-top:0">발행 링크</label><input class="field" id="ne-link" value="${esc(n['발행링크'])}" placeholder="브런치 · 블로그 주소"></div></div>
+      <datalist id="ne-groups">${uniq(S.notes.map(x => x['묶음'])).map(g => `<option value="${esc(g)}">`).join('')}</datalist>
+      ${n['발행링크'] ? `<a class="small" href="${esc(n['발행링크'])}" target="_blank" rel="noopener">발행한 글 열기 ↗</a>` : ''}</div>
+    <div class="actions"><button class="btn" onclick="openNoteAI()">✨ AI 제안</button><button class="btn" onclick="openRelated()">📚 연결된 필사</button>
+      <button class="btn primary grow" onclick="saveNoteNow(true)">저장</button></div>
+    ${back.length ? `<div class="panel2"><h4>이 글을 언급한 글</h4>${back.map(x => `<button class="mini" onclick="openNote('${x.ID}')"><b>${esc(x['제목'] || '제목 없음')}</b></button>`).join('')}</div>` : ''}
+    <div class="small ne-saved" id="ne-saved">${S.noteDirty ? '저장 전' : isTemp(n.ID) ? '' : '저장됨'}</div>`;
+  if (!S.noteRead) {
+    const body = $('ne-body'), title = $('ne-title');
+    const grow = () => { body.style.height = 'auto'; body.style.height = Math.max(260, body.scrollHeight + 4) + 'px'; };
+    grow();
+    body.oninput = () => { grow(); noteChanged(); };
+    title.oninput = noteChanged;
+    body.addEventListener('paste', e => { const t = (e.clipboardData || window.clipboardData).getData('text'); if (t && /\n/.test(t) && e.shiftKey) return; });
+  }
+  ['ne-kw', 'ne-group', 'ne-link'].forEach(id => { $(id).oninput = noteChanged; });
+  $('ne-state').onchange = () => { noteChanged(); saveNoteNow(false); };
+}
+function setNoteRead(r) { if (!r) S.noteRead = false; else { collectNote(); S.noteRead = true; } renderNoteEditor(); window.scrollTo(0, 0); }
+
+/* ----- 저장: 쓰는 동안 자동, 저장 버튼·나갈 때 고친 내역 남김 ----- */
+let noteTimer = null;
+function collectNote() {
+  const n = noteOf(S.noteId); if (!n) return null;
+  if ($('ne-title')) n['제목'] = $('ne-title').value;
+  if ($('ne-body')) n['본문'] = $('ne-body').value;
+  if ($('ne-kw')) n['키워드'] = $('ne-kw').value;
+  if ($('ne-group')) n['묶음'] = $('ne-group').value.trim();
+  if ($('ne-link')) n['발행링크'] = $('ne-link').value.trim();
+  if ($('ne-state')) n['상태'] = $('ne-state').value;
+  return n;
+}
+function noteChanged() {
+  S.noteDirty = true;
+  const n = collectNote(); if (!n) return;
+  const ws = wordStats(n['본문']);
+  const c = $('ne-count'); if (c) c.textContent = `${ws.nows.toLocaleString()}자 (공백 포함 ${ws.all.toLocaleString()}) · 원고지 ${ws.ms}매 · 읽는 데 ${ws.min}분`;
+  const sv = $('ne-saved'); if (sv) sv.textContent = '쓰는 중…';
+  clearTimeout(noteTimer); noteTimer = setTimeout(() => saveNoteNow(false), 1500);
+}
+function saveNoteNow(snapshot) {
+  clearTimeout(noteTimer);
+  const n = collectNote(); if (!n) return;
+  if (!String(n['제목']).trim() && !String(n['본문']).trim()) return;
+  if (String(n['본문']).length > 49000) { toast('글이 너무 길어요 (4만 9천 자까지). 두 편으로 나눠 주세요'); return; }
+  n['수정일'] = S.today; n['수정시각'] = Date.now(); n['글자수'] = wordStats(n['본문']).nows;
+  const data = {}; ['ID', '제목', '본문', '상태', '묶음', '키워드', '발행링크'].forEach(k => data[k] = n[k] ?? '');
+  queue({ fn: 'saveNote', data, local: Object.assign({}, n), args: [!!snapshot] });
+  S.noteDirty = false;
+  const sv = $('ne-saved'); if (sv) sv.textContent = navigator.onLine ? '저장됨' : '이 기기에 저장됨 · 연결되면 올라가요';
+  if (snapshot) toast('저장했어요');
+}
+function leaveNote() {
+  const n = collectNote();
+  if (n && (String(n['제목']).trim() || String(n['본문']).trim())) { if (S.noteDirty || isTemp(n.ID)) saveNoteNow(true); }
+  else if (n) S.notes = S.notes.filter(x => x !== n);   // 빈 글은 버림
+  stopDictate();
+  goBack();
+}
+function noteMenu() {
+  const n = collectNote(); if (!n) return;
+  modal(`<h3>${esc(n['제목'] || '제목 없음')}</h3><div class="qmenu">
+    <button onclick="copyNote('rich')"><b>📋 블로그용 복사</b><span>브런치 · 블로그에 그대로 붙여넣기</span></button>
+    <button onclick="copyNote('md')"><b>📝 마크다운 복사</b><span>## · > 표시 그대로</span></button>
+    <button onclick="closeModal();printNote()"><b>🖨 PDF로 저장</b><span>인쇄 창에서 PDF로 저장</span></button>
+    <button onclick="openVersions()"><b>🕘 고친 내역</b><span>저장할 때마다 남은 예전 모습</span></button>
+    <button onclick="removeNote()"><b style="color:var(--warn)">🗑 삭제</b><span>되돌릴 수 없어요</span></button></div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+}
+function removeNote() {
+  if (!confirm('이 글을 지울까요?')) return;
+  const id = resolveId(S.noteId);
+  S.notes = S.notes.filter(x => x.ID !== id); queue({ fn: 'deleteNote', id });
+  closeModal(); go('notes'); toast('지웠어요');
+}
+
+/* ----- 쓰기 도구 ----- */
+function mdWrap(pre, post) {
+  const ta = $('ne-body'); if (!ta) return;
+  const a = ta.selectionStart, b = ta.selectionEnd, v = ta.value;
+  if (!post) {   // 줄 앞에 붙이기 (선택한 줄 모두)
+    const ls = v.lastIndexOf('\n', a - 1) + 1, le = v.indexOf('\n', b); const end = le < 0 ? v.length : le;
+    const block = v.slice(ls, end).split('\n').map(l => l.startsWith(pre) ? l.slice(pre.length) : pre + l).join('\n');
+    ta.value = v.slice(0, ls) + block + v.slice(end); ta.setSelectionRange(ls, ls + block.length);
+  } else {
+    const sel = v.slice(a, b) || '굵게';
+    ta.value = v.slice(0, a) + pre + sel + post + v.slice(b); ta.setSelectionRange(a + pre.length, a + pre.length + sel.length);
+  }
+  ta.focus(); ta.dispatchEvent(new Event('input'));
+}
+function insertAtCursor(text) {
+  const ta = $('ne-body'); if (!ta) return;
+  const a = ta.selectionStart ?? ta.value.length, v = ta.value;
+  const pre = a > 0 && v[a - 1] !== '\n' ? '\n\n' : '';
+  ta.value = v.slice(0, a) + pre + text + '\n' + v.slice(a);
+  const p = a + pre.length + text.length + 1; ta.setSelectionRange(p, p); ta.focus(); ta.dispatchEvent(new Event('input'));
+}
+function recNoteDone(res) {
+  if ($('ne-body')) { insertAtCursor(res.text); if (res.title && $('ne-title') && !$('ne-title').value.trim()) $('ne-title').value = res.title; noteChanged(); }
+  else voiceToMemo(res);
+}
+function quoteBlock(s) {
+  const b = book(s['책ID']) || {};
+  return String(s['내용']).trim().split('\n').map(l => '> ' + l).join('\n') + `\n> — 『${b['제목'] || ''}』${s['쪽수'] !== '' && s['쪽수'] != null ? ', p.' + s['쪽수'] : ''}`;
+}
+
+/* ----- 연결된 필사: 쓰는 글과 맞는 내 필사 ----- */
+function relatedSnips(n, limit) {
+  const text = (String(n['제목']) + ' ' + String(n['본문'])).toLowerCase();
+  const kws = splitKw(n['키워드']);
+  const linked = [...String(n['본문']).matchAll(/\[\[(.+?)\]\]/g)].map(m => m[1].trim());
+  const linkedBooks = new Set(S.books.filter(b => linked.some(t => normT(b['제목']) === normT(t))).map(b => b.ID));
+  const words = uniq((text.match(/[가-힣a-z]{2,}/g) || []).map(w => w.replace(/(은|는|이|가|을|를|에|의|와|과|도|로|으로|에서|에게|까지|부터|처럼|이다|했다|한다|하는|하고)$/, '')).filter(w => w.length >= 2)).slice(0, 80);
+  const T = topicData();
+  const scored = S.snips.map(s => {
+    const sk = splitKw(s['키워드']); let sc = 0;
+    kws.forEach(k => { if (sk.includes(k)) sc += 6; });
+    sk.forEach(k => { if (text.includes(k.toLowerCase())) sc += 3; });
+    if (linkedBooks.has(s['책ID'])) sc += 5;
+    const body = String(s['내용']).toLowerCase();
+    let hit = 0; words.forEach(w => { if (w.length >= 2 && body.includes(w) && !(T.cnt[w] > 120)) hit++; });
+    sc += Math.min(6, hit);
+    if (String(n['본문']).includes(String(s['내용']).slice(0, 30))) sc = -1;   // 이미 넣은 문장
+    return { s, sc };
+  }).filter(x => x.sc >= 3).sort((a, b) => b.sc - a.sc);
+  return scored.slice(0, limit || 30).map(x => x.s);
+}
+function openRelated(q) {
+  const n = collectNote(); if (!n) return;
+  const qq = String(q || '').trim().toLowerCase();
+  const list = qq ? S.snips.filter(s => (s['내용'] + ' ' + s['제목'] + ' ' + s['키워드'] + ' ' + ((book(s['책ID']) || {})['제목'] || '')).toLowerCase().includes(qq.replace(/^#/, ''))).slice(0, 40) : relatedSnips(n, 30);
+  modal(`<h3>필사 넣기 <span style="font-weight:400;color:var(--faint);font-size:13px">${qq ? '찾은 문장' : '쓰는 글과 맞는 내 필사'}</span></h3>
+    <input class="field" id="rel-q" placeholder="문장 · 책 · #키워드 찾기" value="${esc(q || '')}">
+    <div class="rel-list">${list.map(s => { const b = book(s['책ID']) || {}; return `<button class="mini" onclick="insertSnip('${s.ID}')">
+      <b>${esc(s['제목'] || b['제목'] || '')}</b><span>${esc(String(s['내용']).slice(0, 140))}${String(s['내용']).length > 140 ? '…' : ''}</span>
+      <em>${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''} · 누르면 인용으로 넣어요</em></button>`; }).join('') || `<div class="al-msg">${qq ? '찾는 문장이 없어요' : '아직 이어지는 필사가 없어요. 키워드를 달거나 몇 문장 더 쓰면 찾아줘요.'}</div>`}</div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+  $('rel-q').oninput = e => { const v = e.target.value; openRelated(v); const el = $('rel-q'); el.focus(); el.setSelectionRange(v.length, v.length); };
+}
+function insertSnip(id) {
+  const s = S.snips.find(x => x.ID === id); if (!s) return;
+  closeModal();
+  if (S.noteRead) { S.noteRead = false; renderNoteEditor(); }
+  insertAtCursor(quoteBlock(s));
+  const kw = $('ne-kw'); if (kw && s['키워드']) { const c = splitKw(kw.value); splitKw(s['키워드']).forEach(k => { if (!c.includes(k)) c.push(k); }); kw.value = c.join(', '); noteChanged(); }
+  toast('인용으로 넣었어요');
+}
+
+/* ----- [[링크]] ----- */
+const normT = t => String(t || '').toLowerCase().replace(/\(.*?\)/g, '').replace(/[^0-9a-z가-힣]/g, '');
+function resolveLink(t) {
+  const k = normT(t);
+  const b = S.books.find(x => normT(x['제목']) === k) || S.books.find(x => k.length >= 3 && normT(x['제목']).startsWith(k));
+  if (b) return { kind: 'book', id: b.ID };
+  const n = S.notes.find(x => normT(x['제목']) === k);
+  if (n) return { kind: 'note', id: n.ID };
+  return null;
+}
+function openLink(t) {
+  const r = resolveLink(t);
+  if (!r) { toast('이어진 책이나 글을 찾지 못했어요'); return; }
+  if (r.kind === 'book') go('book', r.id); else openNote(r.id);
+}
+function openLinkPicker(q) {
+  const qq = normT(q);
+  const bs = S.books.filter(b => !qq || normT(b['제목'] + b['저자']).includes(qq)).slice(0, 12);
+  const ns = S.notes.filter(n => n.ID !== resolveId(S.noteId) && n['제목'] && (!qq || normT(n['제목']).includes(qq))).slice(0, 8);
+  modal(`<h3>책이나 글 잇기 <span style="font-weight:400;color:var(--faint);font-size:13px">[[제목]]으로 들어가요</span></h3>
+    <input class="field" id="lk-q" placeholder="책 · 글 제목 찾기" value="${esc(q || '')}">
+    <div class="share-list">${bs.map(b => `<button class="al-item" onclick="insertLink(${esc(JSON.stringify(b['제목']))})">${spine(b)}<div><b>${esc(b['제목'])}</b><span>책 · ${esc(b['저자'] || '')}</span></div></button>`).join('')}
+      ${ns.map(n => `<button class="al-item" onclick="insertLink(${esc(JSON.stringify(n['제목']))})"><div class="spine nspine">글</div><div><b>${esc(n['제목'])}</b><span>내 글</span></div></button>`).join('')}</div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+  $('lk-q').oninput = e => { const v = e.target.value; openLinkPicker(v); const el = $('lk-q'); el.focus(); el.setSelectionRange(v.length, v.length); };
+}
+function insertLink(title) {
+  closeModal();
+  const ta = $('ne-body'); if (!ta) return;
+  const a = ta.selectionStart ?? ta.value.length, v = ta.value, ins = `[[${title}]]`;
+  ta.value = v.slice(0, a) + ins + v.slice(a); ta.setSelectionRange(a + ins.length, a + ins.length); ta.focus(); ta.dispatchEvent(new Event('input'));
+}
+// 이 글 · 이 책을 [[ ]]로 언급한 글
+function notesLinkingHere(target) {
+  const names = target['본문'] !== undefined ? [target['제목']] : [target['제목']];
+  const keys = names.map(normT).filter(Boolean);
+  if (!keys.length) return [];
+  return S.notes.filter(n => n !== target && [...String(n['본문']).matchAll(/\[\[(.+?)\]\]/g)].some(m => keys.includes(normT(m[1]))));
+}
+
+/* ----- 읽기 화면: 가벼운 마크다운 ----- */
+function renderMd(t) {
+  const lines = esc(String(t || '')).split('\n');
+  let html = '', list = false, quote = [];
+  const flushQ = () => { if (quote.length) { html += `<blockquote>${quote.join('<br>')}</blockquote>`; quote = []; } };
+  const closeL = () => { if (list) { html += '</ul>'; list = false; } };
+  lines.forEach(l => {
+    let m;
+    if ((m = l.match(/^&gt;\s?(.*)$/))) { closeL(); quote.push(m[1]); return; }
+    flushQ();
+    if ((m = l.match(/^#{1,3}\s+(.*)$/))) { closeL(); html += `<h2>${m[1]}</h2>`; }
+    else if ((m = l.match(/^\s*[-•]\s+(.*)$/))) { if (!list) { html += '<ul>'; list = true; } html += `<li>${m[1]}</li>`; }
+    else if (!l.trim()) { closeL(); }
+    else { closeL(); html += `<p>${l}</p>`; }
+  });
+  flushQ(); closeL();
+  return html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/\[\[(.+?)\]\]/g, (all, t) => `<a class="wlink ${resolveLink(t.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&')) ? '' : 'dead'}" onclick="openLink(this.dataset.t)" data-t="${t}">${t}</a>`);
+}
+
+/* ----- AI 제안 (고르는 건 내가) ----- */
+function openNoteAI() {
+  const n = collectNote(); if (!n || !String(n['본문']).trim()) { toast('본문을 먼저 써 주세요'); return; }
+  modal(`<h3>✨ AI 제안 <span style="font-weight:400;color:var(--faint);font-size:13px">내 문장은 그대로, 고르는 건 내가</span></h3>
+    <div class="qmenu"><button onclick="runNoteAI('titles')"><b>제목 후보</b><span>글에 어울리는 제목 5개</span></button>
+      <button onclick="runNoteAI('spell')"><b>맞춤법 살펴보기</b><span>틀린 곳만 골라 보여줘요</span></button>
+      <button onclick="runNoteAI('summary')"><b>소개글 · 태그</b><span>블로그 · 브런치 소개용</span></button></div>
+    <div id="ai-out"></div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+}
+async function runNoteAI(mode) {
+  const n = collectNote(); const out = $('ai-out'); if (!out) return;
+  out.innerHTML = '<div class="drill"><span class="spin"></span> 살펴보는 중…</div>';
+  try {
+    const r = await rpc('noteAssist', { mode, '제목': n['제목'], '본문': n['본문'] });
+    if (!$('ai-out')) return;
+    if (mode === 'titles') out.innerHTML = `<div class="ic-lb">눌러서 제목으로 쓰기</div>${(r.titles || []).map(t => `<button class="mini" onclick="useTitle(${esc(JSON.stringify(t))})"><b>${esc(t)}</b></button>`).join('')}`;
+    else if (mode === 'spell') { S.fixes = r.fixes || []; out.innerHTML = S.fixes.length ? `<div class="ic-lb">고칠 곳 ${S.fixes.length}개 · 바꿀 것만 누르세요</div>${S.fixes.map((f, i) => `<div class="fix" id="fx-${i}"><div><s>${esc(f.from)}</s> → <b>${esc(f.to)}</b><div class="small">${esc(f.why || '')}</div></div><button class="btn" onclick="applyFix(${i})">바꾸기</button></div>`).join('')}` : '<div class="drill">맞춤법에서 눈에 띄는 곳이 없어요 👍</div>'; }
+    else out.innerHTML = `<div class="ic-lb">소개글</div><div class="share-peek">${esc(r.summary || '')}</div>${(r.tags || []).length ? `<div class="kw-chips">${r.tags.map(t => `<span class="chip">#${esc(String(t).replace(/^#/, ''))}</span>`).join('')}</div>` : ''}
+      <button class="btn" style="margin-top:8px" onclick="navigator.clipboard.writeText(${esc(JSON.stringify((r.summary || '') + '\n' + (r.tags || []).map(t => '#' + String(t).replace(/^#/, '')).join(' ')))}).then(()=>toast('복사했어요'))">복사</button>`;
+  } catch (e) { if ($('ai-out')) out.innerHTML = `<div class="drill">⚠ ${esc(e.message || e)}</div>`; }
+}
+function useTitle(t) { closeModal(); if (S.noteRead) { S.noteRead = false; renderNoteEditor(); } $('ne-title').value = t; noteChanged(); toast('제목을 바꿨어요'); }
+function applyFix(i) {
+  const f = S.fixes[i]; const n = noteOf(S.noteId); if (!f || !n) return;
+  const body = $('ne-body') ? $('ne-body').value : n['본문'];
+  const at = body.indexOf(f.from); if (at < 0) { toast('이미 바뀐 곳이에요'); return; }
+  const nb = body.slice(0, at) + f.to + body.slice(at + f.from.length);
+  if ($('ne-body')) $('ne-body').value = nb; n['본문'] = nb;
+  noteChanged();
+  const el = $('fx-' + i); if (el) { el.classList.add('done'); el.querySelector('button').textContent = '바꿈'; el.querySelector('button').disabled = true; }
+}
+
+/* ----- 고친 내역 ----- */
+async function openVersions() {
+  const id = resolveId(S.noteId);
+  if (isTemp(id)) { toast('저장한 뒤에 볼 수 있어요'); return; }
+  modal('<h3>고친 내역</h3><div class="drill"><span class="spin"></span> 불러오는 중…</div>');
+  try {
+    S.versions = await rpc('getNoteVersions', id);
+    const fmt = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+    modal(`<h3>고친 내역 <span style="font-weight:400;color:var(--faint);font-size:13px">저장 버튼을 누를 때마다 남아요 (최근 30개)</span></h3>
+      ${S.versions.length ? S.versions.map((v, i) => `<div class="ver"><div><b>${fmt(v.at)}</b> · ${wordStats(v['본문']).nows.toLocaleString()}자<div class="small">${esc(plainText(v['본문']).slice(0, 90))}</div></div>
+        <button class="btn" onclick="restoreVersion(${i})">이걸로 되돌리기</button></div>`).join('') : '<div class="drill">아직 남은 내역이 없어요.</div>'}
+      <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+  } catch (e) { modal(`<h3>고친 내역</h3><div class="drill">⚠ ${esc(e.message || e)}</div><div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`); }
+}
+function restoreVersion(i) {
+  const v = S.versions[i], n = noteOf(S.noteId); if (!v || !n) return;
+  if (!confirm('이 내용으로 되돌릴까요? 지금 내용도 고친 내역에 남아요.')) return;
+  saveNoteNow(true);
+  n['제목'] = v['제목']; n['본문'] = v['본문'];
+  closeModal(); S.noteRead = false; renderNoteEditor(); noteChanged(); saveNoteNow(true);
+}
+
+/* ----- 내보내기 ----- */
+function noteHtml(n) {
+  return `<h1>${esc(n['제목'] || '')}</h1>` + renderMd(n['본문']).replace(/<a class="wlink[^"]*"[^>]*>(.*?)<\/a>/g, '$1');
+}
+async function copyNote(kind) {
+  const n = collectNote(); if (!n) return;
+  try {
+    if (kind === 'rich' && window.ClipboardItem) {
+      const html = noteHtml(n), text = (n['제목'] ? n['제목'] + '\n\n' : '') + plainText(n['본문']);
+      await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' }) })]);
+    } else await navigator.clipboard.writeText((n['제목'] ? '# ' + n['제목'] + '\n\n' : '') + n['본문']);
+    closeModal(); toast('복사했어요. 붙여넣기 하세요');
+  } catch (e) { toast('복사하지 못했어요. 읽기 화면에서 길게 눌러 복사해 주세요'); }
+}
+function printNote() {
+  const n = collectNote(); if (!n) return;
+  let el = $('print-area'); if (!el) { el = document.createElement('div'); el.id = 'print-area'; document.body.appendChild(el); }
+  el.innerHTML = `<article class="ne-read">${noteHtml(n)}</article>`;
+  setTimeout(() => window.print(), 50);
+}
+
+async function noteKw(btn) {
+  const n = collectNote(); if (!n || !String(n['본문']).trim()) { toast('본문을 먼저 써 주세요'); return; }
+  btn.disabled = true; btn.textContent = '추천 중…';
+  try {
+    const ks = await rpc('suggestKeywords', { '책ID': '', '제목': n['제목'], '내용': String(n['본문']).slice(0, 3000) });
+    const kw = $('ne-kw'); const c = splitKw(kw.value); (ks || []).forEach(k => { if (!c.includes(k)) c.push(k); }); kw.value = c.join(', '); noteChanged();
+    if (!ks || !ks.length) toast('추천할 키워드를 찾지 못했어요');
+  } catch (e) { toast('⚠ ' + (e.message || e)); }
+  finally { if (btn.isConnected) { btn.disabled = false; btn.textContent = 'AI 추천'; } }
+}
+
+/* ===================================================================
+   더보기 (v2.4): 통계 · AI 비서 · 백업 · 잠금 · 설정
+   =================================================================== */
+function renderMoreView() {
+  const locked = !!LS.get('pin_hash');
+  $('v-more').innerHTML = `
+    <div class="view-head"><h1>더보기</h1><p>나의 서재 v${APP_VERSION}</p></div>
+    <div class="more-list">
+      <button onclick="go('stats')"><span class="mi">📊</span><b>독서 통계</b><span>완독 · 분류 · 달별 책 목록, 독서 리포트</span></button>
+      <button onclick="go('ai')"><span class="mi">✨</span><b>AI 비서</b><span>내 필사 · 글 · 메모를 근거로 답해요</span></button>
+      <button onclick="exportMarkdown()"><span class="mi">⬇️</span><b>전체 내보내기 (백업)</b><span>책 · 필사 · 글 · 메모를 마크다운 파일로</span></button>
+      <button onclick="openLockSettings()"><span class="mi">🔒</span><b>앱 잠금</b><span>${locked ? '켜짐 · 열 때 비밀번호' : '꺼짐 · 열 때 비밀번호를 물어요'}</span></button>
+      <button onclick="openSettings()"><span class="mi">⚙️</span><b>설정</b><span>목표 · 도서관 · 밝기 · 디자인 · 서버 연결</span></button>
+      <button onclick="openPatchNotes()"><span class="mi">🗒</span><b>업데이트 내역</b><span>v${APP_VERSION}</span></button>
+    </div>`;
+}
+
+/* ===================================================================
+   통합 검색: 책 · 필사 · 글 · 메모 (서재 검색칸)
+   =================================================================== */
+function otherHitsHtml(q) {
+  q = String(q || '').trim().toLowerCase(); if (!q) return '';
+  const kw = q.startsWith('#') ? q.slice(1) : '';
+  const terms = (kw ? [kw] : q.split(/\s+/)).filter(Boolean);
+  const has = t => terms.every(w => t.toLowerCase().includes(w));
+  const notes = S.notes.filter(n => kw ? splitKw(n['키워드']).some(k => k.toLowerCase() === kw) : has(n['제목'] + ' ' + n['본문'] + ' ' + n['키워드'])).slice(0, 10);
+  const memos = kw ? [] : S.memos.filter(m => has(m['내용'])).slice(0, 10);
+  let h = '';
+  if (notes.length) h += `<div class="res-head">내 글 ${notes.length}편</div>` + notes.map(n => `<div class="hit" onclick="openNote('${n.ID}')"><div class="ht">✍ ${esc(n['제목'] || '제목 없음')}</div>
+    <div class="hx">${highlight(plainText(n['본문']), q)}</div><div class="hm">${esc(n['상태'])} · ${esc(String(n['수정일'] || '').slice(0, 10))}</div></div>`).join('');
+  if (memos.length) h += `<div class="res-head">메모 · 할 일 ${memos.length}개</div>` + memos.map(m => `<div class="hit" onclick="go('memo');setTimeout(()=>openMemo('${m.ID}'),60)"><div class="hx">${m['종류'] === '할일' ? '☑ ' : '✎ '}${highlight(String(m['내용']), q)}</div></div>`).join('');
+  return h;
+}
+
+/* ===================================================================
+   전체 내보내기: 마크다운 파일 묶음(zip) — 옵시디언 등에서 그대로 열림
+   =================================================================== */
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function makeZip(files) {   // files: [{name, text}] → Blob (압축 없이 묶기)
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  const now = new Date(), dt = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)), dd = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate());
+  files.forEach(f => {
+    const name = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint16(10, dt, true); h.setUint16(12, dd, true); h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true);
+    h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+    parts.push(h.buffer, name, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true);
+    c.setUint16(12, dt, true); c.setUint16(14, dd, true); c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true);
+    c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+    central.push(c.buffer, name);
+    off += 30 + name.length + data.length;
+  });
+  const csize = central.reduce((t, p) => t + (p.byteLength || p.length), 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...central, e.buffer], { type: 'application/zip' });
+}
+function safeName(t) { return String(t || '제목 없음').replace(/[\\/:*?"<>|#\[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) || '제목 없음'; }
+function exportMarkdown() {
+  const files = [], used = {};
+  const uniqName = p => { let n = p, i = 2; while (used[n]) n = p.replace(/\.md$/, ` (${i++}).md`); used[n] = 1; return n; };
+  S.books.forEach(b => {
+    const sn = snipsOf(b.ID);
+    const meta = [['저자', b['저자']], ['옮긴이', b['옮긴이']], ['출판사', b['출판사']], ['상태', b['상태']], ['시작일', b['시작일']], ['완독일', b['완독일']], ['분량', b['분량'] ? b['분량'] + '쪽' : ''], ['분류', [b['대분류'], b['중분류'], b['개인분류']].filter(Boolean).join(' > ')], ['별점', b['별점'] ? '★'.repeat(Number(b['별점'])) : ''], ['한줄평', b['한줄평']]].filter(x => x[1]);
+    const body = `# ${b['제목']}\n\n${meta.map(([k, v]) => `- ${k}: ${v}`).join('\n')}\n\n## 필사 (${sn.length})\n\n` +
+      sn.map(s => `### ${s['제목'] || '(제목 없음)'}${s['쪽수'] !== '' && s['쪽수'] != null ? ` · p.${s['쪽수']}` : ''}\n\n${s['유형'] === '인용' ? String(s['내용']).split('\n').map(l => '> ' + l).join('\n') : s['내용']}\n${s['키워드'] ? '\n' + splitKw(s['키워드']).map(k => '#' + k.replace(/\s/g, '_')).join(' ') + '\n' : ''}`).join('\n');
+    files.push({ name: uniqName(`책/${safeName(b['제목'])}.md`), text: body });
+  });
+  S.notes.forEach(n => files.push({ name: uniqName(`노트/${safeName(n['제목'])}.md`), text: `---\n상태: ${n['상태']}\n묶음: ${n['묶음'] || ''}\n키워드: ${n['키워드'] || ''}\n작성일: ${n['작성일'] || ''}\n수정일: ${n['수정일'] || ''}\n발행링크: ${n['발행링크'] || ''}\n---\n\n# ${n['제목'] || ''}\n\n${n['본문']}\n` }));
+  const todos = S.memos.filter(m => m['종류'] === '할일'), memos = S.memos.filter(m => m['종류'] !== '할일');
+  files.push({ name: '메모.md', text: `# 메모\n\n${memos.map(m => `- (${m['작성일'] || ''}) ${String(m['내용']).replace(/\n/g, ' ')}`).join('\n')}\n\n# 할 일\n\n${todos.map(m => `- [${isDone(m) ? 'x' : ' '}] ${m['내용']}${m['마감일'] ? ` (마감 ${String(m['마감일']).slice(0, 10)}${m['마감시간'] ? ' ' + m['마감시간'] : ''})` : ''}`).join('\n')}\n` });
+  const blob = makeZip(files);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `나의서재_백업_${S.today}.zip`;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  toast(`책 ${S.books.length} · 글 ${S.notes.length} · 메모 파일로 내보냈어요`);
+}
+
+/* ===================================================================
+   앱 잠금 (이 기기에서만, 비밀번호 4~8자리 숫자)
+   =================================================================== */
+async function pinHash(p) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('my-library:' + p));
+  return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function openLockSettings() {
+  const on = !!LS.get('pin_hash');
+  modal(`<h3>앱 잠금</h3>
+    <div class="small" style="line-height:1.6;margin-bottom:8px">앱을 열 때와, 1분 넘게 다른 앱을 쓰다 돌아올 때 비밀번호를 물어요. 이 기기에만 적용돼요.</div>
+    ${on ? `<div class="actions"><button class="btn danger" onclick="pinOff()">잠금 끄기</button><button class="btn grow" onclick="pinSetup()">비밀번호 바꾸기</button></div>`
+      : `<div class="actions"><button class="btn primary grow" onclick="pinSetup()">잠금 켜기</button></div>`}
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+}
+function pinSetup() {
+  modal(`<h3>새 비밀번호</h3><div class="small">숫자 4~8자리</div>
+    <input class="field pin-in" id="pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" placeholder="비밀번호">
+    <input class="field pin-in" id="pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" placeholder="한 번 더" style="margin-top:8px">
+    <div class="small" style="margin-top:8px;color:var(--faint)">잊어버리면 이 기기의 저장 데이터를 지우고 서버 연결 키를 다시 넣어야 해요. 시트의 기록은 그대로예요.</div>
+    <div class="actions"><button class="btn" onclick="closeModal()">취소</button><button class="btn primary grow" onclick="pinSave()">저장</button></div>`);
+  setTimeout(() => ($('pin1') && $('pin1').focus()), 50);
+}
+async function pinSave() {
+  const a = $('pin1').value, b = $('pin2').value;
+  if (!/^\d{4,8}$/.test(a)) { toast('숫자 4~8자리로 정해 주세요'); return; }
+  if (a !== b) { toast('두 번 넣은 비밀번호가 달라요'); return; }
+  LS.set('pin_hash', await pinHash(a)); closeModal(); toast('잠금을 켰어요'); if (S.view === 'more') renderMoreView();
+}
+function pinOff() { LS.del('pin_hash'); closeModal(); toast('잠금을 껐어요'); if (S.view === 'more') renderMoreView(); }
+let lockedAt = 0, hiddenAt = 0;
+function showLock() {
+  if (!LS.get('pin_hash') || $('lock').innerHTML) return;
+  lockedAt = Date.now();
+  $('lock').innerHTML = `<div class="lock"><div class="lock-box"><div class="lock-ic">🔒</div><b>나의 서재</b>
+    <input class="field pin-in" id="pin-try" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" placeholder="비밀번호">
+    <div class="small" id="pin-msg" style="min-height:1.4em;margin-top:6px"></div>
+    <button class="btn primary" style="width:100%" onclick="tryPin()">열기</button>
+    <button class="iconbtn" style="margin-top:14px;font-size:12.5px" onclick="forgotPin()">비밀번호를 잊었어요</button></div></div>`;
+  const i = $('pin-try'); i.oninput = () => { if (i.value.length >= 4) tryPin(true); }; i.onkeydown = e => { if (e.key === 'Enter') tryPin(); };
+  setTimeout(() => i.focus(), 50);
+}
+async function tryPin(quiet) {
+  const v = $('pin-try').value;
+  if (await pinHash(v) === LS.get('pin_hash')) { $('lock').innerHTML = ''; return; }
+  if (!quiet || v.length >= 8) { $('pin-msg').textContent = '비밀번호가 달라요'; $('pin-try').value = ''; }
+}
+function forgotPin() {
+  if (!confirm('이 기기의 저장 데이터와 연결 정보를 지우고 잠금을 풀까요?\n시트의 기록은 그대로이고, 서버 연결 키를 다시 넣으면 돼요.')) return;
+  LS.del('pin_hash'); LS.del('api_url'); LS.del('api_key'); LS.del(OUTBOX_KEY); IDB.del(CACHE_KEY).then(() => location.reload());
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') hiddenAt = Date.now();
+  else if (hiddenAt && Date.now() - hiddenAt > 60000) showLock();
+});
+
+// 책 화면 아래: 이 책을 [[ ]]로 언급한 글
+const _renderBook = renderBook;
+renderBook = function () {
+  _renderBook();
+  const b = book(S.bookId); if (!b) return;
+  const back = notesLinkingHere(b);
+  if (back.length) $('v-book').insertAdjacentHTML('beforeend', `<div class="panel2" style="margin-top:18px"><h4>이 책을 언급한 내 글</h4>${back.map(x => `<button class="mini" onclick="openNote('${x.ID}')"><b>✍ ${esc(x['제목'] || '제목 없음')}</b><span>${esc(plainText(x['본문']).slice(0, 90))}</span></button>`).join('')}</div>`);
+};
 
 /* ===== 이벤트 · 시작 ===== */
 $('nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) go(b.dataset.v); };
