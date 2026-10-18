@@ -2,11 +2,11 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<script>try{document.documentElement.dataset.theme=localStorage.getItem('theme')||'manuscript'}catch(e){document.documentElement.dataset.theme='manuscript'}</script>
+<script>(function(){var d=document.documentElement,t='manuscript',m='system';try{t=localStorage.getItem('theme')||t;m=localStorage.getItem('mode')||m}catch(e){}
+d.dataset.theme=t;d.dataset.mode=(m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light';})()</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>나의 서재</title>
-<meta name="theme-color" content="#F2F3EF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#15181E" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F2F3EF">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -20,13 +20,12 @@
   --line:#E3DCCF; --accent:#3D5A4C; --accent-soft:#E3EBE5; --warn:#A5442F;
   --quote:#2C3B33; --shadow:0 1px 2px rgba(40,30,10,.06),0 4px 14px rgba(40,30,10,.05);
 }
-@media (prefers-color-scheme: dark){
-  :root{ --paper:#171614; --card:#211F1C; --ink:#ECE7DE; --sub:#B0A99D; --faint:#7C766C;
+html[data-mode="dark"]{ --paper:#171614; --card:#211F1C; --ink:#ECE7DE; --sub:#B0A99D; --faint:#7C766C;
     --line:#34302A; --accent:#8DB5A0; --accent-soft:#26332C; --warn:#E08A72; --quote:#D9E6DE;
     --shadow:none; }
-}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--paper);color:var(--ink)}
+html[data-mode="dark"]{color-scheme:dark}
 body{font-family:Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   font-size:15px;line-height:1.55;padding-bottom:150px}
 button,input,textarea,select{font:inherit;color:inherit}
@@ -48,7 +47,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:600;font-size:24px;margin:0;let
 .chips{display:flex;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none}
 .chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 13px;font-size:13px;white-space:nowrap;cursor:pointer;color:var(--sub)}
 .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
-@media (prefers-color-scheme: dark){.chip.on{color:#10140F}}
+html[data-mode="dark"] .chip.on{color:#10140F}
 
 /* 책 목록 */
 .list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
@@ -65,7 +64,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:600;font-size:24px;margin:0;let
 .bmeta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:7px;font-size:12px;color:var(--faint)}
 .badge{font-size:11.5px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600}
 .badge.reading{background:#F4E7CF;color:#8A5A12}
-@media (prefers-color-scheme: dark){.badge.reading{background:#3A3020;color:#E6C58A}}
+html[data-mode="dark"] .badge.reading{background:#3A3020;color:#E6C58A}
 .group-label{font-size:12.5px;color:var(--sub);font-weight:600;margin:18px 2px 2px}
 .empty{color:var(--faint);text-align:center;padding:40px 0;font-size:14px}
 
@@ -86,7 +85,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:600;font-size:24px;margin:0;let
 .actions{display:flex;gap:8px;margin:12px 0 4px}
 .btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 14px;cursor:pointer;font-size:14px;font-weight:550}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-@media (prefers-color-scheme: dark){.btn.primary{color:#10140F}}
+html[data-mode="dark"] .btn.primary{color:#10140F}
 .btn.danger{color:var(--warn)}
 .btn.grow{flex:1}
 
@@ -119,7 +118,7 @@ textarea.field{min-height:140px;resize:vertical;line-height:1.65}
 .seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px}
 .seg button{flex:1;border:0;background:none;padding:7px;border-radius:8px;cursor:pointer;color:var(--sub);font-weight:550}
 .seg button.on{background:var(--accent);color:#fff}
-@media (prefers-color-scheme: dark){.seg button.on{color:#10140F}}
+html[data-mode="dark"] .seg button.on{color:#10140F}
 .suggest{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .suggest .chip{font-size:12px;padding:3px 10px}
 .sheet .actions{margin-top:20px}
@@ -151,7 +150,7 @@ textarea.field{min-height:140px;resize:vertical;line-height:1.65}
 
 /* 그물망 */
 :root{--n-book:#2a78d6;--n-kw:#eb6834;--n-au:#1baf7a;--n-cat:#eda100}
-@media (prefers-color-scheme: dark){:root{--n-book:#3987e5;--n-kw:#d95926;--n-au:#199e70;--n-cat:#c98500}}
+html[data-mode="dark"]{--n-book:#3987e5;--n-kw:#d95926;--n-au:#199e70;--n-cat:#c98500}
 .g-wrap{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:10px;touch-action:none}
 #g-canvas{display:block;width:100%;height:min(62vh,560px);cursor:grab}
 #g-canvas.dragging{cursor:grabbing}
@@ -214,7 +213,7 @@ textarea.field{min-height:140px;resize:vertical;line-height:1.65}
 .chat{display:flex;flex-direction:column;gap:12px;margin-top:14px}
 .msg{max-width:92%;line-height:1.65;font-size:14.5px}
 .msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-radius:16px 16px 4px 16px;padding:9px 14px;white-space:pre-wrap}
-@media (prefers-color-scheme: dark){.msg.user{color:#10140F}}
+html[data-mode="dark"] .msg.user{color:#10140F}
 .msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:12px 15px}
 .msg.bot p{margin:0 0 8px}.msg.bot p:last-child{margin-bottom:0}
 .msg.bot ul,.msg.bot ol{margin:4px 0 8px;padding-left:20px}
@@ -273,11 +272,11 @@ body{padding-top:env(safe-area-inset-top)}
   display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:keep-all}
 .today .mt{font-size:12px;color:var(--faint);margin-top:8px}
 .due{background:#FBEBE7;color:#8A3220;border-radius:12px;padding:10px 14px;font-size:13px;margin:8px 0 2px;line-height:1.6}
-@media (prefers-color-scheme: dark){.due{background:#3A221C;color:#F0B4A4}}
+html[data-mode="dark"] .due{background:#3A221C;color:#F0B4A4}
 .due a{color:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
 .badge.due-soon{background:#F4E7CF;color:#8A5A12}
 .badge.due-late{background:#FBEBE7;color:#A5442F}
-@media (prefers-color-scheme: dark){.badge.due-late{background:#3A221C;color:#F0B4A4}}
+html[data-mode="dark"] .badge.due-late{background:#3A221C;color:#F0B4A4}
 .mini-bar{height:4px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:8px;max-width:220px}
 .mini-bar i{display:block;height:100%;background:var(--accent)}
 .stars{color:#C9962B;letter-spacing:1px}
@@ -287,7 +286,7 @@ body{padding-top:env(safe-area-inset-top)}
 .hit .hx{font-size:13.5px;color:var(--ink);line-height:1.6;white-space:pre-wrap;word-break:keep-all}
 .hit .hm{font-size:12px;color:var(--faint);margin-top:5px}
 mark{background:#F6E3A1;color:inherit;border-radius:3px;padding:0 1px}
-@media (prefers-color-scheme: dark){mark{background:#5A4A1A}}
+html[data-mode="dark"] mark{background:#5A4A1A}
 .snip.flash{outline:2px solid var(--accent);outline-offset:2px}
 .panel2{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:12px}
 .panel2 h4{margin:0 0 8px;font-size:13.5px}
@@ -311,11 +310,89 @@ mark{background:#F6E3A1;color:inherit;border-radius:3px;padding:0 1px}
 /* 기타 */
 .fab{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:10;border:0;border-radius:999px;background:var(--accent);color:#fff;
   padding:14px 20px;font-weight:650;box-shadow:0 6px 18px rgba(40,60,50,.3);cursor:pointer}
-@media (prefers-color-scheme: dark){.fab{color:#10140F}}
+html[data-mode="dark"] .fab{color:#10140F}
 .toast{position:fixed;left:50%;bottom:140px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
   padding:9px 16px;border-radius:999px;font-size:13.5px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 .loading{text-align:center;color:var(--faint);padding:80px 0}
+
+/* ===== v2.3: 메모 · 할 일 ===== */
+.quick{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:12px 0 10px}
+.quick textarea{width:100%;border:0;background:none;resize:none;outline:none;font-size:15.5px;line-height:1.55;min-height:28px;padding:2px 0}
+.qbar{display:flex;align-items:center;gap:8px;margin-top:6px}
+.qtype{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--sub);cursor:pointer}
+.qtype.todo-on{border-color:var(--accent);color:var(--accent);font-weight:650}
+.qdue{flex:1;font-size:12.5px;color:var(--accent);font-weight:600}
+.qbar .btn{padding:7px 16px}
+.btn:disabled{opacity:.45;cursor:default}
+.group-label span{color:var(--faint);font-weight:500;margin-left:4px}
+.group-label.late{color:var(--warn)}
+.todo-list{display:flex;flex-direction:column}
+.todo{display:flex;gap:12px;align-items:flex-start;padding:11px 2px;border-bottom:1px solid var(--line)}
+.tick{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--faint);background:none;cursor:pointer;color:#fff;font-size:13px;font-weight:800;line-height:1;margin-top:1px;transition:background .15s,border-color .15s}
+.todo.fin .tick{background:var(--accent);border-color:var(--accent)}
+html[data-mode="dark"] .todo.fin .tick{color:#10140F}
+.tbody{flex:1;min-width:0;cursor:pointer}
+.tt{font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
+.todo.fin .tt{color:var(--faint);text-decoration:line-through}
+.tm{font-size:12.5px;color:var(--faint);margin-top:2px}
+.tm .late{color:var(--warn);font-weight:650}.tm .today{color:var(--accent);font-weight:650}
+.memo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+@media (max-width:360px){.memo-grid{grid-template-columns:1fr}}
+.memo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;min-height:76px;display:flex;flex-direction:column;justify-content:space-between}
+.memo .mx{font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.memo .mm{font-size:11.5px;color:var(--faint);margin-top:8px}
+.qmenu{display:flex;flex-direction:column;gap:6px}
+.qmenu button{display:flex;align-items:baseline;gap:10px;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:13px 15px;cursor:pointer}
+.qmenu b{font-size:15px;font-weight:650;min-width:118px}
+.qmenu span{font-size:12.5px;color:var(--sub)}
+.fab{width:56px;height:56px;padding:0;font-size:26px;font-weight:400;line-height:1;display:flex;align-items:center;justify-content:center}
+.nav button{max-width:130px}
+/* ===== v2.3: 그물망 ===== */
+.g-search{position:relative;margin:4px 0 2px}
+.g-sug{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.g-sug:empty{display:none}
+.g-sep{width:1px;background:var(--line);margin:4px 2px;flex:none}
+.legend{display:block}
+.g-clusters{display:flex;flex-wrap:wrap;gap:6px}
+.g-cl{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--ink);cursor:pointer}
+.g-cl.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.g-cl.muted{color:var(--sub);cursor:default}
+.g-cl i,.ic-head .dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
+.g-kinds{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--sub);margin-top:8px;align-items:center}
+.g-kinds span{display:inline-flex;align-items:center;gap:5px}
+.lg-book{background:var(--sub)!important}
+.ic-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ic-head h3{display:flex;align-items:center;gap:8px;margin:0}
+.ic-head .btn{padding:6px 12px;font-size:13px}
+.ic-lb{font-size:12.5px;font-weight:650;color:var(--sub);margin:12px 0 6px}
+.info-card .sub{margin-top:4px}
+/* ===== v2.3: 통계 · 책 목록 ===== */
+.tile.tap{text-align:left;cursor:pointer;font:inherit;color:inherit}
+.tile.tap:active{transform:scale(.98)}
+.tile.tap span{color:var(--accent)}
+.more-btn{display:block;width:100%;margin-top:8px;border:1px dashed var(--line);background:none;border-radius:8px;padding:7px;font-size:12.5px;color:var(--sub);cursor:pointer}
+.bl-head h1{font-size:22px;margin:4px 0 2px}
+.bl-head p{margin:0;color:var(--sub);font-size:13.5px}
+.bl-tools{display:flex;gap:8px;align-items:center;margin:14px 0 10px}
+.bl-mode{flex:none}.bl-mode button{padding:6px 12px}
+.bl-sort{flex:1;padding:8px 10px}
+.bl-lines{display:flex;flex-direction:column}
+.bl-row{display:flex;gap:12px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.bl-row .spine{width:36px;min-height:52px;font-size:10px}
+.bl-info{flex:1;min-width:0}
+.bl-t{font-weight:650;font-size:14.5px;line-height:1.35}
+.bl-a{font-size:12.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bl-m{font-size:12px;color:var(--faint);margin-top:3px;display:flex;flex-wrap:wrap;gap:0 5px;align-items:center}
+.bl-m i{font-style:normal;color:var(--line)}
+.bl-album{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 10px}
+@media (min-width:560px){.bl-album{grid-template-columns:repeat(4,1fr)}}
+.bl-card{cursor:pointer;min-width:0}
+.bl-card .spine{width:100%;min-height:0;aspect-ratio:2/3;border-radius:4px;font-size:13px;margin-bottom:6px}
+.bl-card .bl-t{font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bl-card .bl-m{margin-top:2px;font-size:11.5px}
+.bl-card .stars{font-size:11.5px}
+.mode-seg button{font-size:13px}
 
 /* ===== 업데이트 내역 · 공유 · 디자인 고르기 ===== */
 .share-peek{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--sub);line-height:1.6;margin-bottom:10px;white-space:pre-wrap;word-break:keep-all}
@@ -354,9 +431,9 @@ html[data-theme="manuscript"]{
   --line:#DADDD6; --accent:#2D4F86; --accent-soft:#E4EAF4; --warn:#B04A3A; --quote:#1D2B45;
   --rule:#EBCFC8; --shadow:none; --serif:'Gowun Batang','Noto Serif KR',serif;
 }
-@media (prefers-color-scheme: dark){html[data-theme="manuscript"]{
+html[data-mode="dark"][data-theme="manuscript"]{
   --paper:#15181E; --card:#1C2028; --ink:#E7E9ED; --sub:#A3AAB6; --faint:#6E7581;
-  --line:#2E333D; --accent:#93B2E8; --accent-soft:#243149; --warn:#E59484; --quote:#DCE4F2; --rule:#4A3633; }}
+  --line:#2E333D; --accent:#93B2E8; --accent-soft:#243149; --warn:#E59484; --quote:#DCE4F2; --rule:#4A3633; }
 html[data-theme="manuscript"] h1,
 html[data-theme="manuscript"] .dtitle,
 html[data-theme="manuscript"] .stitle,
@@ -393,9 +470,9 @@ html[data-theme="marker"]{
   --line:#E6E6E0; --accent:#1B1B19; --accent-soft:#FFF5C2; --warn:#C0392B; --quote:#1B1B19;
   --hl:#FFE66B; --shadow:none;
 }
-@media (prefers-color-scheme: dark){html[data-theme="marker"]{
+html[data-mode="dark"][data-theme="marker"]{
   --paper:#1A1A18; --card:#242421; --ink:#F1F1EA; --sub:#ABABA3; --faint:#74746D;
-  --line:#34342F; --accent:#F1F1EA; --accent-soft:#3D3618; --warn:#EE8A7C; --quote:#F1F1EA; --hl:rgba(255,222,70,.4); }}
+  --line:#34342F; --accent:#F1F1EA; --accent-soft:#3D3618; --warn:#EE8A7C; --quote:#F1F1EA; --hl:rgba(255,222,70,.4); }
 html[data-theme="marker"] h1{font-family:inherit;font-weight:800;font-size:27px;letter-spacing:-.04em}
 html[data-theme="marker"] .dtitle{font-family:inherit;font-weight:800;font-size:23px;letter-spacing:-.035em}
 html[data-theme="marker"] .btitle{font-weight:700}
@@ -438,9 +515,9 @@ html[data-theme="bunko"]{
   --line:#D9DDE3; --accent:#23489A; --accent-soft:#E1E8F5; --warn:#B23A48; --quote:#151922;
   --shadow:0 1px 0 rgba(20,25,35,.05);
 }
-@media (prefers-color-scheme: dark){html[data-theme="bunko"]{
+html[data-mode="dark"][data-theme="bunko"]{
   --paper:#12151A; --card:#1B1F26; --ink:#E8EBF0; --sub:#A3ABB8; --faint:#6D7584;
-  --line:#2B313B; --accent:#8AA8E6; --accent-soft:#1F2B44; --warn:#EB8A95; --quote:#E8EBF0; --shadow:none; }}
+  --line:#2B313B; --accent:#8AA8E6; --accent-soft:#1F2B44; --warn:#EB8A95; --quote:#E8EBF0; --shadow:none; }
 html[data-theme="bunko"] h1{font-family:inherit;font-weight:800;font-size:26px;letter-spacing:-.035em}
 html[data-theme="bunko"] .book{padding:0;gap:0;overflow:hidden;border-radius:8px;border-color:transparent}
 html[data-theme="bunko"] .book .spine{width:62px;min-height:92px;border-radius:0;box-shadow:none;font-size:12.5px;font-weight:600}
@@ -489,9 +566,11 @@ html[data-theme="bunko"] .chip{border-radius:6px}
   <section id="v-graph" class="hidden"></section>
   <section id="v-stats" class="hidden"></section>
   <section id="v-ai" class="hidden"></section>
+  <section id="v-memo" class="hidden"></section>
+  <section id="v-blist" class="hidden"></section>
 </div>
 
-<button class="fab" id="fab">+ 책 추가</button>
+<button class="fab" id="fab" aria-label="빠르게 남기기">＋</button>
 <div class="composer hidden" id="composer"><div class="wrap">
   <textarea id="ai-q" rows="1" placeholder="내 독서 기록에 대해 물어보세요" oninput="autoGrow(this)"
     onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();askAI()}"></textarea>
@@ -499,6 +578,7 @@ html[data-theme="bunko"] .chip{border-radius:6px}
 </div></div>
 <nav class="nav" id="nav">
   <button data-v="library" class="on"><svg viewBox="0 0 24 24"><path d="M4 19V5a1 1 0 0 1 1-1h3v16H5a1 1 0 0 1-1-1zM8 4h4v16H8M12 6.5l3.6-1 3.4 13.6-3.6 1z"/></svg>서재</button>
+  <button data-v="memo"><svg viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="16" rx="2"/><path d="M8 9.5l1.5 1.5L12.5 8M8 15h8"/></svg>메모</button>
   <button data-v="graph"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="8" r="2.4"/><circle cx="9" cy="18" r="2.4"/><circle cx="18" cy="18" r="1.8"/><path d="M8.2 7 15.8 7.6M7 8.3l1.4 7.4M16.4 9.8l-5.5 6.6M11.4 18h4.8"/></svg>그물망</button>
   <button data-v="stats"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/></svg>통계</button>
   <button data-v="ai"><svg viewBox="0 0 24 24"><path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/></svg>AI 비서</button>
@@ -554,11 +634,40 @@ function callQuiet(fn, ...args) { return rpc(fn, ...args).catch(() => null); }
 /* ----- 기기에 저장해 두는 데이터 (다음에 열 때 바로 보이도록) ----- */
 const CACHE_KEY = 'lib_cache_v1', OUTBOX_KEY = 'lib_outbox_v1';
 function localToday() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+// 기기 저장: 큰 데이터는 IndexedDB (용량 넉넉), 작은 설정·대기 목록은 localStorage
+const IDB = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('my-library', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const run = (mode, fn) => open().then(db => new Promise((res, rej) => {
+    const t = db.transaction('kv', mode), q = fn(t.objectStore('kv'));
+    t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  }));
+  return {
+    get: k => run('readonly', st => st.get(k)).catch(() => undefined),
+    set: (k, v) => run('readwrite', st => st.put(v, k)).catch(() => false),
+    del: k => run('readwrite', st => st.delete(k)).catch(() => false)
+  };
+})();
+let cacheTimer = null;
 function saveCache() {
   if (!S.loaded) return;
-  LS.set(CACHE_KEY, JSON.stringify({ ver: S.ver || '', books: S.books, snippets: S.snips, settings: S.settings, at: Date.now() }));
+  clearTimeout(cacheTimer);
+  cacheTimer = setTimeout(() => {
+    IDB.set(CACHE_KEY, { ver: S.ver || '', books: S.books, snippets: S.snips, memos: S.memos, settings: S.settings, at: Date.now() });
+  }, 250);
 }
-function loadCache() { try { return JSON.parse(LS.get(CACHE_KEY) || 'null'); } catch (e) { return null; } }
+async function loadCache() {
+  let c = await IDB.get(CACHE_KEY);
+  if (!c) {   // 예전 버전(localStorage)에 저장된 것 옮기기
+    try { c = JSON.parse(LS.get(CACHE_KEY) || 'null'); } catch (e) { c = null; }
+    if (c) { await IDB.set(CACHE_KEY, c); LS.del(CACHE_KEY); }
+  }
+  return c || null;
+}
 
 /* ----- 바로 저장 (먼저 화면에 반영 → 뒤에서 시트에 저장, 끊기면 다시 시도) ----- */
 S.outbox = (() => { try { return JSON.parse(LS.get(OUTBOX_KEY) || '[]'); } catch (e) { return []; } })();
@@ -567,18 +676,23 @@ S.idMap = {};
 S.syncState = '';
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const isTemp = id => /^T/.test(String(id || ''));
+S.memos = [];
+// 바로 저장되는 종류: 저장 함수 → 목록 이름
+const OPS = { saveSnippet: { list: 'snips', del: 'deleteSnippet' }, saveMemo: { list: 'memos', del: 'deleteMemo' } };
+const DEL_OPS = { deleteSnippet: 'snips', deleteMemo: 'memos' };
 const resolveId = id => (id && S.idMap[id]) || id;
 function persistOutbox() { LS.set(OUTBOX_KEY, JSON.stringify(S.outbox.map(o => Object.assign({}, o, { sending: false })))); renderSync(); }
 function normKw(k) { return uniq(String(k || '').split(/[,#\n]/).map(x => x.trim())).join(', '); }
 
-function upsertSnipLocal(s) { const i = S.snips.findIndex(x => x.ID === s.ID); if (i >= 0) S.snips[i] = s; else S.snips.push(s); }
+function upsertLocal(list, x) { const arr = S[list]; const i = arr.findIndex(y => y.ID === x.ID); if (i >= 0) arr[i] = x; else arr.push(x); }
+function upsertSnipLocal(x) { upsertLocal('snips', x); }
 function queue(op) {
   op.cid = op.cid || uid();
-  if (op.fn === 'saveSnippet') {
-    const ex = S.outbox.find(o => o.fn === 'saveSnippet' && o.data.ID === op.data.ID && !o.sending);
+  if (OPS[op.fn]) {
+    const ex = S.outbox.find(o => o.fn === op.fn && o.data.ID === op.data.ID && !o.sending);
     if (ex) { ex.data = op.data; ex.local = op.local; ex.error = ''; persistOutbox(); saveCache(); flush(); return; }
   }
-  if (op.fn === 'deleteSnippet' && isTemp(op.id) && !S.outbox.some(o => o.sending && o.data && o.data.ID === op.id)) {
+  if (DEL_OPS[op.fn] && isTemp(op.id) && !S.outbox.some(o => o.sending && o.data && o.data.ID === op.id)) {
     S.outbox = S.outbox.filter(o => !(o.data && o.data.ID === op.id));
     persistOutbox(); saveCache(); return;
   }
@@ -591,8 +705,8 @@ function queue(op) {
 // 서버에서 새로 받은 데이터 위에, 아직 저장 못 한 변경을 다시 얹기
 function applyPending() {
   S.outbox.forEach(o => {
-    if (o.fn === 'saveSnippet') upsertSnipLocal(Object.assign({}, o.local));
-    else if (o.fn === 'deleteSnippet') S.snips = S.snips.filter(x => x.ID !== o.id);
+    if (OPS[o.fn]) upsertLocal(OPS[o.fn].list, Object.assign({}, o.local));
+    else if (DEL_OPS[o.fn]) S[DEL_OPS[o.fn]] = S[DEL_OPS[o.fn]].filter(x => x.ID !== o.id);
     else if (o.fn === 'updateBookFields') { const b = book(o.id); if (b) Object.assign(b, o.patch); }
   });
 }
@@ -615,15 +729,16 @@ async function flush() {
       if (op.error) break;   // 실패한 건 사용자가 다시 시도할 때까지 멈춤
       op.sending = true;
       try {
-        if (op.fn === 'saveSnippet') {
+        if (OPS[op.fn]) {
+          const list = OPS[op.fn].list;
           const d = Object.assign({}, op.data, { _cid: op.cid });
           const temp = isTemp(d.ID); if (temp) d.ID = '';
-          const saved = await rpc('saveSnippet', d);
-          S.snips = S.snips.filter(x => x.ID !== op.data.ID && x.ID !== saved.ID);
-          S.snips.push(saved);
+          const saved = await rpc(op.fn, d);
+          S[list] = S[list].filter(x => x.ID !== op.data.ID && x.ID !== saved.ID);
+          S[list].push(saved);
           if (temp) { remapId(op.data.ID, saved.ID); changedIds = true; }
-        } else if (op.fn === 'deleteSnippet') {
-          await rpc('deleteSnippet', op.id);
+        } else if (DEL_OPS[op.fn]) {
+          await rpc(op.fn, op.id);
         } else if (op.fn === 'updateBookFields') {
           const saved = await rpc('updateBookFields', op.id, op.patch);
           updateBook(saved);
@@ -642,7 +757,7 @@ async function flush() {
     renderSync();
     clearTimeout(flushTimer);
     if (S.syncState === 'waiting') flushTimer = setTimeout(flush, 30000);
-    if (changedIds && S.view === 'book' && !$('modal').innerHTML) renderBook();
+    if (changedIds && !$('modal').innerHTML) { if (S.view === 'book') renderBook(); else if (S.view === 'memo') renderMemoView(); }
   }
 }
 function renderSync() {
@@ -658,7 +773,8 @@ function renderSync() {
 function openSync() {
   if (!S.outbox.length) return;
   const name = o => o.fn === 'saveSnippet' ? '문장 저장: ' + String(o.local && (o.local['제목'] || o.local['내용']) || '').slice(0, 24)
-    : o.fn === 'deleteSnippet' ? '문장 삭제' : '책 정보: ' + ((book(o.id) || {})['제목'] || '');
+    : o.fn === 'saveMemo' ? (o.local && o.local['종류'] === '할일' ? '할 일: ' : '메모: ') + String(o.local && o.local['내용'] || '').slice(0, 24)
+    : o.fn === 'deleteSnippet' ? '문장 삭제' : o.fn === 'deleteMemo' ? '메모 삭제' : '책 정보: ' + ((book(o.id) || {})['제목'] || '');
   modal(`<h3>아직 시트에 저장되지 않은 기록</h3>
     <div class="small" style="margin-bottom:10px">이 기기에는 저장되어 있어요. 인터넷이 연결되면 자동으로 올라가요.</div>
     ${S.outbox.map((o, i) => `<div class="kw-row"><b style="font-weight:500">${esc(name(o))}</b><span>${o.error ? '⚠ ' + esc(o.error) : '대기 중'}</span>
@@ -670,7 +786,7 @@ function retrySync() { S.outbox.forEach(o => { o.error = ''; }); persistOutbox()
 function dropOp(i) {
   if (!confirm('이 기록을 버릴까요? 되돌릴 수 없어요.')) return;
   const o = S.outbox.splice(i, 1)[0];
-  if (o && o.fn === 'saveSnippet' && isTemp(o.data.ID)) S.snips = S.snips.filter(x => x.ID !== o.data.ID);
+  if (o && OPS[o.fn] && isTemp(o.data.ID)) S[OPS[o.fn].list] = S[OPS[o.fn].list].filter(x => x.ID !== o.data.ID);
   persistOutbox(); saveCache(); closeModal(); if (S.outbox.length) openSync(); show(S.view);
 }
 
@@ -681,11 +797,11 @@ async function refresh(first) {
     const d = await rpc('sync', first ? '' : (S.ver || ''));
     if (d.settings) S.settings = d.settings;
     if (!d.same) {
-      S.books = d.books; S.snips = d.snippets; S.ver = d.ver;
-      applyPending();
+      mergeSync(d);
       S.loaded = true; saveCache();
       if (!$('modal').innerHTML || first) rerender();
     } else { S.ver = d.ver; saveCache(); if (S.view === 'library') renderStats(); }
+    S.lastRefresh = Date.now();
     return true;
   } catch (e) {
     if (first) {
@@ -693,6 +809,22 @@ async function refresh(first) {
     }
     return false;
   } finally { S.refreshing = false; renderSync(); }
+}
+// 전체 또는 바뀐 것만 받은 결과를 합치기
+function mergeSync(d) {
+  if (d.full || !S.loaded) {
+    S.books = d.books || []; S.snips = d.snippets || []; S.memos = d.memos || [];
+  } else {
+    const merge = (key, rows) => {
+      const arr = S[key], idx = new Map(arr.map((x, i) => [x.ID, i]));
+      (rows || []).forEach(r => { const i = idx.get(r.ID); if (i != null) arr[i] = r; else { idx.set(r.ID, arr.length); arr.push(r); } });
+    };
+    merge('books', d.books); merge('snips', d.snippets); merge('memos', d.memos);
+    const TAB = { '책': 'books', '필사': 'snips', '메모': 'memos' };
+    (d.deleted || []).forEach(x => { const k = TAB[x.t]; if (k) S[k] = S[k].filter(r => r.ID !== x.id); });
+  }
+  S.ver = d.ver;
+  applyPending();
 }
 function rerender() {
   if (S.view === 'book' && !book(S.bookId)) S.view = 'library';
@@ -719,7 +851,7 @@ async function saveConnect() {
   try {
     await rpc('ping');
     LS.set('api_url', url); LS.set('api_key', key);
-    if (old.url && old.url !== url) { LS.del(CACHE_KEY); S.ver = ''; }
+    if (old.url && old.url !== url) { IDB.del(CACHE_KEY); LS.del(CACHE_KEY); S.ver = ''; S.loaded = false; }
     closeModal(); toast('연결됐어요');
     if (!S.loaded) $('list').innerHTML = '<div class="empty">처음 한 번 불러오는 중이에요…</div>';
     await refresh(true); flush();
@@ -730,29 +862,32 @@ async function saveConnect() {
 }
 function resetLocal() {
   if (S.outbox.length && !confirm(`아직 시트에 안 올라간 기록 ${S.outbox.length}개가 있어요. 그래도 비울까요?`)) return;
-  LS.del(CACHE_KEY); LS.del(OUTBOX_KEY); S.outbox = []; S.ver = '';
+  IDB.del(CACHE_KEY); LS.del(CACHE_KEY); LS.del(OUTBOX_KEY); S.outbox = []; S.ver = ''; S.loaded = false;
   closeModal(); $('list').innerHTML = '<div class="empty">새로 불러오는 중…</div>'; refresh(true);
 }
 
 /* ----- 앱 시작 ----- */
-function boot() {
+async function boot() {
   S.today = localToday();
   const startBook = new URLSearchParams(location.search).get('book');
   const route = () => {
+    const st = history.state;   // 새로고침해도 보던 탭 그대로
+    if (!startBook && st && ['memo', 'graph', 'stats'].includes(st.view)) S.view = st.view;
     if (startBook && book(startBook)) { S.bookId = startBook; S.view = 'book'; }
     history.replaceState({ view: S.view, id: S.bookId || '' }, '');
     show(S.view);
   };
   renderSync();
   if (!API.url || !API.key) { show('library'); $('list').innerHTML = '<div class="empty">서버를 연결하면 서재가 열려요.</div>'; openConnect(); return; }
-  const c = loadCache();
+  const c = await loadCache();
   if (c && c.books) {
-    S.books = c.books; S.snips = c.snippets || []; S.ver = c.ver || ''; if (c.settings) S.settings = c.settings;
-    S.loaded = true; route(); takeShared(); checkNewVersion();
+    S.books = c.books; S.snips = c.snippets || []; S.memos = c.memos || []; S.ver = c.ver || ''; if (c.settings) S.settings = c.settings;
+    applyPending();
+    S.loaded = true; route(); takeShared(); takeQuick(); checkNewVersion();
     refresh(false).then(() => flush());
   } else {
     show('library'); $('list').innerHTML = '<div class="empty">처음 한 번 불러오는 중이에요…</div>';
-    refresh(true).then(ok => { if (ok) { route(); takeShared(); } checkNewVersion(); flush(); });
+    refresh(true).then(ok => { if (ok) { route(); takeShared(); takeQuick(); } checkNewVersion(); flush(); });
   }
 }
 window.addEventListener('online', () => { renderSync(); flush(); });
@@ -911,16 +1046,18 @@ function snipHtml(s) {
 /* ===== 화면 전환 ===== */
 function show(view) {
   S.view = view;
-  ['library', 'book', 'graph', 'stats', 'ai'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
+  ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
   $('composer').classList.toggle('hidden', view !== 'ai');
   document.body.classList.toggle('ai-mode', view === 'ai');
-  $('fab').classList.toggle('hidden', view !== 'library');
-  const tab = view === 'book' ? 'library' : view;
+  $('fab').classList.toggle('hidden', !['library', 'memo', 'stats'].includes(view));
+  const tab = view === 'book' ? 'library' : view === 'blist' ? 'stats' : view;
   document.querySelectorAll('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
   if (view === 'library') renderLibrary();
   else if (view === 'book') renderBook();
   else if (view === 'graph') renderGraphView();
   else if (view === 'ai') renderAIView();
+  else if (view === 'memo') renderMemoView();
+  else if (view === 'blist') renderBookList();
   else renderStatsView();
 }
 function go(view, id) {
@@ -933,11 +1070,12 @@ window.addEventListener('popstate', e => {
   if ($('modal').innerHTML) closeModal();
   const st = e.state || {};
   if (st.view === 'book' && st.id && book(st.id)) { S.bookId = st.id; show('book'); }
-  else show(['graph', 'stats', 'ai'].includes(st.view) ? st.view : 'library');
+  else if (st.view === 'blist' && S.blist) show('blist');
+  else show(['graph', 'stats', 'ai', 'memo'].includes(st.view) ? st.view : 'library');
 });
 
 /* ===== 입력 창 ===== */
-function closeModal() { $('modal').innerHTML = ''; }
+function closeModal() { $('modal').innerHTML = ''; S.moveMemoId = null; }
 function modal(html) {
   $('modal').innerHTML = `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="sheet">${html}</div></div>`;
 }
@@ -989,7 +1127,11 @@ function submitSnip(id, keepOpen) {
   const local = Object.assign({ '출처': '직접입력', '작성일': S.today }, prev || {}, data, { '책제목': (book(S.bookId) || {})['제목'] || '' });
   upsertSnipLocal(local);
   queue({ fn: 'saveSnippet', data, local });
-  toast('저장했어요');
+  if (S.moveMemoId) {
+    const mid = resolveId(S.moveMemoId); S.moveMemoId = null;
+    S.memos = S.memos.filter(x => x.ID !== mid); queue({ fn: 'deleteMemo', id: mid });
+    toast('메모를 필사로 옮겼어요');
+  } else toast('저장했어요');
   renderBook();
   if (keepOpen) { openSnipForm(null); } else closeModal();
 }
@@ -1118,48 +1260,17 @@ const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(
 
 /* ---------- 그물망 ---------- */
 const G = { nodes: [], edges: [], byId: {}, nb: {}, scale: 1, ox: 0, oy: 0, sel: null,
-  opt: { kw: true, au: true, cat: false, init: false }, ptr: new Map(), drag: null, moved: 0,
+  mode: 'topic', top: 40, focus: null, hl: null, q: '',
+  opt: { au: false, cat: false }, ptr: new Map(), drag: null, moved: 0,
   cfg: { rep: 1200, grav: 0.03, len: 34, k: 0.05, cut: 110 } };
-
-function renderGraphView() {
-  const hasKw = S.snips.some(s => splitKw(s['키워드']).length);
-  if (!G.opt.init) { G.opt.cat = !hasKw; G.opt.init = true; }
-  const kwStats = keywordStats();
-  $('v-graph').innerHTML = `
-    <div class="view-head ai-head"><div><h1>그물망</h1><p>책과 키워드, 저자, 분류가 어떻게 이어지는지 보여줘요.</p></div><button class="btn" onclick="openKwManager()">키워드 정리</button></div>
-    <div class="chips" id="g-opts">
-      ${[['kw','키워드'],['au','저자'],['cat','개인분류']].map(([k, t]) => `<button class="chip ${G.opt[k] ? 'on' : ''}" data-o="${k}">${t}</button>`).join('')}
-    </div>
-    ${hasKw ? '' : `<div class="notice">아직 키워드가 달린 문장이 없어서 저자 · 개인분류로만 연결했어요.
-      필사 문장을 눌러 키워드를 달거나, <a style="color:var(--accent);font-weight:600;cursor:pointer" onclick="go('ai')">AI 비서 탭에서 키워드를 한꺼번에 달면</a> 그물망이 채워져요.</div>`}
-    <div class="g-wrap">
-      <canvas id="g-canvas" aria-label="책과 키워드 연결 그물망"></canvas>
-      <div class="g-tools">
-        <button onclick="gZoom(1.25)" aria-label="확대">＋</button>
-        <button onclick="gZoom(0.8)" aria-label="축소">－</button>
-        <button onclick="gFit()" aria-label="전체 보기">⤢</button>
-      </div>
-    </div>
-    <div class="legend">
-      <span><i class="lg-book"></i>책</span><span><i class="lg-kw"></i>키워드</span>
-      <span><i class="lg-au"></i>저자 (2권 이상)</span><span><i class="lg-cat"></i>개인분류</span>
-    </div>
-    ${kwStats.length ? `<div class="kw-chips">${kwStats.slice(0, 20).map(k =>
-      `<button class="chip" data-kw="${esc(k.kw)}">#${esc(k.kw)}<b>${k.n}</b></button>`).join('')}</div>` : ''}
-    <div id="g-info"></div>`;
-  $('g-opts').onclick = e => {
-    const c = e.target.closest('[data-o]'); if (!c) return;
-    G.opt[c.dataset.o] = !G.opt[c.dataset.o];
-    c.classList.toggle('on', G.opt[c.dataset.o]);
-    buildGraph(); gFit(); gInfo(null);
-  };
-  document.querySelectorAll('#v-graph [data-kw]').forEach(c => c.onclick = () => {
-    if (!G.opt.kw) { G.opt.kw = true; $('g-opts').querySelector('[data-o="kw"]').classList.add('on'); buildGraph(); gFit(); }
-    gSelect(G.byId['k:' + c.dataset.kw] || null, true);
-  });
-  setupCanvas();
-  buildGraph(); gFit(); gInfo(G.sel);
-}
+const CFG = {
+  topic: { rep: 2600, grav: 0.022, len: 58, k: 0.035, cut: 190 },
+  book: { rep: 1400, grav: 0.03, len: 36, k: 0.05, cut: 120 },
+  focus: { rep: 3200, grav: 0.03, len: 74, k: 0.04, cut: 240 }
+};
+// 검증한 8색 (밝은 화면 / 어두운 화면). 주제 묶음 크기 순서대로 고정, 9번째부터는 회색
+const CLUSTER_COLORS = { light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948'],
+  dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'] };
 
 function keywordStats() {
   const m = {};
@@ -1170,57 +1281,218 @@ function keywordStats() {
   return Object.values(m).sort((a, b) => b.n - a.n || b.books.size - a.books.size);
 }
 
-function seeded(str) { let h = 2166136261; for (const c of str) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)) >>> 0) / 4294967296; }
+/* 키워드끼리 얼마나 함께 나오나 + 주제 묶음 (데이터가 바뀔 때만 다시 계산) */
+let TOPIC = null, TOPIC_KEY = '';
+function topicData() {
+  const key = S.snips.length + ':' + S.snips.reduce((t, s) => t + String(s['키워드'] || '').length, 0);
+  if (TOPIC && TOPIC_KEY === key) return TOPIC;
+  const cnt = {}, co = {}, kwBooks = {}, bookKw = {};
+  S.snips.forEach(s => {
+    const ks = uniq(splitKw(s['키워드'])); const bid = s['책ID'];
+    ks.forEach(k => { cnt[k] = (cnt[k] || 0) + 1; (kwBooks[k] = kwBooks[k] || {})[bid] = (kwBooks[k][bid] || 0) + 1; (bookKw[bid] = bookKw[bid] || {})[k] = (bookKw[bid][k] || 0) + 1; });
+    for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {
+      const [a, b] = [ks[i], ks[j]].sort(); const kk = a + '\u0001' + b; co[kk] = (co[kk] || 0) + 1;
+    }
+  });
+  // 연관 강도: 함께 나온 횟수를 두 키워드 크기로 나눠서, '사랑'처럼 어디에나 있는 말이 모두를 삼키지 않게
+  const nb = {}; Object.keys(cnt).forEach(k => nb[k] = {});
+  const addW = (a, b, w) => { nb[a][b] = (nb[a][b] || 0) + w; nb[b][a] = (nb[b][a] || 0) + w; };
+  Object.entries(co).forEach(([kk, w]) => { const [a, b] = kk.split('\u0001'); addW(a, b, w / Math.sqrt(cnt[a] * cnt[b])); });
+  Object.values(bookKw).forEach(m => { const ks = Object.keys(m); if (ks.length > 40) return;
+    for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) addW(ks[i], ks[j], 0.15 / Math.sqrt(cnt[ks[i]] * cnt[ks[j]])); });
+  // 주제 묶기 (모듈성 최대화 한 단계)
+  const ks = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b));
+  const deg = {}; ks.forEach(k => deg[k] = Object.values(nb[k]).reduce((a, b) => a + b, 0));
+  const m2 = ks.reduce((t, k) => t + deg[k], 0) || 1;
+  const com = {}, tot = {}; ks.forEach(k => { com[k] = k; tot[k] = deg[k]; });
+  for (let it = 0, moved = true; moved && it < 30; it++) {
+    moved = false;
+    ks.forEach(k => {
+      const cur = com[k], links = {};
+      Object.entries(nb[k]).forEach(([o, w]) => links[com[o]] = (links[com[o]] || 0) + w);
+      tot[cur] -= deg[k];
+      let best = cur, gain = (links[cur] || 0) - tot[cur] * deg[k] / m2;
+      Object.entries(links).forEach(([c, w]) => { const g = w - tot[c] * deg[k] / m2; if (g > gain + 1e-9) { gain = g; best = c; } });
+      tot[best] += deg[k]; if (best !== cur) { com[k] = best; moved = true; }
+    });
+  }
+  const groups = {}; ks.forEach(k => { if (deg[k] > 0) (groups[com[k]] = groups[com[k]] || []).push(k); });
+  let cl = Object.values(groups).map(g => ({ kws: g, size: g.reduce((t, k) => t + cnt[k], 0) }));
+  // 색은 8개뿐이라, 작은 묶음은 가장 많이 이어진 묶음에 합쳐서 8개 이하로
+  while (cl.length > 8) {
+    cl.sort((a, b) => a.size - b.size);
+    const small = cl.shift(), inSmall = new Set(small.kws);
+    let best = null, bw = -1;
+    cl.forEach(c => { let w = 0; c.kws.forEach(k => small.kws.forEach(o => { w += (nb[k][o] || 0); })); if (w > bw) { bw = w; best = c; } });
+    best.kws = best.kws.concat(small.kws); best.size += small.size;
+  }
+  const loners = ks.filter(k => !(deg[k] > 0));   // 다른 키워드와 한 번도 같이 안 나온 것 → 회색
+  const clusters = cl.map(c => ({ kws: c.kws.sort((a, b) => cnt[b] - cnt[a]), size: c.size }))
+    .sort((a, b) => b.size - a.size || a.kws[0].localeCompare(b.kws[0]));
+  if (loners.length) clusters.push({ kws: loners, size: 0, loners: true });
+  const clusterOf = {}; clusters.forEach((c, i) => { c.i = c.loners ? 99 : i; c.kws.forEach(k => clusterOf[k] = c.i); });
+  TOPIC = { cnt, co, nb, kwBooks, bookKw, clusters, clusterOf, ranked: ks }; TOPIC_KEY = key;
+  return TOPIC;
+}
+function coCount(a, b) { const T = topicData(); const [x, y] = [a, b].sort(); return T.co[x + '\u0001' + y] || 0; }
+function clusterColor(i) {
+  const pal = CLUSTER_COLORS[document.documentElement.dataset.mode === 'dark' ? 'dark' : 'light'];
+  return i != null && i < 8 ? pal[i] : cssVar('--faint');
+}
+function relatedKw(k, n) {
+  const T = topicData();
+  return Object.keys(T.nb[k] || {}).map(o => ({ k: o, c: coCount(k, o), w: T.nb[k][o] }))
+    .filter(x => x.c > 0).sort((a, b) => b.c - a.c || b.w - a.w).slice(0, n);
+}
+
+function renderGraphView() {
+  const T = topicData();
+  const hasKw = T.ranked.length > 0;
+  if (!hasKw && G.mode === 'topic') G.mode = 'book';
+  const tops = [[30, '30개'], [60, '60개'], [0, '전체']];
+  const focusNode = G.focus ? graphLabel(G.focus) : '';
+  $('v-graph').innerHTML = `
+    <div class="view-head ai-head"><div><h1>그물망</h1><p>${G.focus ? `<b>${esc(focusNode)}</b>과 이어진 것만 보고 있어요.` : G.mode === 'topic' ? '함께 자주 나오는 키워드끼리 이어지고, 비슷한 주제는 같은 색이에요.' : '책과 키워드가 어떻게 이어지는지 보여줘요.'}</p></div>
+      <button class="btn" onclick="openKwManager()">키워드 정리</button></div>
+    <div class="g-search"><input class="field" id="g-q" placeholder="키워드 · 책 찾기" value="${esc(G.q)}" autocomplete="off"><div id="g-sug" class="g-sug"></div></div>
+    ${G.focus ? `<div class="chips"><button class="chip on" onclick="gUnfocus()">← 전체 지도로</button></div>` : `
+    <div class="chips" id="g-modes">
+      <button class="chip ${G.mode === 'topic' ? 'on' : ''}" data-m="topic">주제 지도</button>
+      <button class="chip ${G.mode === 'book' ? 'on' : ''}" data-m="book">책과 주제</button>
+      <span class="g-sep"></span>
+      ${tops.map(([n, t]) => `<button class="chip ${G.top === n ? 'on' : ''}" data-top="${n}">${t}</button>`).join('')}
+      ${G.mode === 'book' ? `<span class="g-sep"></span>${[['au', '저자'], ['cat', '개인분류']].map(([k, t]) => `<button class="chip ${G.opt[k] ? 'on' : ''}" data-o="${k}">${t}</button>`).join('')}` : ''}
+    </div>`}
+    ${hasKw ? '' : `<div class="notice">아직 키워드가 달린 문장이 없어요. 필사 문장에 키워드를 달면 주제 지도가 채워져요.</div>`}
+    <div class="g-wrap">
+      <canvas id="g-canvas" aria-label="키워드 그물망"></canvas>
+      <div class="g-tools">
+        <button onclick="gZoom(1.25)" aria-label="확대">＋</button>
+        <button onclick="gZoom(0.8)" aria-label="축소">－</button>
+        <button onclick="gFit()" aria-label="전체 보기">⤢</button>
+      </div>
+    </div>
+    <div class="legend" id="g-legend"></div>
+    <div id="g-info"></div>`;
+  if ($('g-modes')) $('g-modes').onclick = e => {
+    const m = e.target.closest('[data-m]'), t = e.target.closest('[data-top]'), o = e.target.closest('[data-o]');
+    if (m) { G.mode = m.dataset.m; G.sel = null; G.hl = null; }
+    else if (t) { G.top = Number(t.dataset.top); }
+    else if (o) { G.opt[o.dataset.o] = !G.opt[o.dataset.o]; }
+    else return;
+    renderGraphView();
+  };
+  const q = $('g-q');
+  q.oninput = () => { G.q = q.value; graphSuggest(); };
+  q.onkeydown = e => { if (e.key === 'Enter') { const f = document.querySelector('#g-sug [data-n]'); if (f) f.click(); } };
+  graphSuggest();
+  setupCanvas();
+  buildGraph(); gFit(); renderLegend(); gInfo(G.sel);
+}
+function graphLabel(id) {
+  if (!id) return '';
+  if (id.startsWith('k:')) return '#' + id.slice(2);
+  if (id.startsWith('b:')) return (book(id.slice(2)) || {})['제목'] || '';
+  return id.slice(2);
+}
+function graphSuggest() {
+  const box = $('g-sug'); if (!box) return;
+  const q = G.q.trim().replace(/^#/, '').toLowerCase();
+  if (!q) { box.innerHTML = ''; return; }
+  const T = topicData();
+  const kws = T.ranked.filter(k => k.toLowerCase().includes(q)).slice(0, 8).map(k => ({ id: 'k:' + k, t: '#' + k, s: T.cnt[k] + '문장' }));
+  const bs = S.books.filter(b => (String(b['제목']) + String(b['저자'])).toLowerCase().includes(q)).slice(0, 5).map(b => ({ id: 'b:' + b.ID, t: b['제목'], s: '책' }));
+  const all = kws.concat(bs);
+  box.innerHTML = all.length ? all.map(x => `<button class="chip" data-n="${esc(x.id)}">${esc(x.t)} <span class="small">${esc(x.s)}</span></button>`).join('') : '<span class="small">찾는 키워드나 책이 없어요</span>';
+  box.querySelectorAll('[data-n]').forEach(c => c.onclick = () => { G.q = ''; gFocus(c.dataset.n); });
+}
 
 function buildGraph() {
+  const T = topicData();
   const nodes = {}, edges = [];
-  const add = (id, type, label, ref) => nodes[id] || (nodes[id] = { id, type, label, ref, w: 0 });
-  const link = (a, b, w) => { edges.push({ a, b, w: w || 1 }); nodes[a].w += w || 1; nodes[b].w += w || 1; };
-  const bookIds = new Set(S.books.map(b => b.ID));
+  const add = (id, type, label, ref, w) => nodes[id] || (nodes[id] = { id, type, label, ref, w: w || 0 });
+  const link = (a, b, w) => { if (!nodes[a] || !nodes[b] || a === b) return; edges.push({ a, b, w: w || 1 }); };
+  const kwSet = (n) => (n ? T.ranked.slice(0, n) : T.ranked.filter(k => T.cnt[k] >= 1));
+  let mode = G.mode;
 
-  if (G.opt.kw) {
-    const pair = {};
-    S.snips.forEach(s => {
-      if (!bookIds.has(s['책ID'])) return;
-      splitKw(s['키워드']).forEach(k => { const key = s['책ID'] + '\u0001' + k; pair[key] = (pair[key] || 0) + 1; });
+  if (G.focus) {
+    mode = 'focus';
+    const fid = G.focus;
+    if (fid.startsWith('k:')) {
+      const k = fid.slice(2);
+      add(fid, 'kw', '#' + k, k, T.cnt[k] || 1);
+      const rel = relatedKw(k, 12);
+      rel.forEach(r => { add('k:' + r.k, 'kw', '#' + r.k, r.k, T.cnt[r.k]); link(fid, 'k:' + r.k, r.c); });
+      const bs = Object.entries(T.kwBooks[k] || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      bs.forEach(([bid, n]) => { const b = book(bid); if (!b) return; add('b:' + bid, 'book', b['제목'], bid, n); link(fid, 'b:' + bid, n); });
+      rel.forEach(r => bs.forEach(([bid]) => { const n = (T.bookKw[bid] || {})[r.k]; if (n) link('k:' + r.k, 'b:' + bid, n); }));
+      for (let i = 0; i < rel.length; i++) for (let j = i + 1; j < rel.length; j++) { const c = coCount(rel[i].k, rel[j].k); if (c >= 2) link('k:' + rel[i].k, 'k:' + rel[j].k, c); }
+    } else if (fid.startsWith('b:')) {
+      const bid = fid.slice(2), b = book(bid);
+      if (b) {
+        add(fid, 'book', b['제목'], bid, 10);
+        const mine = Object.entries(T.bookKw[bid] || {}).sort((a, c) => c[1] - a[1]).slice(0, 15);
+        mine.forEach(([k, n]) => { add('k:' + k, 'kw', '#' + k, k, T.cnt[k]); link(fid, 'k:' + k, n); });
+        const share = {};
+        mine.forEach(([k]) => Object.keys(T.kwBooks[k] || {}).forEach(o => { if (o !== bid) share[o] = (share[o] || 0) + 1; }));
+        Object.entries(share).filter(([, n]) => n >= 2).sort((a, c) => c[1] - a[1]).slice(0, 8).forEach(([o]) => {
+          const ob = book(o); if (!ob) return; add('b:' + o, 'book', ob['제목'], o, 3);
+          mine.forEach(([k]) => { const n = (T.bookKw[o] || {})[k]; if (n) link('b:' + o, 'k:' + k, n); });
+        });
+      }
+    }
+  } else if (mode === 'topic') {
+    const ks = kwSet(G.top);
+    const inSet = new Set(ks);
+    ks.forEach(k => add('k:' + k, 'kw', '#' + k, k, T.cnt[k]));
+    // 키워드마다 가장 강하게 이어진 4개만 → 실타래가 되지 않게
+    const seen = new Set();
+    ks.forEach(k => {
+      Object.entries(T.nb[k] || {}).filter(([o]) => inSet.has(o) && coCount(k, o) > 0)
+        .sort((a, b) => b[1] - a[1]).slice(0, 4)
+        .forEach(([o]) => { const kk = [k, o].sort().join('\u0001'); if (seen.has(kk)) return; seen.add(kk); link('k:' + k, 'k:' + o, coCount(k, o)); });
     });
-    Object.entries(pair).forEach(([key, n]) => {
-      const [bid, k] = key.split('\u0001');
-      const b = book(bid);
-      add('b:' + bid, 'book', b['제목'], bid); add('k:' + k, 'kw', '#' + k, k);
-      link('b:' + bid, 'k:' + k, n);
+  } else {
+    const ks = new Set(kwSet(G.top));
+    Object.entries(T.bookKw).forEach(([bid, m]) => {
+      const b = book(bid); if (!b) return;
+      Object.entries(m).forEach(([k, n]) => { if (!ks.has(k)) return; add('b:' + bid, 'book', b['제목'], bid); add('k:' + k, 'kw', '#' + k, k, T.cnt[k]); link('b:' + bid, 'k:' + k, n); });
     });
+    if (G.opt.au) {
+      const m = {};
+      S.books.forEach(b => splitAuthors(b['저자']).forEach(a => (m[a] = m[a] || []).push(b)));
+      Object.entries(m).filter(([, bs]) => bs.length >= 2).forEach(([a, bs]) => bs.forEach(b => {
+        add('b:' + b.ID, 'book', b['제목'], b.ID); add('a:' + a, 'au', a, a, bs.length); link('b:' + b.ID, 'a:' + a, 1);
+      }));
+    }
+    if (G.opt.cat) {
+      const m = {};
+      S.books.forEach(b => { const c = String(b['개인분류'] || '').trim(); if (c) (m[c] = m[c] || []).push(b); });
+      Object.entries(m).filter(([, bs]) => bs.length >= 2).forEach(([c, bs]) => bs.forEach(b => {
+        add('b:' + b.ID, 'book', b['제목'], b.ID); add('c:' + c, 'cat', c, c, bs.length); link('b:' + b.ID, 'c:' + c, 1);
+      }));
+    }
   }
-  if (G.opt.au) {
-    const m = {};
-    S.books.forEach(b => splitAuthors(b['저자']).forEach(a => (m[a] = m[a] || []).push(b)));
-    Object.entries(m).filter(([, bs]) => bs.length >= 2).forEach(([a, bs]) => bs.forEach(b => {
-      add('b:' + b.ID, 'book', b['제목'], b.ID); add('a:' + a, 'au', a, a); link('b:' + b.ID, 'a:' + a, 1);
-    }));
-  }
-  if (G.opt.cat) {
-    const m = {};
-    S.books.forEach(b => { const c = String(b['개인분류'] || '').trim(); if (c) (m[c] = m[c] || []).push(b); });
-    Object.entries(m).filter(([, bs]) => bs.length >= 2).forEach(([c, bs]) => bs.forEach(b => {
-      add('b:' + b.ID, 'book', b['제목'], b.ID); add('c:' + c, 'cat', c, c); link('b:' + b.ID, 'c:' + c, 1);
-    }));
-  }
+  G.cfg = CFG[mode] || CFG.book;
+  G.view = mode;
 
-  // 이전 위치는 유지하고, 새 노드만 자리를 잡음
-  const old = G.byId;
+  const old = G.byId || {};
   const list = Object.values(nodes);
-  const R = Math.sqrt(list.length) * 40;
+  const R = Math.sqrt(list.length) * (mode === 'book' ? 40 : 60);
   list.forEach(n => {
     const o = old[n.id];
-    if (o) { n.x = o.x; n.y = o.y; }
+    if (o && mode !== 'focus') { n.x = o.x; n.y = o.y; }
     else { const r = seeded(n.id); const a = r() * Math.PI * 2, d = Math.sqrt(r()) * R; n.x = Math.cos(a) * d; n.y = Math.sin(a) * d; }
-    n.r = n.type === 'book' ? 7 : n.type === 'kw' ? 5 + Math.min(14, Math.sqrt(n.w) * 2.6) : 6 + Math.min(10, Math.sqrt(n.w) * 2.2);
+    if (n.type === 'kw') { n.cl = T.clusterOf[n.ref]; n.r = 5 + Math.min(17, Math.sqrt(T.cnt[n.ref] || 1) * 1.9); }
+    else if (n.type === 'book') n.r = mode === 'focus' ? 9 : 7;
+    else n.r = 6 + Math.min(8, Math.sqrt(n.w) * 2);
+    if (G.focus === n.id) { n.x = 0; n.y = 0; n.pin = true; n.r += 4; }
   });
   G.nodes = list; G.edges = edges.map(e => ({ a: nodes[e.a], b: nodes[e.b], w: e.w }));
   G.byId = nodes; G.nb = {};
   G.edges.forEach(e => { (G.nb[e.a.id] = G.nb[e.a.id] || new Set()).add(e.b.id); (G.nb[e.b.id] = G.nb[e.b.id] || new Set()).add(e.a.id); });
   if (G.sel && !nodes[G.sel.id]) G.sel = null; else if (G.sel) G.sel = nodes[G.sel.id];
-  simulate(list.some(n => !old[n.id]) ? 320 : 60);
+  simulate(list.some(n => !old[n.id]) || mode === 'focus' ? 360 : 60);
 }
 
 function simulate(iters) {
@@ -1248,12 +1520,163 @@ function simulate(iters) {
       e.a.fx += dx * f; e.a.fy += dy * f; e.b.fx -= dx * f; e.b.fy -= dy * f;
     });
     N.forEach(p => {
-      if (p === G.drag) return;
+      if (p === G.drag || p.pin) return;
       const m = Math.max(1.5, 22 * alpha);
       p.x += Math.max(-m, Math.min(m, p.fx)); p.y += Math.max(-m, Math.min(m, p.fy));
     });
   }
 }
+
+function renderLegend() {
+  const box = $('g-legend'); if (!box) return;
+  const T = topicData();
+  const shown = new Set(G.nodes.filter(n => n.type === 'kw').map(n => n.cl));
+  const cl = T.clusters.filter(c => !c.loners && shown.has(c.i));
+  const kinds = [];
+  if (G.nodes.some(n => n.type === 'book')) kinds.push('<span><i class="lg-book"></i>책</span>');
+  if (G.nodes.some(n => n.type === 'au')) kinds.push('<span><i class="lg-au"></i>저자 (2권 이상)</span>');
+  if (G.nodes.some(n => n.type === 'cat')) kinds.push('<span><i class="lg-cat"></i>개인분류</span>');
+  box.innerHTML = (cl.length ? `<div class="g-clusters">${cl.map(c => `<button class="g-cl ${G.hl === c.i ? 'on' : ''}" data-c="${c.i}">
+      <i style="background:${clusterColor(c.i)}"></i>${c.kws.slice(0, 3).map(esc).join(' · ')}</button>`).join('')}
+      ${shown.has(99) ? `<span class="g-cl muted"><i style="background:${clusterColor(99)}"></i>혼자 쓰인 키워드</span>` : ''}</div>` : '')
+    + (kinds.length ? `<div class="g-kinds">${kinds.join('')}<span class="small">● 키워드 (크기 = 문장 수)</span></div>` : '');
+  box.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const c = Number(b.dataset.c); G.hl = G.hl === c ? null : c; G.sel = null; renderLegend(); drawGraph(); gInfo(null); });
+}
+
+function drawGraph() {
+  const cv = $('g-canvas'); if (!cv) return;
+  const ctx = cv.getContext('2d'), dpr = window.devicePixelRatio || 1;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cv.width / dpr, cv.height / dpr);
+  const W = cv.width / dpr, H = cv.height / dpr;
+  const colBook = G.view === 'focus' || G.view === 'book' ? cssVar('--sub') : cssVar('--n-book');
+  const col = n => n.type === 'kw' ? clusterColor(n.cl) : n.type === 'book' ? colBook : n.type === 'au' ? cssVar('--n-au') : cssVar('--n-cat');
+  const line = cssVar('--line'), ink = cssVar('--ink'), sub = cssVar('--sub'), card = cssVar('--card');
+  const sel = G.sel, near = sel ? (G.nb[sel.id] || new Set()) : null;
+  const lit = n => sel ? (n === sel || near.has(n.id)) : G.hl != null ? (n.type === 'kw' && n.cl === G.hl) : true;
+  if (!G.nodes.length) {
+    ctx.fillStyle = sub; ctx.font = '14px Pretendard, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('보여줄 연결이 없어요.', W / 2, H / 2); return;
+  }
+  const sx = n => n.x * G.scale + G.ox, sy = n => n.y * G.scale + G.oy;
+  G.edges.forEach(e => {
+    const on = sel ? (e.a === sel || e.b === sel) : G.hl != null ? (lit(e.a) && lit(e.b)) : false;
+    const dim = (sel || G.hl != null) && !on;
+    ctx.globalAlpha = dim ? 0.07 : on ? 0.8 : 0.5;
+    ctx.strokeStyle = on && sel ? col(sel) : line;
+    ctx.lineWidth = Math.min(3.2, (on ? 1.4 : 0.8) + Math.log(e.w + 1) * 0.55);
+    ctx.beginPath(); ctx.moveTo(sx(e.a), sy(e.a)); ctx.lineTo(sx(e.b), sy(e.b)); ctx.stroke();
+  });
+  G.nodes.forEach(n => {
+    const x = sx(n), y = sy(n), r = nodeR(n);
+    if (x < -30 || y < -30 || x > W + 30 || y > H + 30) return;
+    ctx.globalAlpha = lit(n) ? 1 : 0.13;
+    ctx.fillStyle = col(n); ctx.strokeStyle = card; ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (n.type === 'book') roundRect(ctx, x - r * 0.72, y - r, r * 1.44, r * 2, 2);
+    else if (n.type === 'kw') ctx.arc(x, y, r, 0, Math.PI * 2);
+    else if (n.type === 'au') { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); }
+    else { ctx.moveTo(x, y - r); ctx.lineTo(x + r * 0.95, y + r * 0.75); ctx.lineTo(x - r * 0.95, y + r * 0.75); ctx.closePath(); }
+    ctx.fill(); ctx.stroke();
+    if (n === sel || (G.focus === n.id && !sel)) { ctx.lineWidth = 2.5; ctx.strokeStyle = ink; ctx.stroke(); }
+  });
+  // 이름표: 선택 > 이어진 것 > 큰 키워드 순. 겹치면 건너뜀 (작은 키워드는 확대하면 보임)
+  function pri(n) {
+    if (n === sel || G.focus === n.id) return 1e6;
+    if (sel) return near.has(n.id) ? 1e5 + n.w : -1;
+    if (G.hl != null) return lit(n) ? 1e5 + n.w : -1;
+    return (n.type === 'book' ? (G.view === 'book' ? 0 : 500) : 1000) + (n.type === 'kw' ? (topicData().cnt[n.ref] || 0) : n.w);
+  }
+  const order = G.nodes.slice().sort((a, b) => pri(b) - pri(a));
+  const boxes = [];
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  order.forEach(n => {
+    const p = pri(n); if (p < 0) return;
+    if (n.type === 'book' && G.view === 'book' && p < 1e5 && G.scale < 0.85) return;
+    const t = n.label.length > 13 ? n.label.slice(0, 12) + '…' : n.label;
+    const big = p >= 1e6;
+    const fsz = big ? 14 : n.type === 'book' ? 11.5 : Math.round(11 + Math.min(3, Math.sqrt(topicData().cnt[n.ref] || 1) * 0.35));
+    ctx.font = `${n.type === 'book' ? 500 : 650} ${fsz}px Pretendard, -apple-system, sans-serif`;
+    const w = ctx.measureText(t).width, x = sx(n), y = sy(n) + nodeR(n) + 3;
+    const box = [x - w / 2 - 2, y - 1, x + w / 2 + 2, y + fsz + 2];
+    if (box[2] < 0 || box[0] > W || box[3] < 0 || box[1] > H) return;
+    if (!big && boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) return;
+    boxes.push(box);
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 4; ctx.strokeStyle = card; ctx.strokeText(t, x, y);
+    ctx.fillStyle = n.type === 'book' ? sub : ink; ctx.fillText(t, x, y);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function gSelect(n, center) {
+  G.sel = n && G.sel === n && !center ? null : n;
+  if (G.sel) G.hl = null;
+  if (G.sel && center) {
+    const r = $('g-canvas').getBoundingClientRect();
+    G.ox = r.width / 2 - G.sel.x * G.scale; G.oy = r.height / 2 - G.sel.y * G.scale;
+  }
+  drawGraph(); renderLegend(); gInfo(G.sel);
+}
+function gFocus(id) {
+  G.focus = id; G.sel = null; G.hl = null;
+  renderGraphView();
+  G.sel = G.byId[id] || null; drawGraph(); gInfo(G.sel);
+  const wrap = document.querySelector('.g-wrap'); if (wrap) wrap.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+function gUnfocus() { const was = G.focus; G.focus = null; G.sel = null; renderGraphView(); if (was && G.byId[was]) gSelect(G.byId[was], true); }
+
+function gInfo(n) {
+  const box = $('g-info'); if (!box) return;
+  const T = topicData();
+  if (!n) {
+    box.innerHTML = `<div class="drill">점을 누르면 이어진 키워드와 책, 문장을 보여줘요. 색 이름표를 누르면 그 주제만 밝게 보여요. 두 손가락으로 확대, 끌어서 이동할 수 있어요.</div>
+      ${G.focus ? '' : `<div class="kw-chips">${T.ranked.slice(0, 20).map(k => `<button class="chip" onclick="gFocus('k:${esc(k)}')">#${esc(k)}<b>${T.cnt[k]}</b></button>`).join('')}</div>`}`;
+    return;
+  }
+  if (n.type === 'kw') {
+    const k = n.ref;
+    const list = S.snips.filter(s => splitKw(s['키워드']).includes(k));
+    const nb = new Set(list.map(s => s['책ID']));
+    const rel = relatedKw(k, 10);
+    const books = Object.entries(T.kwBooks[k] || {}).sort((a, b) => b[1] - a[1]).map(([bid, c]) => [book(bid), c]).filter(x => x[0]);
+    const lim = S.gLimit || 30;
+    box.innerHTML = `<div class="info-card">
+      <div class="ic-head"><h3><i class="dot" style="background:${clusterColor(T.clusterOf[k])}"></i>#${esc(k)}</h3>
+        ${G.focus === n.id ? '' : `<button class="btn" onclick="gFocus('k:${esc(k)}')">이 주제만 보기</button>`}</div>
+      <div class="sub">문장 ${list.length}개 · 책 ${nb.size}권</div>
+      ${rel.length ? `<div class="ic-lb">함께 자주 나온 키워드</div><div class="kw-chips" style="margin:0 0 6px">${rel.map(r => `<button class="chip" onclick="gFocus('k:${esc(r.k)}')">#${esc(r.k)}<b>${r.c}</b></button>`).join('')}</div>` : ''}
+      <div class="ic-lb">이 키워드가 나온 책</div><div class="kw-chips" style="margin:0 0 6px">${books.slice(0, 12).map(([b, c]) => `<button class="chip" onclick="go('book','${b.ID}')">${esc(b['제목'])}<b>${c}</b></button>`).join('')}</div>
+      <div class="ic-lb">문장 <span class="small">누르면 그 문장으로 가요</span></div>
+      ${list.slice(0, lim).map(s => snipMini(s)).join('')}
+      ${list.length > lim ? `<button class="btn" style="width:100%;margin-top:8px" onclick="S.gLimit=${lim + 30};gInfo(G.sel)">${list.length - lim}개 더 보기</button>` : ''}</div>`;
+  } else if (n.type === 'book') {
+    const b = book(n.ref);
+    const kws = Object.entries(T.bookKw[b.ID] || {}).sort((a, c) => c[1] - a[1]);
+    box.innerHTML = `<div class="info-card"><div class="ic-head"><h3>${esc(b['제목'])}</h3></div>
+      <div class="sub">${esc(b['저자'])}${b['개인분류'] ? ' · ' + esc(b['개인분류']) : ''} · 필사 ${snipsOf(b.ID).length}개</div>
+      ${kws.length ? `<div class="kw-chips" style="margin:0 0 10px">${kws.slice(0, 16).map(([k, c]) => `<button class="chip" onclick="gFocus('k:${esc(k)}')">#${esc(k)}<b>${c}</b></button>`).join('')}</div>` : ''}
+      <div class="actions" style="margin:0"><button class="btn primary" onclick="go('book','${b.ID}')">책 열기</button>
+        ${G.focus === n.id ? '' : `<button class="btn" onclick="gFocus('b:${b.ID}')">이 책 중심으로 보기</button>`}</div></div>`;
+  } else {
+    const books = [...(G.nb[n.id] || [])].map(id => G.byId[id]).filter(x => x && x.type === 'book').map(x => book(x.ref));
+    box.innerHTML = `<div class="info-card"><h3>${esc(n.label)}</h3><div class="sub">${n.type === 'au' ? '저자' : '개인분류'} · 책 ${books.length}권</div>
+      ${books.map(b => `<button class="mini" onclick="go('book','${b.ID}')"><b>${esc(b['제목'])}</b><span>${esc(b['저자'])}</span></button>`).join('')}</div>`;
+  }
+}
+function snipMini(s) {
+  const b = book(s['책ID']) || {};
+  return `<button class="mini" onclick="openSnipInBook('${s.ID}')">
+    <b>${esc(s['제목'] || b['제목'] || '')}</b>
+    <span>${esc(String(s['내용']).slice(0, 110))}${String(s['내용']).length > 110 ? '…' : ''}</span>
+    <em>${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}</em></button>`;
+}
+
+
+
+
+function seeded(str) { let h = 2166136261; for (const c of str) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)) >>> 0) / 4294967296; }
+
+
 
 /* 캔버스 · 그리기 */
 function setupCanvas() {
@@ -1317,105 +1740,9 @@ function gFit() {
 }
 
 function nodeR(n) { return n.r * Math.max(0.75, Math.min(1.35, Math.sqrt(G.scale / 0.6))); }   // 화면 기준 크기
-function drawGraph() {
-  const cv = $('g-canvas'); if (!cv) return;
-  const ctx = cv.getContext('2d'), dpr = window.devicePixelRatio || 1;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cv.width / dpr, cv.height / dpr);
-  const W = cv.width / dpr, H = cv.height / dpr;
-  const col = { book: cssVar('--n-book'), kw: cssVar('--n-kw'), au: cssVar('--n-au'), cat: cssVar('--n-cat') };
-  const line = cssVar('--line'), ink = cssVar('--ink'), sub = cssVar('--sub'), card = cssVar('--card');
-  const sel = G.sel, near = sel ? (G.nb[sel.id] || new Set()) : null;
-  const lit = n => !sel || n === sel || near.has(n.id);
-  if (!G.nodes.length) {
-    ctx.fillStyle = sub; ctx.font = '14px Pretendard, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('보여줄 연결이 없어요. 위에서 다른 항목을 켜 보세요.', W / 2, H / 2); return;
-  }
-  const sx = n => n.x * G.scale + G.ox, sy = n => n.y * G.scale + G.oy;
-  // 선
-  G.edges.forEach(e => {
-    const on = sel && (e.a === sel || e.b === sel);
-    ctx.globalAlpha = sel ? (on ? 0.85 : 0.1) : 0.6;
-    ctx.strokeStyle = on ? col[sel.type] : line;
-    ctx.lineWidth = on ? 2 : Math.min(2.4, 0.8 + Math.log(e.w + 1) * 0.6);
-    ctx.beginPath(); ctx.moveTo(sx(e.a), sy(e.a)); ctx.lineTo(sx(e.b), sy(e.b)); ctx.stroke();
-  });
-  // 점
-  G.nodes.forEach(n => {
-    const x = sx(n), y = sy(n), r = nodeR(n);
-    if (x < -30 || y < -30 || x > W + 30 || y > H + 30) return;
-    ctx.globalAlpha = lit(n) ? 1 : 0.16;
-    ctx.fillStyle = col[n.type]; ctx.strokeStyle = card; ctx.lineWidth = 2;
-    ctx.beginPath();
-    if (n.type === 'book') roundRect(ctx, x - r * 0.72, y - r, r * 1.44, r * 2, 2);
-    else if (n.type === 'kw') ctx.arc(x, y, r, 0, Math.PI * 2);
-    else if (n.type === 'au') { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); }
-    else { ctx.moveTo(x, y - r); ctx.lineTo(x + r * 0.95, y + r * 0.75); ctx.lineTo(x - r * 0.95, y + r * 0.75); ctx.closePath(); }
-    ctx.fill(); ctx.stroke();
-    if (n === sel) { ctx.lineWidth = 2.5; ctx.strokeStyle = ink; ctx.stroke(); }
-  });
-  // 이름표: 선택 > 키워드·저자·분류(많이 이어진 순) > 책. 겹치면 건너뜀
-  const order = G.nodes.slice().sort((a, b) => pri(b) - pri(a));
-  function pri(n) {
-    if (n === sel) return 1e6;
-    if (sel && near.has(n.id)) return 1e5 + n.w;
-    if (sel) return -1;
-    return (n.type === 'book' ? 0 : 1000) + n.w;
-  }
-  const boxes = [];
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  order.forEach(n => {
-    const p = pri(n);
-    if (p < 0) return;
-    if (n.type === 'book' && p < 1e5 && G.scale < 0.85) return;
-    const t = n.label.length > 12 ? n.label.slice(0, 11) + '…' : n.label;
-    const fsz = n === sel ? 13 : (n.type === 'book' ? 11 : 12);
-    ctx.font = `${n.type === 'book' ? 400 : 650} ${fsz}px Pretendard, -apple-system, sans-serif`;
-    const w = ctx.measureText(t).width, x = sx(n), y = sy(n) + nodeR(n) + 3;
-    const box = [x - w / 2 - 2, y - 1, x + w / 2 + 2, y + fsz + 2];
-    if (box[2] < 0 || box[0] > W || box[3] < 0 || box[1] > H) return;
-    if (boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) return;
-    boxes.push(box);
-    ctx.globalAlpha = 1;
-    ctx.lineWidth = 3.5; ctx.strokeStyle = card; ctx.strokeText(t, x, y);
-    ctx.fillStyle = n.type === 'book' ? sub : ink; ctx.fillText(t, x, y);
-  });
-  ctx.globalAlpha = 1;
-}
 function roundRect(ctx, x, y, w, h, r) { ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
-function gSelect(n, center) {
-  G.sel = n && G.sel === n && !center ? null : n;
-  if (G.sel && center) {
-    const r = $('g-canvas').getBoundingClientRect();
-    G.ox = r.width / 2 - G.sel.x * G.scale; G.oy = r.height / 2 - G.sel.y * G.scale;
-  }
-  drawGraph(); gInfo(G.sel);
-}
 
-function gInfo(n) {
-  const box = $('g-info'); if (!box) return;
-  if (!n) { box.innerHTML = `<div class="drill">점을 누르면 이어진 책과 문장을 보여줘요. 두 손가락이나 휠로 확대, 끌어서 이동할 수 있어요.</div>`; return; }
-  const bookBtn = b => `<button class="mini" onclick="go('book','${b.ID}')"><b>${esc(b['제목'])}</b><span>${esc(b['저자'])}</span></button>`;
-  if (n.type === 'kw') {
-    const list = S.snips.filter(s => splitKw(s['키워드']).includes(n.ref));
-    const nb = new Set(list.map(s => s['책ID']));
-    box.innerHTML = `<div class="info-card"><h3>#${esc(n.ref)}</h3><div class="sub">문장 ${list.length}개 · 책 ${nb.size}권</div>
-      ${list.slice(0, 40).map(s => `<button class="mini" onclick="go('book','${s['책ID']}')">
-        <b>${esc(s['제목'] || (book(s['책ID']) || {})['제목'] || '')}</b>
-        <span>${esc(String(s['내용']).slice(0, 110))}${String(s['내용']).length > 110 ? '…' : ''}</span>
-        <em>${esc((book(s['책ID']) || {})['제목'] || '')}${s['쪽수'] !== '' ? ' · p.' + esc(s['쪽수']) : ''}</em></button>`).join('')}</div>`;
-  } else if (n.type === 'book') {
-    const b = book(n.ref);
-    const kws = keywordStats().filter(k => k.books.has(b.ID));
-    box.innerHTML = `<div class="info-card"><h3>${esc(b['제목'])}</h3><div class="sub">${esc(b['저자'])}${b['개인분류'] ? ' · ' + esc(b['개인분류']) : ''}</div>
-      ${kws.length ? `<div class="kw-chips" style="margin:0 0 10px">${kws.map(k => `<span class="chip">#${esc(k.kw)}</span>`).join('')}</div>` : ''}
-      <button class="btn primary" onclick="go('book','${b.ID}')">책 열기</button></div>`;
-  } else {
-    const books = [...(G.nb[n.id] || [])].map(id => G.byId[id]).filter(x => x && x.type === 'book').map(x => book(x.ref));
-    box.innerHTML = `<div class="info-card"><h3>${esc(n.label)}</h3><div class="sub">${n.type === 'au' ? '저자' : '개인분류'} · 책 ${books.length}권</div>
-      ${books.map(bookBtn).join('')}</div>`;
-  }
-}
 window.addEventListener('resize', () => { if (S.view === 'graph' && G.resize) G.resize(); });
 
 /* ---------- 통계 ---------- */
@@ -1444,8 +1771,10 @@ function renderStatsView() {
   };
   const hbars = (id, rows, limit) => {
     const max = Math.max(1, ...rows.map(r => r.bs.length));
-    return rows.slice(0, limit).map((r, i) => `<div class="hbar" data-g="${id}" data-i="${i}" title="${esc(r.k)} · ${r.bs.length}권">
-      <span class="name">${esc(r.k)}</span><span class="track"><span class="fill" style="display:block;width:${r.bs.length / max * 100}%"></span></span><span class="n">${r.bs.length}</span></div>`).join('');
+    const open = !!S.statOpen[id];
+    const more = rows.length > limit ? `<button class="more-btn" data-more="${id}">${open ? '접기' : `전체 ${rows.length}개 보기`}</button>` : '';
+    return (open ? rows : rows.slice(0, limit)).map((r, i) => `<div class="hbar" data-g="${id}" data-i="${i}" title="${esc(r.k)} · ${r.bs.length}권">
+      <span class="name">${esc(r.k)}</span><span class="track"><span class="fill" style="display:block;width:${r.bs.length / max * 100}%"></span></span><span class="n">${r.bs.length}</span></div>`).join('') + more;
   };
   const G2 = { cat: groupBy('대분류'), my: groupBy('개인분류'), route: groupBy('경로'), au: groupBy('저자', splitAuthors).filter(r => r.bs.length >= 2) };
   statGroups = { ...G2, month: buckets.map(x => ({ k: x.label, bs: x.books })) };
@@ -1459,22 +1788,22 @@ function renderStatsView() {
     <div class="view-head ai-head"><div><h1>독서 통계</h1><p>완독일 기준이에요.</p></div><button class="btn" onclick="openReport(statYear)">📖 독서 리포트</button></div>
     <div class="chips" id="st-years">${[...years, '전체'].map(y => `<button class="chip ${statYear === y ? 'on' : ''}" data-y="${y}">${y === '전체' ? '전체' : y + '년'}</button>`).join('')}</div>
     <div class="tiles">
-      <div class="tile"><b>${done.length}</b><span>완독한 책 (권)</span></div>
-      <div class="tile"><b>${pages.toLocaleString()}</b><span>읽은 쪽수</span></div>
-      <div class="tile"><b>${avgDays ? avgDays.toFixed(1) : '–'}</b><span>한 권 평균 (일)</span></div>
-      <div class="tile"><b>${snipN.toLocaleString()}</b><span>필사 덩어리</span></div>
+      <button class="tile tap" data-list="최근 완독"><b>${done.length}</b><span>완독한 책 (권) ›</span></button>
+      <button class="tile tap" data-list="두꺼운"><b>${pages.toLocaleString()}</b><span>읽은 쪽수 ›</span></button>
+      <button class="tile tap" data-list="빨리 읽은"><b>${avgDays ? avgDays.toFixed(1) : '–'}</b><span>한 권 평균 (일) ›</span></button>
+      <button class="tile tap" data-list="필사 많은"><b>${snipN.toLocaleString()}</b><span>필사 덩어리 ›</span></button>
     </div>
     ${(() => { const g = Number(S.settings.goal) || 0, y = S.today.slice(0, 4); if (all || statYear !== y) return '';
       return `<div class="panel" onclick="openSettings()" style="cursor:pointer"><h3>${y}년 목표<small>${g ? '' : '눌러서 정하기'}</small></h3>${g ? `<div class="gl small" style="display:flex;justify-content:space-between;margin-bottom:6px"><span>${done.length} / ${g}권</span><span>${Math.min(100, Math.round(done.length / g * 100))}% · ${done.length >= g ? '달성! 🎉' : '남은 ' + (g - done.length) + '권'}</span></div><div class="bar"><i style="width:${Math.min(100, done.length / g * 100)}%"></i></div>` : ''}</div>`; })()}
-    <div class="panel"><h3>${all ? '연도별 완독' : '월별 완독'}<small>막대를 누르면 책 목록</small></h3>
+    <div class="panel"><h3>${all ? '연도별 완독' : '월별 완독'}<small>막대를 누르면 그 달에 읽은 책</small></h3>
       <div class="vbars">${buckets.map((x, i) => `<div class="vbar" data-g="month" data-i="${i}" title="${x.label} · ${x.books.length}권">
         <span class="val">${x.books.length || ''}</span><span class="fill" style="height:${x.books.length / maxB * 100}%"></span></div>`).join('')}</div>
       <div class="vlabels">${buckets.map(x => `<span>${x.label}</span>`).join('')}</div>
       <div class="drill" id="drill-month"></div>
     </div>
     <div class="two">
-      <div class="panel"><h3>대분류</h3>${hbars('cat', G2.cat, 10)}<div class="drill" id="drill-cat"></div></div>
-      <div class="panel"><h3>개인분류<small>상위 10</small></h3>${hbars('my', G2.my, 10)}<div class="drill" id="drill-my"></div></div>
+      <div class="panel"><h3>대분류<small>${G2.cat.length}개 · 누르면 책 목록</small></h3>${hbars('cat', G2.cat, 10)}<div class="drill" id="drill-cat"></div></div>
+      <div class="panel"><h3>개인분류<small>${G2.my.length}개 · 누르면 책 목록</small></h3>${hbars('my', G2.my, 10)}<div class="drill" id="drill-my"></div></div>
       <div class="panel"><h3>어디서 읽었나</h3>${hbars('route', G2.route, 8)}<div class="drill" id="drill-route"></div></div>
       <div class="panel"><h3>여러 권 읽은 저자</h3>${G2.au.length ? hbars('au', G2.au, 10) : '<div class="drill">아직 없어요</div>'}<div class="drill" id="drill-au"></div></div>
     </div>
@@ -1487,18 +1816,18 @@ function renderStatsView() {
       ${mostSnip ? `<div class="fact" onclick="go('book','${mostSnip[0]}')"><span>필사를 가장 많이 한 책</span><b>${esc((book(mostSnip[0]) || {})['제목'] || '')} · ${mostSnip[1]}개</b></div>` : ''}
     </div></div>`;
   $('st-years').onclick = e => { const c = e.target.closest('[data-y]'); if (!c) return; statYear = c.dataset.y; renderStatsView(); };
-  $('v-stats').querySelectorAll('[data-g]').forEach(el => el.onclick = () => statDrill(el));
+  $('v-stats').querySelectorAll('[data-g]').forEach(el => el.onclick = () => openStatGroup(el));
+  $('v-stats').querySelectorAll('[data-more]').forEach(el => el.onclick = () => { const k = el.dataset.more; S.statOpen[k] = !S.statOpen[k]; renderStatsView(); });
+  const yLabel = all ? '전체 기간' : statYear + '년';
+  $('v-stats').querySelectorAll('[data-list]').forEach(el => el.onclick = () => openBookList(`${yLabel} 완독한 책`, done, el.dataset.list));
 }
 let statGroups = {};
-function statDrill(el) {
-  const g = el.dataset.g, row = statGroups[g][Number(el.dataset.i)];
-  const box = $('drill-' + g); if (!box) return;
-  const was = el.classList.contains('on');
-  $('v-stats').querySelectorAll(`[data-g="${g}"]`).forEach(x => x.classList.remove('on'));
-  if (was) { box.innerHTML = ''; return; }
-  el.classList.add('on');
-  box.innerHTML = `<b>${esc(row.k)}</b> · ${row.bs.length}권<br>` + (row.bs.length
-    ? row.bs.map(b => `<a onclick="go('book','${b.ID}')">${esc(b['제목'])}</a>`).join(' · ') : '없음');
+function openStatGroup(el) {
+  const g = el.dataset.g, row = (statGroups[g] || [])[Number(el.dataset.i)]; if (!row) return;
+  const names = { cat: '대분류', my: '개인분류', route: '어디서 읽었나', au: '저자' };
+  const span = statYear === '전체' ? '전체 기간' : statYear + '년 완독';
+  if (g === 'month') openBookList(`${statYear === '전체' ? '' : statYear + '년 '}${row.k} 완독`, row.bs, '최근 완독');
+  else openBookList(`${names[g]} · ${row.k}`, row.bs, '최근 완독', span);
 }
 
 /* ===================================================================
@@ -2148,8 +2477,18 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.2.1';
+const APP_VERSION = '2.3';
 const PATCH_NOTES = [
+  { v: '2.3', d: '2026.10.18', t: '메모 · 할 일 · 새 그물망', items: [
+    '아래 메뉴에 메모가 생겼어요. "내일 3시 치과", "- 책 반납하기"처럼 쓰면 할 일로, 그냥 쓰면 메모로 들어가요',
+    '할 일은 지난 일 · 오늘 · 내일 · 이번 주 · 나중에로 나눠 보이고, 동그라미를 누르면 끝낸 일로 가요',
+    '메모를 필사로 옮기거나 책과 이을 수 있어요',
+    '어디서든 ＋ 버튼으로 메모 · 할 일 · 필사 · 사진 필사 · 책 추가. 앱 아이콘을 길게 눌러도 바로 열려요',
+    '그물망이 주제 지도로 바뀌었어요: 함께 자주 나온 키워드끼리 잇고 비슷한 주제는 같은 색, 찾기와 "이 주제만 보기"',
+    '그물망에서 문장을 누르면 그 책의 그 문장으로 바로 가요',
+    '설정에서 화면 밝기를 고를 수 있어요 (휴대폰 설정대로 · 밝게 · 어둡게)',
+    '통계의 완독한 책 · 분류 · 달을 누르면 책 목록이 열려요 (목록 · 앨범 보기, 정렬). 분류는 전체 보기도 돼요',
+    '바뀐 것만 주고받아 동기화가 가벼워졌고, 기기 저장 공간이 넉넉해졌어요'] },
   { v: '2.2.1', d: '2026.10.17', t: '공유 받기 고침 · 붙여넣기', items: [
     '설치할 때 예전 앱 설정이 쓰여 공유 목록에 안 나오던 문제를 고쳤어요',
     '복사한 글을 내용 칸에 붙여넣으면 줄바꿈 정리 · 쪽수 · AI 제목이 공유와 똑같이 돼요',
@@ -2214,15 +2553,342 @@ const THEMES = [
 function curTheme() { return document.documentElement.dataset.theme || 'manuscript'; }
 function setTheme(id) {
   document.documentElement.dataset.theme = id; LS.set('theme', id);
-  const paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim();
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', paper));
+  applyMode();
   if (S.loaded) show(S.view);
 }
 function themePickerHtml() {
-  return `<div class="panel2" style="margin-top:18px"><h4>디자인</h4><div class="themes">${THEMES.map(t => `
+  return `<div class="panel2" style="margin-top:18px"><h4>화면 밝기</h4>${modePickerHtml()}</div>
+    <div class="panel2" style="margin-top:12px"><h4>디자인</h4><div class="themes">${THEMES.map(t => `
     <button class="theme-opt ${curTheme() === t.id ? 'on' : ''}" onclick="setTheme('${t.id}');openSettings()">
       <span class="tsw">${t.sw.map(c => `<i style="background:${c}"></i>`).join('')}</span>
       <b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div></div>`;
+}
+
+
+/* ===================================================================
+   메모 · 할 일 (v2.3)
+   =================================================================== */
+S.memoFilter = '전체';
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+function ymd(d) { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); }
+function dateOf(str) { return new Date(String(str).slice(0, 10) + 'T00:00:00'); }
+
+// "내일 3시 치과", "- 책 반납하기", "다음주 수요일까지 보고서" → { type, due, time, text }
+function parseQuick(raw, forceType) {
+  let t = String(raw || '').trim(), type = forceType || '', due = '', time = '';
+  const today = dateOf(S.today || localToday());
+  const add = n => { const d = new Date(today); d.setDate(d.getDate() + n); return ymd(d); };
+  const mark = t.match(/^\s*(?:[-*•]|\[\s?\]|☐|□|할\s?일\s*[:：])\s*/);
+  if (mark) { type = type || '할일'; t = t.slice(mark[0].length); }
+  const cut = re => { const m = t.match(re); if (m) t = (t.slice(0, m.index) + ' ' + t.slice(m.index + m[0].length)).trim(); return m; };
+  let m;
+  if ((m = cut(/(오늘|내일|모레|글피)(?:\s*까지)?/))) due = add({ 오늘: 0, 내일: 1, 모레: 2, 글피: 3 }[m[1]]);
+  else if ((m = cut(/(이번\s?주|다음\s?주|담주)?\s*([월화수목금토일])요일(?:\s*까지)?/))) {
+    const want = WD.indexOf(m[2]), cur = today.getDay();
+    const mon = (cur + 6) % 7;   // 월요일 기준 오늘이 몇 번째 날
+    const wantMon = (want + 6) % 7;
+    let diff;
+    if (!m[1]) diff = (want - cur + 7) % 7;
+    else if (/이번/.test(m[1])) diff = wantMon - mon;
+    else diff = 7 - mon + wantMon;
+    due = add(diff);
+  } else if ((m = cut(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})(?:\s*까지)?/))) due = `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  else if ((m = cut(/(\d{1,2})\s*월\s*(\d{1,2})\s*일(?:\s*까지)?/)) || (m = cut(/(?:^|\s)(\d{1,2})\/(\d{1,2})(?:\s*까지)?(?=\s|$)/))) {
+    let y = today.getFullYear(); const mm = Number(m[1]), dd = Number(m[2]);
+    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+      let d = new Date(y, mm - 1, dd); if (d < today - 86400000 * 30) d = new Date(y + 1, mm - 1, dd);
+      due = ymd(d);
+    }
+  } else if ((m = cut(/(\d{1,2})\s*일\s*(?:뒤|후)/))) due = add(Number(m[1]));
+  else if ((m = cut(/(이번\s?주말|주말)/))) due = add((6 - today.getDay() + 7) % 7);
+  else if ((m = cut(/다음\s?주(?:\s*까지)?/))) due = add(7 - ((today.getDay() + 6) % 7));
+  if ((m = cut(/(오전|오후|아침|저녁|밤|낮)?\s*(\d{1,2})\s*시(?!간)(?:\s*(\d{1,2})\s*분|\s*(반))?/)) || (m = cut(/(?:^|\s)()(\d{1,2}):(\d{2})(?=\s|$)/))) {
+    let h = Number(m[2]), mi = Number(m[3] || (m[4] ? 30 : 0));
+    if (/오후|저녁|밤/.test(m[1] || '') && h < 12) h += 12;
+    if (!m[1] && h >= 1 && h <= 7) h += 12;   // "3시"는 보통 오후
+    if (h <= 24 && mi < 60) { time = String(h % 24).padStart(2, '0') + ':' + String(mi).padStart(2, '0'); if (!due) due = add(0); }
+  }
+  t = t.replace(/\s{2,}/g, ' ').replace(/^\s*(?:에|까지|,)\s*/, '').trim();
+  const verbTodo = /(하기|할\s?것|해야\s?(?:함|해|돼)|사기|보내기|챙기기|예약|신청|반납|제출|연락|전화)[.!]?\s*$/.test(t);
+  const sentence = /(다|요|네|죠|음|어|야|지)[.!?~]*\s*$/.test(t);   // "오늘 읽은 책이 좋았다" 같은 문장은 메모
+  if (!type) type = (verbTodo || ((due || time) && !sentence)) ? '할일' : '메모';
+  if (type === '메모') {   // 메모는 쓴 그대로 (날짜 말도 지우지 않음)
+    return { type, due: '', time: '', text: String(raw || '').trim().replace(mark ? mark[0] : '', '').trim() || String(raw || '').trim() };
+  }
+  return { type, due, time, text: t || String(raw || '').trim() };
+}
+function dueLabel(due, time) {
+  if (!due) return '';
+  const d = dayDiff(due), wd = WD[dateOf(due).getDay()];
+  const md = `${Number(due.slice(5, 7))}/${Number(due.slice(8, 10))}(${wd})`;
+  const word = d === 0 ? '오늘' : d === 1 ? '내일' : d === 2 ? '모레' : d < 0 ? `${-d}일 지남` : md;
+  return word + (d >= 0 && d <= 2 ? ' ' + md : '') + (time ? ' ' + time : '');
+}
+
+/* ----- 화면 ----- */
+function renderMemoView() {
+  const all = S.memos.slice();
+  const todos = all.filter(m => m['종류'] === '할일' && !isDone(m));
+  const done = all.filter(m => m['종류'] === '할일' && isDone(m)).sort((a, b) => String(b['완료일']).localeCompare(String(a['완료일'])));
+  const memos = all.filter(m => m['종류'] !== '할일').sort((a, b) => String(b['작성일'] || '').localeCompare(String(a['작성일'] || '')) || String(b.ID).localeCompare(String(a.ID)));
+  const f = S.memoFilter;
+  const groups = [['지난 할 일', d => d < 0], ['오늘', d => d === 0], ['내일', d => d === 1], ['이번 주', d => d > 1 && d <= 7], ['나중에', d => d > 7]];
+  const sorted = todos.slice().sort((a, b) => String(a['마감일'] || '9999').localeCompare(String(b['마감일'] || '9999')) || String(a['마감시간'] || '99').localeCompare(String(b['마감시간'] || '99')));
+  let todoHtml = '';
+  groups.forEach(([name, test]) => {
+    const list = sorted.filter(m => m['마감일'] && test(dayDiff(m['마감일'])));
+    if (list.length) todoHtml += `<div class="group-label ${name === '지난 할 일' ? 'late' : ''}">${name} <span>${list.length}</span></div>${list.map(todoRow).join('')}`;
+  });
+  const nodue = sorted.filter(m => !m['마감일']);
+  if (nodue.length) todoHtml += `<div class="group-label">날짜 없음 <span>${nodue.length}</span></div>${nodue.map(todoRow).join('')}`;
+  $('v-memo').innerHTML = `
+    <div class="view-head"><h1>메모</h1><p>${todos.length ? `할 일 ${todos.length}개 남았어요` : '할 일을 다 끝냈어요'}${memos.length ? ` · 메모 ${memos.length}개` : ''}</p></div>
+    ${quickBox('mq', '')}
+    <div class="chips" id="memo-f">${['전체', '할 일', '메모', '끝낸 일'].map(x => `<button class="chip ${f === x ? 'on' : ''}" data-f="${x}">${x}</button>`).join('')}</div>
+    ${f === '전체' || f === '할 일' ? (todoHtml ? `<div class="todo-list">${todoHtml}</div>` : (f === '할 일' ? '<div class="empty">할 일이 없어요. 위 칸에 "- 책 반납하기"처럼 적어 보세요.</div>' : '')) : ''}
+    ${f === '전체' || f === '메모' ? (memos.length ? `${f === '전체' ? '<div class="group-label">메모</div>' : ''}<div class="memo-grid">${memos.map(memoCard).join('')}</div>` : (f === '메모' ? '<div class="empty">메모가 없어요.</div>' : '')) : ''}
+    ${f === '끝낸 일' ? (done.length ? `<div class="todo-list">${done.map(todoRow).join('')}</div>` : '<div class="empty">아직 끝낸 일이 없어요.</div>') : ''}
+    ${f === '전체' && !todos.length && !memos.length ? '<div class="empty">떠오른 생각이나 해야 할 일을 위 칸에 적어 보세요.<br>"내일 3시 치과", "- 책 반납하기"처럼 쓰면 할 일로 들어가요.</div>' : ''}`;
+  $('memo-f').onclick = e => { const c = e.target.closest('[data-f]'); if (!c) return; S.memoFilter = c.dataset.f; renderMemoView(); };
+  bindQuick('mq');
+}
+const isDone = m => m['완료'] === true || m['완료'] === 'TRUE' || m['완료'] === 'true';
+function todoRow(m) {
+  const d = m['마감일'] ? dayDiff(m['마감일']) : null, fin = isDone(m);
+  const b = m['책ID'] ? book(m['책ID']) : null;
+  return `<div class="todo ${fin ? 'fin' : ''}" data-id="${m.ID}">
+    <button class="tick" onclick="toggleTodo('${m.ID}')" aria-label="${fin ? '안 끝낸 일로' : '끝냈어요'}">${fin ? '✓' : ''}</button>
+    <div class="tbody" onclick="openMemo('${m.ID}')"><div class="tt">${esc(m['내용'])}</div>
+      ${(m['마감일'] && !fin) || b || fin ? `<div class="tm">${fin ? (m['완료일'] ? String(m['완료일']).slice(5).replace('-', '/') + ' 끝냄' : '끝냄') : `<span class="${d < 0 ? 'late' : d === 0 ? 'today' : ''}">${dueLabel(m['마감일'], m['마감시간'])}</span>`}${b ? ` · 📖 ${esc(b['제목'])}` : ''}</div>` : ''}</div>
+  </div>`;
+}
+function memoCard(m) {
+  const b = m['책ID'] ? book(m['책ID']) : null;
+  return `<div class="memo" onclick="openMemo('${m.ID}')"><div class="mx">${esc(m['내용'])}</div>
+    <div class="mm">${m['작성일'] ? String(m['작성일']).slice(5).replace('-', '/') : '방금'}${b ? ' · 📖 ' + esc(b['제목']) : ''}</div></div>`;
+}
+
+/* ----- 빠른 입력 칸 (메모 화면 · + 버튼 공통) ----- */
+function quickBox(id, force) {
+  return `<div class="quick" id="${id}-box" data-force="${force}">
+    <textarea id="${id}" rows="1" placeholder="${force === '할일' ? '해야 할 일 (예: 금요일까지 책 반납)' : '메모나 할 일 (예: 내일 3시 치과, - 책 반납하기)'}"></textarea>
+    <div class="qbar"><button class="qtype" id="${id}-type" type="button"></button><span id="${id}-due" class="qdue"></span>
+      <button class="btn primary" id="${id}-go" type="button">저장</button></div></div>`;
+}
+function bindQuick(id, after) {
+  const ta = $(id), box = $(id + '-box'); if (!ta) return;
+  let manual = box.dataset.force || '';
+  const update = () => {
+    ta.style.height = 'auto'; ta.style.height = Math.min(220, ta.scrollHeight) + 'px';
+    const p = parseQuick(ta.value, manual);
+    $(id + '-type').textContent = p.type === '할일' ? '☑ 할 일' : '✎ 메모';
+    $(id + '-type').classList.toggle('todo-on', p.type === '할일');
+    $(id + '-due').textContent = p.type === '할일' && p.due ? dueLabel(p.due, p.time) : '';
+    $(id + '-go').disabled = !ta.value.trim();
+  };
+  $(id + '-type').onclick = () => { const p = parseQuick(ta.value, manual); manual = p.type === '할일' ? '메모' : '할일'; update(); ta.focus(); };
+  ta.oninput = update;
+  ta.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); go(); } };
+  const go = () => {
+    if (!ta.value.trim()) return;
+    const p = parseQuick(ta.value, manual);
+    addMemo({ '종류': p.type, '내용': p.text, '마감일': p.type === '할일' ? p.due : '', '마감시간': p.type === '할일' ? p.time : '' });
+    ta.value = ''; manual = box.dataset.force || ''; update();
+    toast(p.type === '할일' ? '할 일에 넣었어요' : '메모했어요');
+    if (after) after(); else renderMemoView();
+    setTimeout(() => { const t = $(id); if (t) t.focus(); }, 30);
+  };
+  $(id + '-go').onclick = go;
+  update();
+}
+
+/* ----- 저장 · 고치기 ----- */
+function addMemo(fields) {
+  const data = Object.assign({ ID: 'T' + uid(), '종류': '메모', '내용': '', '완료': false, '마감일': '', '마감시간': '', '책ID': '' }, fields);
+  const local = Object.assign({ '작성일': S.today }, data);
+  upsertLocal('memos', local); queue({ fn: 'saveMemo', data, local });
+  return local;
+}
+function patchMemo(id, patch) {
+  id = resolveId(id);
+  const cur = S.memos.find(x => x.ID === id); if (!cur) return;
+  const local = Object.assign({}, cur, patch);
+  if ('완료' in patch) local['완료일'] = patch['완료'] ? S.today : '';
+  upsertLocal('memos', local);
+  const data = {}; ['ID', '종류', '내용', '완료', '마감일', '마감시간', '책ID'].forEach(k => data[k] = local[k] ?? '');
+  queue({ fn: 'saveMemo', data, local });
+}
+function toggleTodo(id) {
+  id = resolveId(id);
+  const m = S.memos.find(x => x.ID === id); if (!m) return;
+  const now = !isDone(m);
+  const row = document.querySelector(`.todo[data-id="${id}"]`); if (row) row.classList.toggle('fin', now);
+  patchMemo(id, { '완료': now });
+  setTimeout(() => { if (S.view === 'memo' && !$('modal').innerHTML) renderMemoView(); }, now ? 450 : 0);
+  if (now) toast('끝냈어요 ✓');
+}
+function removeMemo(id) {
+  if (!confirm('지울까요?')) return;
+  id = resolveId(id);
+  S.memos = S.memos.filter(x => x.ID !== id); queue({ fn: 'deleteMemo', id });
+  closeModal(); if (S.view === 'memo') renderMemoView(); toast('지웠어요');
+}
+let memoType = '메모';
+function openMemo(id) {
+  id = resolveId(id);
+  const m = S.memos.find(x => x.ID === id); if (!m) return;
+  memoType = m['종류'] === '할일' ? '할일' : '메모';
+  const opts = S.books.slice().sort((a, b) => (a['상태'] === '읽는중' ? 0 : 1) - (b['상태'] === '읽는중' ? 0 : 1) || String(a['제목']).localeCompare(String(b['제목'])));
+  modal(`<h3>${memoType === '할일' ? '할 일' : '메모'} 고치기</h3>
+    <div class="seg" id="mseg">${['메모', '할일'].map(t => `<button data-t="${t}" class="${memoType === t ? 'on' : ''}">${t === '할일' ? '할 일' : '메모'}</button>`).join('')}</div>
+    <label>내용</label><textarea class="field" id="m-txt" style="min-height:120px">${esc(m['내용'])}</textarea>
+    <div id="m-due" class="${memoType === '할일' ? '' : 'hidden'}"><div class="row">
+      <div><label>마감일</label><input class="field" type="date" id="m-date" value="${esc(String(m['마감일'] || '').slice(0, 10))}"></div>
+      <div><label>시간</label><input class="field" type="time" id="m-time" value="${esc(m['마감시간'] || '')}"></div></div></div>
+    <label>책과 잇기 <span style="font-weight:400;color:var(--faint)">고르지 않아도 돼요</span></label>
+    <select class="field" id="m-book"><option value="">없음</option>${opts.map(b => `<option value="${b.ID}" ${m['책ID'] === b.ID ? 'selected' : ''}>${esc(b['제목'])}</option>`).join('')}</select>
+    <div class="actions">
+      <button class="btn danger" onclick="removeMemo('${m.ID}')">삭제</button>
+      <button class="btn" onclick="memoToSnip('${m.ID}')">필사로 옮기기</button>
+      <button class="btn primary grow" onclick="saveMemoForm('${m.ID}')">저장</button></div>`);
+  $('mseg').onclick = e => { const t = e.target.closest('button'); if (!t) return; memoType = t.dataset.t;
+    [...$('mseg').children].forEach(x => x.classList.toggle('on', x === t)); $('m-due').classList.toggle('hidden', memoType !== '할일'); };
+}
+function saveMemoForm(id) {
+  const txt = $('m-txt').value.trim(); if (!txt) { toast('내용을 입력해 주세요'); return; }
+  patchMemo(id, { '종류': memoType, '내용': txt, '마감일': memoType === '할일' ? $('m-date').value : '', '마감시간': memoType === '할일' ? $('m-time').value : '', '책ID': $('m-book').value });
+  closeModal(); if (S.view === 'memo') renderMemoView(); toast('저장했어요');
+}
+function memoToSnip(id) {
+  id = resolveId(id);
+  const m = S.memos.find(x => x.ID === id); if (!m) return;
+  const text = $('m-txt') ? $('m-txt').value.trim() : m['내용'];
+  const bid = ($('m-book') && $('m-book').value) || m['책ID'];
+  const start = b => { S.moveMemoId = id; go('book', b); openSnipForm(null); $('f-txt').value = text; snipType = '생각';
+    [...$('seg').children].forEach(x => x.classList.toggle('on', x.dataset.t === '생각'));
+    const btn = document.querySelector('[data-ai-title]'); if (btn && navigator.onLine) aiTitle(btn, true); };
+  closeModal();
+  if (bid && book(bid)) start(bid); else openBookPicker('어느 책의 필사로 옮길까요?', start, text.slice(0, 140));
+}
+
+/* ----- 책 고르기 (공유 · 빠른 입력 · 메모 옮기기 공통) ----- */
+function openBookPicker(title, cb, peek, q) {
+  S.pickCb = cb;
+  const order = { '읽는중': 0, '완독': 1, '읽을예정': 2 };
+  const nq = String(q || '').toLowerCase().replace(/\s+/g, '');
+  const list = S.books.filter(b => !nq || (String(b['제목']) + String(b['저자'])).toLowerCase().replace(/\s+/g, '').includes(nq))
+    .sort((a, b) => (order[a['상태']] ?? 3) - (order[b['상태']] ?? 3) || String(b['시작일'] || b['등록일'] || '').localeCompare(String(a['시작일'] || a['등록일'] || '')))
+    .slice(0, 30);
+  modal(`<h3>${esc(title)}</h3>
+    ${peek ? `<div class="share-peek">${esc(peek)}${peek.length >= 140 ? '…' : ''}</div>` : ''}
+    <input class="field" id="bp-q" placeholder="책 제목 · 저자 찾기" value="${esc(q || '')}">
+    <div class="share-list">${list.map(b => `<button class="al-item" data-b="${b.ID}">${spine(b)}<div><b>${esc(b['제목'])}</b><span>${esc(b['저자'] || '')}${b['상태'] === '읽는중' ? ' · 읽는 중' : ''}</span></div></button>`).join('') || '<div class="al-msg">찾는 책이 없어요.</div>'}</div>
+    <div class="actions"><button class="btn" onclick="S.pickCb=null;S.shared=null;closeModal()">취소</button></div>`);
+  $('bp-q').oninput = e => { const v = e.target.value; openBookPicker(title, cb, peek, v); const el = $('bp-q'); el.focus(); el.setSelectionRange(v.length, v.length); };
+  document.querySelectorAll('.share-list [data-b]').forEach(x => x.onclick = () => { const f = S.pickCb; S.pickCb = null; closeModal(); if (f) f(x.dataset.b); });
+}
+
+/* ----- + 버튼: 어디서든 빠르게 ----- */
+function openQuickMenu() {
+  modal(`<h3>무엇을 남길까요?</h3>
+    <div class="qmenu">
+      <button onclick="openQuickSheet('')"><b>✎ 메모</b><span>떠오른 생각을 바로</span></button>
+      <button onclick="openQuickSheet('할일')"><b>☑ 할 일</b><span>"금요일까지 반납"처럼 날짜도</span></button>
+      <button onclick="quickSnip(false)"><b>❝ 필사 쓰기</b><span>책을 고르고 문장 적기</span></button>
+      <button onclick="quickSnip(true)"><b>📷 사진으로 필사</b><span>책을 고르고 사진 찍기</span></button>
+      <button onclick="closeModal();openBookForm(null)"><b>📚 책 추가</b><span>새 책 등록</span></button>
+    </div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+}
+function openQuickSheet(force) {
+  modal(`<h3>${force === '할일' ? '할 일' : '빠른 메모'}</h3>${quickBox('qq', force)}
+    <div class="small" style="margin-top:8px;color:var(--faint)">"내일", "금요일", "10월 20일", "3시" 같은 말은 날짜로 알아들어요.</div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+  bindQuick('qq', () => { closeModal(); if (S.view === 'memo') renderMemoView(); });
+  setTimeout(() => { const t = $('qq'); if (t) t.focus(); }, 60);
+}
+function quickSnip(photo) {
+  openBookPicker(photo ? '어느 책을 찍을까요?' : '어느 책의 필사인가요?', id => { go('book', id); if (photo) openScan(); else openSnipForm(null); });
+}
+// 앱 아이콘 길게 누르기 → 빠른 메모 · 할 일 · 필사
+function takeQuick() {
+  const q = new URLSearchParams(location.search).get('quick'); if (!q) return;
+  history.replaceState({ view: S.view, id: S.bookId || '' }, '', location.pathname);
+  if (q === 'memo') openQuickSheet(''); else if (q === 'todo') openQuickSheet('할일'); else if (q === 'snip') quickSnip(false);
+}
+
+/* ===================================================================
+   책 목록 (통계에서 누르면: 줄 · 앨범 보기)
+   =================================================================== */
+S.blist = null; S.statOpen = {};
+const BL_SORTS = {
+  '최근 완독': (a, b) => String(b['완독일'] || '').localeCompare(String(a['완독일'] || '')),
+  '오래된 완독': (a, b) => String(a['완독일'] || '9999').localeCompare(String(b['완독일'] || '9999')),
+  '별점 높은': (a, b) => (Number(b['별점']) || 0) - (Number(a['별점']) || 0) || String(b['완독일'] || '').localeCompare(String(a['완독일'] || '')),
+  '두꺼운': (a, b) => (Number(b['분량']) || 0) - (Number(a['분량']) || 0),
+  '빨리 읽은': (a, b) => (Number(a['완독일수']) || 99999) - (Number(b['완독일수']) || 99999),
+  '필사 많은': (a, b) => snipsOf(b.ID).length - snipsOf(a.ID).length,
+  '제목': (a, b) => String(a['제목']).localeCompare(String(b['제목']), 'ko')
+};
+function openBookList(title, books, sort, sub) {
+  S.blist = { title, sub: sub || '', ids: books.map(b => b.ID), sort: sort || '최근 완독' };
+  go('blist');
+}
+function shortDate(d) { d = String(d || ''); return d ? d.slice(2, 4) + '.' + d.slice(5, 7) + '.' + d.slice(8, 10) : ''; }
+function periodText(b) {
+  const s = b['시작일'], e = b['완독일'];
+  if (!s && !e) return '';
+  const days = Number(b['완독일수']) || 0;
+  const end = e && s && String(e).slice(0, 4) === String(s).slice(0, 4) ? String(e).slice(5, 7) + '.' + String(e).slice(8, 10) : shortDate(e);
+  return (s ? shortDate(s) : '') + (e ? ' – ' + end : ' – 읽는 중') + (days ? ` · ${days}일` : '');
+}
+function renderBookList() {
+  const L = S.blist;
+  if (!L) { show('stats'); return; }
+  const mode = LS.get('blist_mode') === 'album' ? 'album' : 'line';
+  const books = L.ids.map(book).filter(Boolean).sort(BL_SORTS[L.sort] || BL_SORTS['최근 완독']);
+  const pages = books.reduce((t, b) => t + (Number(b['분량']) || 0), 0);
+  const ds = books.map(b => Number(b['완독일수'])).filter(n => n > 0);
+  const avg = ds.length ? (ds.reduce((a, b) => a + b, 0) / ds.length).toFixed(1) : '';
+  const meta = b => [b['분량'] ? Number(b['분량']).toLocaleString() + '쪽' : '', periodText(b), b['개인분류'] || b['대분류'] || ''].filter(Boolean);
+  $('v-blist').innerHTML = `
+    <div class="topbar"><button class="iconbtn" onclick="goBack()">← 뒤로</button></div>
+    <div class="bl-head"><h1>${esc(L.title)}</h1>
+      <p>${books.length}권${pages ? ' · ' + pages.toLocaleString() + '쪽' : ''}${avg ? ' · 한 권 평균 ' + avg + '일' : ''}${L.sub ? ' · ' + esc(L.sub) : ''}</p></div>
+    <div class="bl-tools">
+      <div class="seg bl-mode"><button class="${mode === 'line' ? 'on' : ''}" onclick="setBlMode('line')" aria-label="한 줄씩 보기">☰ 목록</button><button class="${mode === 'album' ? 'on' : ''}" onclick="setBlMode('album')" aria-label="표지로 보기">▦ 앨범</button></div>
+      <select class="field bl-sort" onchange="S.blist.sort=this.value;renderBookList()">${Object.keys(BL_SORTS).map(k => `<option value="${k}" ${k === L.sort ? 'selected' : ''}>${k} 순</option>`).join('')}</select>
+    </div>
+    ${!books.length ? '<div class="empty">해당하는 책이 없어요.</div>' : mode === 'line'
+      ? `<div class="bl-lines">${books.map(b => `<div class="bl-row" onclick="go('book','${b.ID}')">${spine(b)}
+          <div class="bl-info"><div class="bl-t">${esc(b['제목'])}</div><div class="bl-a">${esc(b['저자'] || '')}</div>
+            <div class="bl-m">${meta(b).map(esc).join('<i>·</i>')}${Number(b['별점']) ? `<i>·</i><span class="stars">${starText(b['별점'])}</span>` : ''}</div></div></div>`).join('')}</div>`
+      : `<div class="bl-album">${books.map(b => `<div class="bl-card" onclick="go('book','${b.ID}')">${spine(b)}
+          <div class="bl-t">${esc(b['제목'])}</div><div class="bl-m">${esc(periodText(b))}</div>
+          <div class="bl-m">${esc([b['분량'] ? b['분량'] + '쪽' : '', b['개인분류'] || ''].filter(Boolean).join(' · '))}</div>
+          ${Number(b['별점']) ? `<div class="stars">${starText(b['별점'])}</div>` : ''}</div>`).join('')}</div>`}`;
+}
+function setBlMode(m) { LS.set('blist_mode', m); renderBookList(); }
+
+/* ===================================================================
+   라이트 · 다크 모드 (휴대폰 설정 따라가기 / 늘 밝게 / 늘 어둡게)
+   =================================================================== */
+const MODES = [['system', '휴대폰 따라'], ['light', '밝게'], ['dark', '어둡게']];
+function curMode() { return LS.get('mode') || 'system'; }
+function applyMode() {
+  const m = curMode();
+  const dark = m === 'dark' || (m === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.mode = dark ? 'dark' : 'light';
+  const paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim();
+  document.querySelectorAll('meta[name="theme-color"]').forEach(x => { x.setAttribute('content', paper); x.removeAttribute('media'); });
+}
+function setMode(m) {
+  LS.set('mode', m); applyMode();
+  if (S.loaded) show(S.view);
+}
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (curMode() === 'system') { applyMode(); if (S.loaded) show(S.view); } }); } catch (e) {}
+function modePickerHtml() {
+  return `<div class="seg mode-seg" style="margin-top:10px">${MODES.map(([k, t]) => `<button class="${curMode() === k ? 'on' : ''}" onclick="setMode('${k}');openSettings()">${t}</button>`).join('')}</div>`;
 }
 
 /* ===== 이벤트 · 시작 ===== */
@@ -2230,9 +2896,10 @@ $('nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) go(b.da
 $('q').addEventListener('input', e => { S.q = e.target.value; S.hitLimit = 30; renderList(); });
 $('filters').addEventListener('click', e => { const c = e.target.closest('[data-f]'); if (!c) return; S.filter = c.dataset.f; renderFilters(); renderList(); });
 $('list').addEventListener('click', e => { const c = e.target.closest('.book'); if (c) go('book', c.dataset.id); });
-$('fab').onclick = () => openBookForm(null);
+$('fab').onclick = () => openQuickMenu();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+applyMode();
 boot();
 </script>
 </body>
