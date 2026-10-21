@@ -48,6 +48,28 @@
   },
   "shortcuts": [
     {
+      "name": "여기까지 읽었어요",
+      "short_name": "읽은 쪽",
+      "url": "./?quick=read",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "필사 쓰기",
+      "short_name": "필사",
+      "url": "./?quick=snip",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
       "name": "빠른 메모",
       "short_name": "메모",
       "url": "./?quick=memo",

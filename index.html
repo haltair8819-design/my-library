@@ -605,6 +605,50 @@ html[data-theme="bunko"] .grid{border-radius:8px;border-color:transparent}
 html[data-theme="bunko"] .stitle{font-family:inherit;font-weight:700;color:var(--ink);font-size:15px}
 html[data-theme="bunko"] .snip.quote .txt{border-left-width:4px;border-left-color:var(--bc,var(--accent))}
 html[data-theme="bunko"] .chip{border-radius:6px}
+
+/* ===== v2.5 ===== */
+.book-tabs{margin:24px 0 4px}
+.book-tabs button span{font-weight:500;opacity:.75;margin-left:3px}
+.sec-head.tight{margin-top:12px}
+.sec-sub{font-size:12.5px;color:var(--faint);margin:-2px 0 8px;line-height:1.5}
+.badge.plat{background:var(--line);color:var(--sub)}
+.badge.plat.eb{background:#E2E9F4;color:#35588C}
+html[data-mode="dark"] .badge.plat.eb{background:#222C3A;color:#9DB7DE}
+.tag.tap{cursor:pointer;border-style:dashed}
+.chip.sub{font-size:12.5px;padding-top:4px;padding-bottom:4px}
+.chip-sep{flex:none;width:1px;background:var(--line);margin:4px 2px}
+.plat-seg{margin-top:2px}
+.draft-note{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--accent-soft);border-radius:10px;padding:8px 12px;font-size:12.5px;margin:8px 0 2px}
+.draft-note button{border:0;background:none;color:var(--accent);font-weight:600;cursor:pointer;font-size:12.5px;padding:0}
+.draft-state{font-size:11.5px;color:var(--faint);margin-left:6px;font-weight:400}
+.readlog{margin-top:10px;border-top:1px solid var(--line)}
+.readlog .rl{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer}
+.readlog .rl b{font-weight:600}
+.readlog .rl em{font-style:normal;color:var(--accent);font-weight:600}
+.read-today{font-size:12.5px;color:var(--sub);margin-top:8px}
+.read-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:12px;font-size:13.5px;cursor:pointer}
+.read-strip b{color:var(--accent)}
+.read-strip span{color:var(--faint);font-size:12px;white-space:nowrap}
+.dbars{display:flex;align-items:flex-end;gap:2px;height:120px;padding-top:16px;border-bottom:1px solid var(--line)}
+.dbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;cursor:pointer;min-width:0}
+.dbar .fill{width:100%;max-width:14px;background:var(--accent);border-radius:3px 3px 0 0}
+.dbar.dtoday .fill{background:var(--warn)}
+.dbar.on .fill{filter:brightness(1.2)}
+.dlabels{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:4px}
+.dsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.dsum div{background:var(--accent-soft);border-radius:10px;padding:8px 10px}
+.dsum b{display:block;font-size:18px;font-weight:700}
+.dsum span{font-size:11.5px;color:var(--sub)}
+.sel-check{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:#fff;margin-right:8px;vertical-align:-5px}
+.note-card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.note-card.sel .sel-check{background:var(--accent);border-color:var(--accent)}
+.selbar{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));z-index:30;padding:0 12px}
+.selbar .in{max-width:720px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.14)}
+.selbar .top{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:8px}
+.selbar .top button{border:0;background:none;color:var(--accent);font-weight:600;cursor:pointer;font-size:13px}
+.selbar .row2{display:flex;gap:6px;flex-wrap:wrap}
+.selbar .row2 .btn{padding:6px 11px;font-size:13px}
+.cat-auto{margin-top:6px;font-size:12px;color:var(--sub)}
 </style>
 </head>
 <body>
@@ -728,7 +772,7 @@ function saveCache() {
   if (!S.loaded) return;
   clearTimeout(cacheTimer);
   cacheTimer = setTimeout(() => {
-    IDB.set(CACHE_KEY, { ver: S.ver || '', books: S.books, snippets: S.snips, memos: S.memos, notes: S.notes, settings: S.settings, at: Date.now() });
+    IDB.set(CACHE_KEY, { ver: S.ver || '', books: S.books, snippets: S.snips, memos: S.memos.concat(S.logs || []), notes: S.notes, settings: S.settings, at: Date.now() });
   }, 250);
 }
 async function loadCache() {
@@ -776,8 +820,8 @@ function queue(op) {
 // 서버에서 새로 받은 데이터 위에, 아직 저장 못 한 변경을 다시 얹기
 function applyPending() {
   S.outbox.forEach(o => {
-    if (OPS[o.fn]) upsertLocal(OPS[o.fn].list, Object.assign({}, o.local));
-    else if (DEL_OPS[o.fn]) S[DEL_OPS[o.fn]] = S[DEL_OPS[o.fn]].filter(x => x.ID !== o.id);
+    if (OPS[o.fn]) upsertLocal(o.list || OPS[o.fn].list, Object.assign({}, o.local));
+    else if (DEL_OPS[o.fn]) { const L = o.list || DEL_OPS[o.fn]; S[L] = S[L].filter(x => x.ID !== o.id); }
     else if (o.fn === 'updateBookFields') { const b = book(o.id); if (b) Object.assign(b, o.patch); }
   });
 }
@@ -801,7 +845,7 @@ async function flush() {
       op.sending = true;
       try {
         if (OPS[op.fn]) {
-          const list = OPS[op.fn].list;
+          const list = op.list || OPS[op.fn].list;
           const d = Object.assign({}, op.data, { _cid: op.cid });
           const temp = isTemp(d.ID); if (temp) d.ID = '';
           const saved = await rpc(op.fn, d, ...(op.args || []));
@@ -845,6 +889,8 @@ function renderSync() {
 function openSync() {
   if (!S.outbox.length) return;
   const name = o => o.fn === 'saveSnippet' ? '문장 저장: ' + String(o.local && (o.local['제목'] || o.local['내용']) || '').slice(0, 24)
+    : o.fn === 'saveMemo' && o.list === 'logs' ? '독서 기록: ' + ((book(o.local && o.local['책ID']) || {})['제목'] || '')
+    : o.fn === 'deleteMemo' && o.list === 'logs' ? '독서 기록 삭제'
     : o.fn === 'saveMemo' ? (o.local && o.local['종류'] === '할일' ? '할 일: ' : '메모: ') + String(o.local && o.local['내용'] || '').slice(0, 24)
     : o.fn === 'deleteSnippet' ? '문장 삭제' : o.fn === 'deleteMemo' ? '메모 삭제' : '책 정보: ' + ((book(o.id) || {})['제목'] || '');
   modal(`<h3>아직 시트에 저장되지 않은 기록</h3>
@@ -858,7 +904,7 @@ function retrySync() { S.outbox.forEach(o => { o.error = ''; }); persistOutbox()
 function dropOp(i) {
   if (!confirm('이 기록을 버릴까요? 되돌릴 수 없어요.')) return;
   const o = S.outbox.splice(i, 1)[0];
-  if (o && OPS[o.fn] && isTemp(o.data.ID)) S[OPS[o.fn].list] = S[OPS[o.fn].list].filter(x => x.ID !== o.data.ID);
+  if (o && OPS[o.fn] && isTemp(o.data.ID)) { const L = o.list || OPS[o.fn].list; S[L] = S[L].filter(x => x.ID !== o.data.ID); }
   persistOutbox(); saveCache(); closeModal(); if (S.outbox.length) openSync(); show(S.view);
 }
 
@@ -886,11 +932,11 @@ async function refresh(first) {
 function mergeSync(d) {
   if (d.full || !S.loaded) {
     const keepTemp = (S.notes || []).filter(n => isTemp(n.ID));   // 막 만든, 아직 안 올라간 글은 지키기
-    S.books = d.books || []; S.snips = d.snippets || []; S.memos = d.memos || []; S.notes = (d.notes || []).concat(keepTemp);
+    S.books = d.books || []; S.snips = d.snippets || []; S.memos = d.memos || []; S.logs = []; S.notes = (d.notes || []).concat(keepTemp);
   } else {
     // 지운 것 먼저, 그다음 새로 받은 것 (같은 번호가 다시 생겼을 때를 위해)
     const TAB = { '책': 'books', '필사': 'snips', '메모': 'memos', '노트': 'notes' };
-    (d.deleted || []).forEach(x => { const k = TAB[x.t]; if (k) S[k] = S[k].filter(r => r.ID !== x.id); });
+    (d.deleted || []).forEach(x => { const k = TAB[x.t]; if (k) S[k] = S[k].filter(r => r.ID !== x.id); if (k === 'memos') S.logs = S.logs.filter(r => r.ID !== x.id); });
     const merge = (key, rows) => {
       const arr = S[key], idx = new Map(arr.map((x, i) => [x.ID, i]));
       (rows || []).forEach(r => { const i = idx.get(r.ID); if (i != null) arr[i] = r; else { idx.set(r.ID, arr.length); arr.push(r); } });
@@ -898,7 +944,16 @@ function mergeSync(d) {
     merge('books', d.books); merge('snips', d.snippets); merge('memos', d.memos); merge('notes', d.notes);
   }
   S.ver = d.ver;
+  splitLogs();
   applyPending();
+}
+// 독서 기록은 메모 시트에 '독서기록' 종류로 들어가요 (서버를 바꾸지 않으려고). 앱에서는 따로 모아 써요
+S.logs = [];
+const isLogRow = m => m && m['종류'] === '독서기록';
+function splitLogs() {
+  const seen = new Set(), memos = [], logs = [];
+  S.memos.concat(S.logs || []).forEach(x => { if (!x || seen.has(x.ID)) return; seen.add(x.ID); (isLogRow(x) ? logs : memos).push(x); });
+  S.memos = memos; S.logs = logs;
 }
 function rerender() {
   if (S.view === 'book' && !book(S.bookId)) S.view = 'library';
@@ -957,8 +1012,8 @@ async function boot() {
   if (!API.url || !API.key) { show('library'); $('list').innerHTML = '<div class="empty">서버를 연결하면 서재가 열려요.</div>'; openConnect(); return; }
   const c = await loadCache();
   if (c && c.books) {
-    S.books = c.books; S.snips = c.snippets || []; S.memos = c.memos || []; S.notes = c.notes || []; S.ver = c.ver || ''; if (c.settings) S.settings = c.settings;
-    applyPending();
+    S.books = c.books; S.snips = c.snippets || []; S.memos = c.memos || []; S.logs = []; S.notes = c.notes || []; S.ver = c.ver || ''; if (c.settings) S.settings = c.settings;
+    splitLogs(); applyPending();
     S.loaded = true; route(); takeShared(); takeQuick(); checkNewVersion(); setTimeout(processVoiceQueue, 2500);
     refresh(false).then(() => flush());
   } else {
@@ -999,6 +1054,23 @@ function spine(b) {
   return `<div class="spine" style="background:${spineColor(b)}">${esc(String(b['제목']).slice(0, 8))}</div>`;
 }
 const snipsOf = id => S.snips.filter(s => s['책ID'] === id);
+// 종이책 · E북 · 오디오북 (예전 기록의 'e북', '전자책', 경로가 밀리의 서재 등이면 E북으로 봐요)
+const EBOOK_RE = /e\s*북|ebook|전자책|밀리|리디|윌라|크레마|yes24\s*e|예스24\s*e|교보\s*e|킨들|kindle/i;
+function platOf(b) {
+  const p = String(b['플랫폼'] || '').trim();
+  if (/오디오/.test(p)) return '오디오북';
+  if (/종이/.test(p)) return '종이책';
+  if (EBOOK_RE.test(p)) return 'E북';
+  if (!p && /윌라|오디오/.test(String(b['경로'] || ''))) return '오디오북';
+  if (!p && EBOOK_RE.test(String(b['경로'] || ''))) return 'E북';
+  return '종이책';
+}
+const PLATS = ['종이책', 'E북', '오디오북'];
+function togglePlat(id) {
+  const b = book(id); if (!b) return;
+  const next = platOf(b) === '종이책' ? 'E북' : '종이책';
+  patchBook(id, { '플랫폼': next }); renderBook(); toast(next + '으로 바꿨어요');
+}
 const book = id => S.books.find(b => b.ID === id);
 function uniq(arr) { return [...new Set(arr.filter(Boolean))]; }
 function period(b) {
@@ -1020,7 +1092,8 @@ function renderStats() {
   $('goal').innerHTML = goalHtml();
 }
 function renderFilters() {
-  $('filters').innerHTML = FILTERS.map(f => `<button class="chip ${S.filter === f ? 'on' : ''}" data-f="${f}">${FILTER_LABEL[f] || f}</button>`).join('');
+  $('filters').innerHTML = FILTERS.map(f => `<button class="chip ${S.filter === f ? 'on' : ''}" data-f="${f}">${FILTER_LABEL[f] || f}</button>`).join('')
+    + '<span class="chip-sep"></span>' + PLATS.filter(p => p !== '오디오북' || S.books.some(b => platOf(b) === p)).map(p => `<button class="chip sub ${S.plat === p ? 'on' : ''}" data-p="${p}">${p}</button>`).join('');
 }
 function bookCard(b) {
   const n = snipsOf(b.ID).length;
@@ -1033,6 +1106,7 @@ function bookCard(b) {
       <div class="bmeta">
         ${b['상태'] === '읽는중' ? '<span class="badge reading">읽는 중</span>' : ''}
         ${b['상태'] === '읽을예정' ? '<span class="badge">읽고 싶은</span>' : ''}
+        ${platOf(b) !== '종이책' ? `<span class="badge plat eb">${platOf(b)}</span>` : '<span class="badge plat">종이책</span>'}
         ${dueBadge(b)}
         ${b['별점'] ? `<span class="stars">${'★'.repeat(Number(b['별점']) || 0)}</span>` : ''}
         ${n ? `<span class="badge">필사 ${n}</span>` : ''}
@@ -1046,6 +1120,7 @@ function renderList() {
   const q = S.q.trim().toLowerCase();
   $('top').innerHTML = q ? '' : libraryTopHtml();
   let rows = S.books.filter(b => q || S.filter === '전체' || b['상태'] === S.filter);   // 검색할 때는 모든 책에서
+  if (S.plat && !q) rows = rows.filter(b => platOf(b) === S.plat);
   if (q) rows = q.startsWith('#') ? [] : rows.filter(b => ['제목','저자','옮긴이','출판사','대분류','중분류','개인분류','한줄평'].some(k => String(b[k] || '').toLowerCase().includes(q)));
   rows.sort((a, b) => String(b['완독일'] || b['시작일']).localeCompare(String(a['완독일'] || a['시작일'])));
   if (q) {
@@ -1053,6 +1128,7 @@ function renderList() {
       || '<div class="empty">검색 결과가 없어요</div>';
     return;
   }
+  if (!rows.length && S.plat) { $('list').innerHTML = `<div class="empty">${esc(S.plat)}으로 ${FILTER_LABEL[S.filter] || S.filter} 책이 없어요</div>`; return; }
   if (!rows.length) { $('list').innerHTML = `<div class="empty">${S.filter === '읽을예정' ? '읽고 싶은 책을 + 책 추가에서 상태 ‘읽을예정’으로 담아 보세요' : '아직 책이 없어요'}</div>`; return; }
   if (S.filter === '완독' && !q) {
     // 월별로 묶어 보기
@@ -1079,7 +1155,10 @@ function renderBook() {
     fileOrder(x) - fileOrder(y) ||
     (fileOrder(x) ? (Number(x['쪽수']) || 99999) - (Number(y['쪽수']) || 99999) : 0) ||
     String(x.ID).localeCompare(String(y.ID)));
-  const tags = [b['대분류'], b['중분류'], b['개인분류'], b['플랫폼'], b['경로']].filter(Boolean);
+  const tags = [b['대분류'], b['중분류'], b['개인분류'], b['경로']].filter(Boolean);
+  const plat = platOf(b);
+  const quotes = snips.filter(s => s['유형'] !== '생각'), thoughts = snips.filter(s => s['유형'] === '생각');
+  const tab = S.bookTab === '생각' ? '생각' : '필사';
   $('v-book').style.setProperty('--bc', spineColor(b));
   $('v-book').innerHTML = `
     <div class="topbar">
@@ -1091,7 +1170,7 @@ function renderBook() {
       <div>
         <div class="dtitle">${esc(b['제목'])}</div>
         <div class="dauthor">${esc(b['저자'])}${b['옮긴이'] ? ' 지음 · ' + esc(b['옮긴이']) + ' 옮김' : ''}${b['출판사'] ? ' · ' + esc(b['출판사']) : ''}</div>
-        <div class="tags">${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <div class="tags"><span class="tag tap" onclick="togglePlat('${b.ID}')" title="눌러서 종이책 · E북 바꾸기">${plat === 'E북' ? '📱 E북' : plat === '오디오북' ? '🎧 오디오북' : '📕 종이책'}</span>${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
       </div>
     </div>
     <div class="grid">
@@ -1102,11 +1181,22 @@ function renderBook() {
     </div>
     ${b['상태'] === '읽는중' || b['상태'] === '중단' ? `<div class="actions"><button class="btn primary grow" onclick="finish('${b.ID}')">오늘 완독했어요</button></div>` : ''}
     ${bookExtrasHtml(b)}
-    <div class="sec-head"><h2>필사 노트 <span style="color:var(--faint);font-weight:500">${snips.length}</span></h2>
-      <div style="display:flex;gap:8px"><button class="btn" onclick="openScan()">📷 사진으로</button><button class="btn" onclick="openSnipForm(null)">+ 문장 추가</button></div></div>
-    ${snips.length ? snips.map(snipHtml).join('')
-    : '<div class="empty">아직 필사한 문장이 없어요.<br>‘+ 문장 추가’로 시작해 보세요.</div>'}
+    <div class="seg book-tabs" id="book-tabs">
+      <button data-t="필사" class="${tab === '필사' ? 'on' : ''}">필사 · 메모<span>${quotes.length}</span></button>
+      <button data-t="생각" class="${tab === '생각' ? 'on' : ''}">내 생각 · 서평<span>${thoughts.length}</span></button></div>
+    ${tab === '필사' ? `
+    <div class="sec-head tight"><h2>필사 · 메모</h2>
+      <div style="display:flex;gap:8px"><button class="btn" onclick="openScan()">📷 사진으로</button><button class="btn" onclick="openSnipForm(null,'인용')">+ 문장 추가</button></div></div>
+    ${quotes.length ? quotes.map(snipHtml).join('')
+    : '<div class="empty">아직 필사한 문장이 없어요.<br>‘+ 문장 추가’로 시작해 보세요.</div>'}` : `
+    <div class="sec-head tight"><h2>내 생각 · 서평</h2>
+      <button class="btn" onclick="openSnipForm(null,'생각')">+ 내 생각 쓰기</button></div>
+    <div class="sec-sub">책을 읽으며 든 생각, 다 읽고 난 서평을 모아 둬요.</div>
+    ${b['별점'] || b['한줄평'] ? `<div class="snip thought" onclick="openRating('${b.ID}')"><div class="stitle">한줄평 ${b['별점'] ? `<span class="stars">${starText(b['별점'])}</span>` : ''}</div><div class="txt">${esc(b['한줄평'] || '')}</div></div>` : ''}
+    ${thoughts.length ? thoughts.map(snipHtml).join('')
+    : '<div class="empty">아직 남긴 생각이 없어요.<br>‘+ 내 생각 쓰기’로 서평을 남겨 보세요.</div>'}`}
   `;
+  $('book-tabs').onclick = e => { const t = e.target.closest('[data-t]'); if (!t) return; S.bookTab = t.dataset.t; renderBook(); };
 }
 function snipHtml(s) {
   const cls = s['유형'] === '생각' ? 'thought' : s['유형'] === '메모' ? 'memo' : 'quote';
@@ -1121,8 +1211,10 @@ function snipHtml(s) {
 
 /* ===== 화면 전환 ===== */
 function show(view) {
-  S.view = view;
+  if (view === 'notes' && S.view !== 'notes' && S.view !== 'note') S.seedRand = Math.random();   // 노트 탭에 들어올 때마다 새 글감
+  if (view !== 'notes' && S.noteSel) S.noteSel = null;
   if (S.view === 'note' && view !== 'note' && typeof collectNote === 'function') { const n = collectNote(); if (n && S.noteDirty) saveNoteNow(true); stopDictate(); }
+  S.view = view;
   ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
   $('composer').classList.toggle('hidden', view !== 'ai');
   document.body.classList.toggle('ai-mode', view === 'ai');
@@ -1135,13 +1227,14 @@ function show(view) {
   else if (view === 'ai') renderAIView();
   else if (view === 'memo') { renderMemoView(); renderVoiceQueue(); processVoiceQueue(); }
   else if (view === 'notes') renderNoteList();
+  if (view !== 'notes' && $('selbar')) $('selbar').remove();
   else if (view === 'note') renderNoteEditor();
   else if (view === 'more') renderMoreView();
   else if (view === 'blist') renderBookList();
   else renderStatsView();
 }
 function go(view, id) {
-  if (view === 'book') S.bookId = id;
+  if (view === 'book') { if (S.bookId !== id) S.bookTab = '필사'; S.bookId = id; }
   if (view === 'note') S.noteId = id;
   try { history.pushState({ view, id: id || '' }, '', view === 'book' ? '?book=' + encodeURIComponent(id) : location.pathname); } catch (e) {}
   show(view); window.scrollTo(0, 0);
@@ -1157,24 +1250,33 @@ window.addEventListener('popstate', e => {
 });
 
 /* ===== 입력 창 ===== */
-function closeModal() { $('modal').innerHTML = ''; S.moveMemoId = null; if (typeof stopDictate === 'function') stopDictate(); }
+function closeModal() { if (S.snipDraftOn) { saveSnipDraft(); S.snipDraftOn = false; } $('modal').innerHTML = ''; S.moveMemoId = null; if (typeof stopDictate === 'function') stopDictate(); }
 function modal(html) {
   $('modal').innerHTML = `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="sheet">${html}</div></div>`;
+}
+// 검색칸: 글자를 칠 때 결과 목록만 바꿔요 (칸을 다시 그리면 한글이 ㄱㅏ처럼 쪼개져서)
+function liveInput(id, fn) {
+  const el = $(id); if (!el) return;
+  let t = null;
+  const run = () => { clearTimeout(t); t = setTimeout(() => fn(el.value), 60); };
+  el.addEventListener('input', run);
+  el.addEventListener('compositionend', run);
 }
 function datalist(id, values) { return `<datalist id="${id}">${uniq(values).map(v => `<option value="${esc(v)}">`).join('')}</datalist>`; }
 
 /* 필사 입력 */
 let snipType = '인용';
-function openSnipForm(id) {
+function openSnipForm(id, forceType) {
   id = resolveId(id);
   const s = id ? S.snips.find(x => x.ID === id) : null;
   const b = book(S.bookId);
-  snipType = s ? (s['유형'] || '인용') : snipType;
+  snipType = s ? (s['유형'] || '인용') : (forceType || (S.bookTab === '생각' ? '생각' : (snipType === '생각' ? '인용' : snipType)));
   const allKw = uniq(S.snips.flatMap(x => String(x['키워드'] || '').split(',').map(k => k.trim())));
   const bookKw = uniq(snipsOf(b.ID).flatMap(x => String(x['키워드'] || '').split(',').map(k => k.trim())));
   const kwSuggest = uniq([...bookKw, ...allKw]).slice(0, 14);
   modal(`
-    <h3>${s ? '문장 수정' : '문장 추가'} <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span></h3>
+    <h3>${s ? '문장 수정' : snipType === '생각' ? '내 생각 쓰기' : '문장 추가'} <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span><span class="draft-state" id="draft-state"></span></h3>
+    <div id="draft-note"></div>
     <div class="seg" id="seg">${['인용','생각','메모'].map(t => `<button data-t="${t}" class="${snipType === t ? 'on' : ''}">${t === '인용' ? '인용 (책 문장)' : t === '생각' ? '내 생각' : '메모'}</button>`).join('')}</div>
     <label>제목 <span style="font-weight:400;color:var(--faint)">내가 붙이는 표제</span><button type="button" class="kw-ai" data-ai-title onclick="aiTitle(this)">AI 제목</button></label>
     <input class="field" id="f-ttl" value="${esc(s ? s['제목'] : '')}" placeholder="예: 과학은 믿음을 싫어한다">
@@ -1192,20 +1294,23 @@ function openSnipForm(id) {
     <div class="actions">
       ${s ? `<button class="btn danger" onclick="removeSnip('${s.ID}')">삭제</button>` : ''}
       <button class="btn" onclick="closeModal()">취소</button>
-      ${s ? '' : `<button class="btn grow" onclick="submitSnip(null,true)">저장 후 이어서</button>`}
+      <button class="btn grow" style="white-space:nowrap" onclick="submitSnip(${s ? `'${s.ID}'` : 'null'},'stay')" title="창을 닫지 않고 저장">중간 저장</button>
+      ${s ? '' : `<button class="btn grow" style="white-space:nowrap" onclick="submitSnip(null,true)">저장·다음</button>`}
       <button class="btn primary grow" onclick="submitSnip(${s ? `'${s.ID}'` : 'null'},false)">저장</button>
     </div>`);
-  $('seg').onclick = e => { const t = e.target.closest('button'); if (!t) return; snipType = t.dataset.t; [...$('seg').children].forEach(x => x.classList.toggle('on', x === t)); };
+  bindSnipDraft(s);
+  $('seg').onclick = e => { const t = e.target.closest('button'); if (!t) return; snipType = t.dataset.t; [...$('seg').children].forEach(x => x.classList.toggle('on', x === t)); snipDraftSoon(); };
   document.querySelectorAll('[data-kw]').forEach(c => c.onclick = () => {
     const cur = $('f-kw').value.split(',').map(x => x.trim()).filter(Boolean);
     if (!cur.includes(c.dataset.kw)) cur.push(c.dataset.kw);
-    $('f-kw').value = cur.join(', ');
+    $('f-kw').value = cur.join(', '); snipDraftSoon();
   });
   $('f-txt').addEventListener('paste', onSnipPaste);
   setTimeout(() => { const el = s ? $('f-txt') : $('f-ttl'); if (el) el.focus(); }, 50);
 }
 function submitSnip(id, keepOpen) {
   id = resolveId(id);
+  const stay = keepOpen === 'stay';
   const data = { ID: id || ('T' + uid()), '책ID': S.bookId, '유형': snipType, '내용': $('f-txt').value.trim(),
     '쪽수': $('f-page').value.trim().replace(/\s*p$/i, ''), '제목': $('f-ttl').value.trim(), '키워드': normKw($('f-kw').value) };
   if (!data['내용']) { toast('내용을 입력해 주세요'); return; }
@@ -1217,13 +1322,53 @@ function submitSnip(id, keepOpen) {
     const mid = resolveId(S.moveMemoId); S.moveMemoId = null;
     S.memos = S.memos.filter(x => x.ID !== mid); queue({ fn: 'deleteMemo', id: mid });
     toast('메모를 필사로 옮겼어요');
-  } else toast('저장했어요');
+  } else toast(stay ? '중간 저장했어요 · 계속 쓰세요' : '저장했어요');
+  clearSnipDraft();
   renderBook();
-  if (keepOpen) { openSnipForm(null); } else closeModal();
+  if (stay) {
+    if (!id) {   // 새 문장 → 이제부터는 이 문장을 고치는 창으로
+      const pos = $('f-txt').selectionStart;
+      S.snipDraftOn = false; openSnipForm(data.ID);
+      setTimeout(() => { const t = $('f-txt'); if (t) { t.focus(); t.setSelectionRange(pos, pos); } }, 60);
+    } else { S.snipDraft0 = snipFormValues(); const st = $('draft-state'); if (st) st.textContent = '저장됨 ' + hhmm(); }
+  } else if (keepOpen) { openSnipForm(null); } else closeModal();
+}
+/* ----- 문장 입력 임시저장: 쓰다가 창이 닫혀도 다시 열면 그대로 ----- */
+const SNIP_DRAFT_KEY = 'snip_draft_v1';
+const hhmm = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+function snipDraftKey(s) { return s ? 'id:' + s.ID : 'new:' + S.bookId; }
+function snipFormValues() {
+  return { type: snipType, ttl: $('f-ttl') ? $('f-ttl').value : '', txt: $('f-txt') ? $('f-txt').value : '', page: $('f-page') ? $('f-page').value : '', kw: $('f-kw') ? $('f-kw').value : '' };
+}
+function readSnipDraft() { try { return JSON.parse(LS.get(SNIP_DRAFT_KEY) || 'null'); } catch (e) { return null; } }
+function clearSnipDraft() { LS.del(SNIP_DRAFT_KEY); S.snipDraftOn = false; clearTimeout(S.snipDraftT); }
+function saveSnipDraft() {
+  if (!S.snipDraftOn || !$('f-txt')) return;
+  const v = snipFormValues(), base = S.snipDraft0 || {};
+  const same = ['type', 'ttl', 'txt', 'page', 'kw'].every(k => String(v[k] || '') === String(base[k] || ''));
+  if (same || (!v.txt.trim() && !v.ttl.trim())) { LS.del(SNIP_DRAFT_KEY); return; }
+  LS.set(SNIP_DRAFT_KEY, JSON.stringify(Object.assign({ key: S.snipDraftKey, at: Date.now() }, v)));
+  const st = $('draft-state'); if (st) st.textContent = '임시저장 ' + hhmm();
+}
+function snipDraftSoon() { clearTimeout(S.snipDraftT); S.snipDraftT = setTimeout(saveSnipDraft, 500); }
+function bindSnipDraft(s) {
+  S.snipDraftKey = snipDraftKey(s); S.snipDraftOn = true;
+  S.snipDraft0 = snipFormValues();
+  const d = readSnipDraft();
+  if (d && d.key === S.snipDraftKey && (d.txt || d.ttl)) {
+    const fill = v => { $('f-ttl').value = v.ttl || ''; $('f-txt').value = v.txt || ''; $('f-page').value = v.page || ''; $('f-kw').value = v.kw || '';
+      snipType = v.type || snipType; [...$('seg').children].forEach(x => x.classList.toggle('on', x.dataset.t === snipType)); };
+    const orig = S.snipDraft0;
+    fill(d);
+    const when = new Date(d.at); const label = (when.toDateString() === new Date().toDateString() ? '' : (when.getMonth() + 1) + '/' + when.getDate() + ' ') + String(when.getHours()).padStart(2, '0') + ':' + String(when.getMinutes()).padStart(2, '0');
+    $('draft-note').innerHTML = `<div class="draft-note"><span>✎ ${label}에 쓰던 내용을 불러왔어요</span><button type="button" id="draft-drop">${s ? '원래대로' : '지우기'}</button></div>`;
+    $('draft-drop').onclick = () => { fill(orig); LS.del(SNIP_DRAFT_KEY); $('draft-note').innerHTML = ''; toast(s ? '저장된 내용으로 되돌렸어요' : '임시저장을 지웠어요'); };
+  }
+  ['f-ttl', 'f-txt', 'f-page', 'f-kw'].forEach(k => { const el = $(k); if (el) el.addEventListener('input', snipDraftSoon); });
 }
 function removeSnip(id) {
   if (!confirm('이 문장을 삭제할까요?')) return;
-  id = resolveId(id);
+  id = resolveId(id); clearSnipDraft();
   S.snips = S.snips.filter(x => x.ID !== id);
   queue({ fn: 'deleteSnippet', id });
   closeModal(); renderBook(); toast('삭제했어요');
@@ -1232,16 +1377,18 @@ function removeSnip(id) {
 /* 책 추가 · 수정 */
 const BOOK_FIELDS = [
   ['제목', 'text', true], ['저자', 'text'], ['옮긴이', 'text'], ['출판사', 'text'],
-  ['플랫폼', 'list'], ['경로', 'list'], ['대분류', 'list'], ['중분류', 'list'], ['개인분류', 'list'],
+  ['플랫폼', 'plat'], ['경로', 'list'], ['대분류', 'list'], ['중분류', 'list'], ['개인분류', 'list'],
   ['분량', 'number'], ['시작일', 'date'], ['완독일', 'date'], ['상태', 'select'], ['표지URL', 'text'], ['ISBN', 'hidden'],
   ['반납일', 'date'], ['별점', 'stars'], ['한줄평', 'text']
 ];
 function openBookForm(id) {
+  S.formBookId = id || '';
   const b = id ? book(id) : { '시작일': S.today, '상태': '읽는중', '플랫폼': '종이책' };
   const field = ([k, type, req]) => {
     const v = esc(b[k] ?? '');
     let input;
     if (type === 'hidden') return `<input type="hidden" id="b-${k}" value="${v}">`;
+    if (type === 'plat') { const cur = id ? platOf(b) : (b[k] || '종이책'); return `<div><label>${k}</label><input type="hidden" id="b-${k}" value="${esc(cur)}"><div class="seg plat-seg" id="plat-seg">${PLATS.map(p => `<button type="button" data-p="${p}" class="${cur === p ? 'on' : ''}">${p}</button>`).join('')}</div></div>`; }
     if (type === 'stars') input = `<select class="field" id="b-${k}"><option value="">–</option>${[5,4,3,2,1].map(n => `<option value="${n}" ${String(b[k]) === String(n) ? 'selected' : ''}>${'★'.repeat(n)}</option>`).join('')}</select>`;
     else if (type === 'select') input = `<select class="field" id="b-${k}">${['읽는중','완독','중단','읽을예정'].map(o => `<option ${b[k] === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
     else if (type === 'list') input = `<input class="field" id="b-${k}" list="dl-${k}" value="${v}">` + datalist('dl-' + k, S.books.map(x => x[k]));
@@ -1261,7 +1408,8 @@ function openBookForm(id) {
     ${f['제목']}
     <div class="row">${f['저자']}${f['옮긴이']}</div>
     <div class="row">${f['출판사']}${f['분량']}</div>
-    <div class="row">${f['플랫폼']}${f['경로']}</div>
+    ${f['플랫폼']}
+    ${f['경로']}
     <div class="row">${f['대분류']}${f['중분류']}</div>
     <div class="row">${f['개인분류']}${f['상태']}</div>
     <div class="row">${f['시작일']}${f['완독일']}</div>
@@ -1273,6 +1421,11 @@ function openBookForm(id) {
       <button class="btn" onclick="closeModal()">취소</button>
       <button class="btn primary grow" onclick="submitBook(${id ? `'${id}'` : 'null'})">저장</button>
     </div>`);
+  const setPlat = p => { $('b-플랫폼').value = p; [...$('plat-seg').children].forEach(x => x.classList.toggle('on', x.dataset.p === p)); };
+  $('plat-seg').onclick = e => { const t = e.target.closest('[data-p]'); if (t) { setPlat(t.dataset.p); S.platTouched = true; } };
+  S.platTouched = !!id;
+  $('b-경로').addEventListener('change', () => { if (S.platTouched) return; const r = $('b-경로').value; if (/윌라|오디오/.test(r)) setPlat('오디오북'); else if (EBOOK_RE.test(r)) setPlat('E북'); });
+  $('b-대분류').insertAdjacentHTML('afterend', `<div class="cat-auto" id="cat-auto"><button type="button" class="kw-ai" style="padding:0" onclick="autoCatForm(this)">🪄 자동 분류</button></div>`);
   if (!id) setTimeout(() => ($('al-q') && $('al-q').focus()), 50);
 }
 /* 책 검색 (카카오 + 국립중앙도서관) */
@@ -1303,21 +1456,111 @@ async function alPick(item) {
     $('al-res').innerHTML = '';
     $('cover-pick').innerHTML = d['표지URL'] ? coverPick(d['표지URL'], '검색 정보로 채웠어요' + (d['분류출처'] ? ' · ' + d['분류출처'] : '') + (d['분량'] ? '' : ' · 쪽수는 직접 입력해 주세요')) : '';
     toast('책 정보를 채웠어요. 확인 후 저장하세요');
+    if (!$('b-대분류').value.trim()) autoCatForm(); else { const box = $('cat-auto'); if (box) box.innerHTML = `✓ 검색 정보의 분류예요 <button type="button" class="kw-ai" onclick="autoCatForm(this, true)">AI로 다시</button>`; }
   } catch (e) { $('al-res').innerHTML = `<div class="al-msg">${esc(e.message || e)}</div>`; }
 }
 
+/* ----- 카테고리 자동 분류: 같은 저자 → 제목 낱말 → AI 순서로, 내 서재 분류 이름에 맞춰요 ----- */
+const CAT_RULES = [
+  [/부동산|아파트|청약|경매/, '경제/경영', '재테크/투자', '부동산'],
+  [/주식|월가|투자|가치투자|배당|ETF|펀드/i, '경제/경영', '재테크/투자', '주식'],
+  [/비트코인|코인|가상자산|암호화폐|블록체인/, '경제/경영', '재테크/투자', '가상자산'],
+  [/부자|돈의|머니|재테크|금융|금의|자산|연금|월급/, '경제/경영', '재테크/투자', '금융'],
+  [/트렌드|전망/, '경제/경영', '경제전망', '경제'],
+  [/\bAI\b|인공지능|챗GPT|GPT|디지털|테크/i, '경제/경영', '경제전망', 'AI'],
+  [/넛지|행동경제|경제학|경제|마케팅|경영|브랜드|비즈니스|창업|리더십/, '경제/경영', '경제일반', '경제'],
+  [/습관|레버리지|원씽|성공|시간관리|생산성|자기계발|목표|부의|멘탈|동기/, '자기계발', '성공', '자기계발'],
+  [/글쓰기|문장|작가 수업|에디터/, '인문학', '책읽기/글쓰기', '글쓰기'],
+  [/독서|책읽기|읽는 법|서재|책 읽/, '인문학', '책읽기/글쓰기', '독서법'],
+  [/니체|프롬|칸트|쇼펜하우어|스피노자|철학|소유냐|사유|실존/, '인문학', '서양철학', '철학'],
+  [/심리|마음|감정|불안|우울|트라우마|정신/, '인문학', '인문교양', '심리'],
+  [/사피엔스|인류|문명|인문/, '인문학', '인문교양', '인문'],
+  [/수학|미적분|확률|숫자/, '과학', '교양과학', '수학'],
+  [/과학|물리|우주|양자|진화|생물|화학|뇌과학|유전자|빅뱅|코스모스/, '과학', '교양과학', '과학'],
+  [/역사|세계사|한국사|전쟁|제국|왕조|문화사/, '역사/문화', '세계사', '역사'],
+  [/지리|정치|민주주의|국가|사회|불평등|계급|외교/, '정치/사회', '사회학', '사회'],
+  [/클래식|교향곡|오페라|작곡가|음악/, '예술/대중문화', '클래식', '음악'],
+  [/각본|시나리오|영화|감독/, '예술/대중문화', '영화', '각본'],
+  [/미술|그림|화가|미술관|건축|디자인/, '예술/대중문화', '미술', '예술'],
+  [/건강|운동|식단|다이어트|수면|달리기/, '인문학', '인문교양', '건강'],
+  [/에세이|산문/, '', '', '에세이']
+];
+function normAuthor(a) { return String(a || '').replace(/\(.*?\)/g, '').replace(/\s+/g, '').toLowerCase(); }
+function guessCategory(info) {
+  const others = S.books.filter(b => b['대분류'] && b.ID !== info.ID);
+  // 1) 같은 저자의 책이 있으면 그 분류
+  const au = splitAuthors(info['저자']).map(normAuthor).filter(Boolean);
+  for (const a of au) {
+    const same = others.filter(b => splitAuthors(b['저자']).map(normAuthor).includes(a));
+    if (same.length) { const pick = same[same.length - 1]; return { '대분류': pick['대분류'], '중분류': pick['중분류'] || '', '개인분류': pick['개인분류'] || '', how: '같은 저자 책 기준' }; }
+  }
+  // 2) 같은 시리즈 (제목 앞부분이 같은 책)
+  const t = String(info['제목'] || '').replace(/\(.*?\)/g, '').trim();
+  const stem = t.replace(/\s*\d+\s*(권|부|편)?$/, '').trim();
+  if (stem.length >= 3) { const ser = others.find(b => String(b['제목']).replace(/\(.*?\)/g, '').trim().startsWith(stem)); if (ser) return { '대분류': ser['대분류'], '중분류': ser['중분류'] || '', '개인분류': ser['개인분류'] || '', how: '같은 시리즈 기준' }; }
+  // 3) 제목 낱말
+  for (const [re, big, mid, mine] of CAT_RULES) {
+    if (re.test(t) && big) return { '대분류': big, '중분류': mid, '개인분류': mine, how: '제목 낱말 기준' };
+  }
+  return null;
+}
+async function aiCategory(info) {
+  const bigs = uniq(S.books.map(b => b['대분류'])), mids = uniq(S.books.map(b => b['중분류'])), mine = uniq(S.books.map(b => b['개인분류']));
+  const q = `[분류 요청] 아래 책 한 권의 분류만 골라 줘. 내 기록이나 필사는 참고하지 말고, 이 책 자체가 어떤 책인지로 판단해.
+책: 제목 "${info['제목']}" / 저자 ${info['저자'] || '모름'}${info['옮긴이'] ? ' / 옮긴이 ' + info['옮긴이'] : ''}${info['출판사'] ? ' / 출판사 ' + info['출판사'] : ''}
+대분류 후보: ${bigs.join(', ')}
+중분류 예시: ${mids.join(', ')}
+개인분류 예시: ${mine.join(', ')}
+규칙: 소설·시·에세이는 작가 국적에 따라 '한국 문학' 또는 '해외 문학'. 중분류는 예시에 맞는 게 있으면 그대로, 없으면 비슷한 형식으로 새로 지어도 돼.
+다른 말 없이 JSON 한 줄로만 답해: {"대분류":"…","중분류":"…","개인분류":"…"}`;
+  const r = await rpc('askAssistant', q, []);
+  const m = String(r && r.answer || '').match(/\{[\s\S]*?\}/);
+  if (!m) return null;
+  try { const j = JSON.parse(m[0]); if (!j['대분류']) return null; return { '대분류': String(j['대분류']).trim(), '중분류': String(j['중분류'] || '').trim(), '개인분류': String(j['개인분류'] || '').trim(), how: 'AI 추천' }; } catch (e) { return null; }
+}
+async function classifyBook(info, useAI) {
+  return guessCategory(info) || (useAI ? await aiCategory(info).catch(() => null) : null);
+}
+function formBookInfo() { const o = {}; ['제목', '저자', '옮긴이', '출판사'].forEach(k => o[k] = ($('b-' + k) || {}).value || ''); o.ID = S.formBookId || ''; return o; }
+function fillCat(c, force) {
+  ['대분류', '중분류', '개인분류'].forEach(k => { const el = $('b-' + k); if (el && c[k] && (force || !el.value.trim())) el.value = c[k]; });
+  const box = $('cat-auto'); if (box) box.innerHTML = `✓ ${esc([c['대분류'], c['중분류'], c['개인분류']].filter(Boolean).join(' > '))} <span style="color:var(--faint)">· ${esc(c.how)}</span> <button type="button" class="kw-ai" onclick="autoCatForm(this, true)">다시</button>`;
+}
+async function autoCatForm(btn, aiOnly) {
+  const info = formBookInfo();
+  if (!info['제목'].trim()) { toast('제목을 먼저 넣어 주세요'); return; }
+  const box = $('cat-auto'); if (box) box.innerHTML = '<span class="spin"></span> 분류를 고르는 중…';
+  const c = aiOnly ? await aiCategory(info).catch(() => null) : await classifyBook(info, true);
+  if (!$('cat-auto')) return;
+  if (c) fillCat(c, true); else $('cat-auto').innerHTML = `분류를 찾지 못했어요. 직접 골라 주세요. <button type="button" class="kw-ai" onclick="autoCatForm(this)">다시</button>`;
+}
+// 분류 없는 책 한꺼번에
+async function autoCatAll() {
+  const list = S.books.filter(b => !String(b['대분류'] || '').trim());
+  if (!list.length) { toast('분류 없는 책이 없어요'); return; }
+  if (!confirm(`분류가 빈 책 ${list.length}권을 자동으로 채울까요?\n같은 저자 · 제목으로 먼저 찾고, 모르면 AI에게 물어요.`)) return;
+  toast(`${list.length}권 분류하는 중…`); let n = 0;
+  for (const b of list) {
+    const c = await classifyBook(b, true);
+    if (c) { const patch = {}; ['대분류', '중분류', '개인분류'].forEach(k => { if (c[k] && !String(b[k] || '').trim()) patch[k] = c[k]; }); if (Object.keys(patch).length) { patchBook(b.ID, patch); n++; } }
+  }
+  toast(`${n}권 분류했어요`); if (S.view === 'stats') renderStatsView(); else if (S.view === 'library') renderList();
+}
 async function submitBook(id) {
   const data = { ID: id || '' };
   BOOK_FIELDS.forEach(([k]) => data[k] = $('b-' + k).value.trim());
   if (!data['제목']) { toast('제목을 입력해 주세요'); return; }
   if (data['분량'] && isNaN(Number(data['분량']))) { toast('분량은 숫자로 입력해 주세요'); return; }
   if (data['분량']) data['분량'] = Number(data['분량']);
+  if (!data['대분류']) { const g = guessCategory(data); if (g) ['대분류', '중분류', '개인분류'].forEach(k => { if (!data[k] && g[k]) data[k] = g[k]; }); }
   document.querySelectorAll('.sheet .btn').forEach(b => b.disabled = true);
   try {
     const saved = await call('saveBook', data);
     const i = S.books.findIndex(x => x.ID === saved.ID);
     if (i >= 0) S.books[i] = saved; else S.books.push(saved);
     closeModal(); toast('저장했어요');
+    if (!String(saved['대분류'] || '').trim()) aiCategory(saved).then(c => { if (!c) return; const patch = {}; ['대분류', '중분류', '개인분류'].forEach(k => { if (c[k] && !String(saved[k] || '').trim()) patch[k] = c[k]; });
+      if (Object.keys(patch).length) { patchBook(saved.ID, patch); toast('분류를 자동으로 채웠어요: ' + patch['대분류']); if (S.view === 'book' && S.bookId === saved.ID) renderBook(); } }).catch(() => {});
     if (id) renderBook(); else go('book', saved.ID);
   } catch (e) { document.querySelectorAll('.sheet .btn').forEach(b => b.disabled = false); }
 }
@@ -1329,11 +1572,13 @@ async function removeBook(id) {
   S.snips = S.snips.filter(x => x['책ID'] !== id);
   closeModal(); go('library'); toast('삭제했어요');
 }
-async function finish(id) {
-  if (!confirm('오늘 날짜로 완독 처리할까요?')) return;
+async function finish(id, sure) {
+  if (!sure && !confirm('오늘 날짜로 완독 처리할까요?')) return;
+  const b0 = book(id), total = Number(b0 && b0['분량']) || 0;
+  if (total && (Number(b0['현재쪽수']) || 0) < total) readHereQuiet(id, total);   // 마지막 쪽까지 읽은 걸로 기록
   const saved = await call('finishBook', id);
   S.books[S.books.findIndex(x => x.ID === id)] = saved;
-  renderBook(); toast(`완독! ${saved['완독일수'] ? saved['완독일수'] + '일 걸렸어요' : ''}`);
+  rerenderBookish(id); toast(`완독! ${saved['완독일수'] ? saved['완독일수'] + '일 걸렸어요' : ''}`);
   setTimeout(() => openRating(id), 400);
 }
 
@@ -1862,7 +2107,8 @@ function renderStatsView() {
     return (open ? rows : rows.slice(0, limit)).map((r, i) => `<div class="hbar" data-g="${id}" data-i="${i}" title="${esc(r.k)} · ${r.bs.length}권">
       <span class="name">${esc(r.k)}</span><span class="track"><span class="fill" style="display:block;width:${r.bs.length / max * 100}%"></span></span><span class="n">${r.bs.length}</span></div>`).join('') + more;
   };
-  const G2 = { cat: groupBy('대분류'), my: groupBy('개인분류'), route: groupBy('경로'), au: groupBy('저자', splitAuthors).filter(r => r.bs.length >= 2) };
+  const G2 = { cat: groupBy('대분류'), my: groupBy('개인분류'), route: groupBy('경로'), au: groupBy('저자', splitAuthors).filter(r => r.bs.length >= 2),
+    plat: Object.entries(done.reduce((m, b) => { (m[platOf(b)] = m[platOf(b)] || []).push(b); return m; }, {})).map(([k, bs]) => ({ k, bs })).sort((a, b) => b.bs.length - a.bs.length) };
   statGroups = { ...G2, month: buckets.map(x => ({ k: x.label, bs: x.books })) };
 
   const by = (arr, f, dir) => arr.filter(b => Number(f(b)) > 0).sort((a, b) => dir * (Number(f(b)) - Number(f(a))))[0];
@@ -1879,6 +2125,7 @@ function renderStatsView() {
       <button class="tile tap" data-list="빨리 읽은"><b>${avgDays ? avgDays.toFixed(1) : '–'}</b><span>한 권 평균 (일) ›</span></button>
       <button class="tile tap" data-list="필사 많은"><b>${snipN.toLocaleString()}</b><span>필사 덩어리 ›</span></button>
     </div>
+    ${dailyPanelHtml()}
     ${(() => { const g = Number(S.settings.goal) || 0, y = S.today.slice(0, 4); if (all || statYear !== y) return '';
       return `<div class="panel" onclick="openSettings()" style="cursor:pointer"><h3>${y}년 목표<small>${g ? '' : '눌러서 정하기'}</small></h3>${g ? `<div class="gl small" style="display:flex;justify-content:space-between;margin-bottom:6px"><span>${done.length} / ${g}권</span><span>${Math.min(100, Math.round(done.length / g * 100))}% · ${done.length >= g ? '달성! 🎉' : '남은 ' + (g - done.length) + '권'}</span></div><div class="bar"><i style="width:${Math.min(100, done.length / g * 100)}%"></i></div>` : ''}</div>`; })()}
     <div class="panel"><h3>${all ? '연도별 완독' : '월별 완독'}<small>막대를 누르면 그 달에 읽은 책</small></h3>
@@ -1888,8 +2135,10 @@ function renderStatsView() {
       <div class="drill" id="drill-month"></div>
     </div>
     <div class="two">
-      <div class="panel"><h3>대분류<small>${G2.cat.length}개 · 누르면 책 목록</small></h3>${hbars('cat', G2.cat, 10)}<div class="drill" id="drill-cat"></div></div>
+      <div class="panel"><h3>대분류<small>${G2.cat.length}개 · 누르면 책 목록</small></h3>${hbars('cat', G2.cat, 10)}<div class="drill" id="drill-cat"></div>
+        ${(() => { const n = S.books.filter(b => !String(b['대분류'] || '').trim()).length; return n ? `<button class="more-btn" onclick="autoCatAll()">🪄 분류 없는 책 ${n}권 자동 분류</button>` : ''; })()}</div>
       <div class="panel"><h3>개인분류<small>${G2.my.length}개 · 누르면 책 목록</small></h3>${hbars('my', G2.my, 10)}<div class="drill" id="drill-my"></div></div>
+      <div class="panel"><h3>종이책 · E북</h3>${hbars('plat', G2.plat, 3)}<div class="drill" id="drill-plat"></div></div>
       <div class="panel"><h3>어디서 읽었나</h3>${hbars('route', G2.route, 8)}<div class="drill" id="drill-route"></div></div>
       <div class="panel"><h3>여러 권 읽은 저자</h3>${G2.au.length ? hbars('au', G2.au, 10) : '<div class="drill">아직 없어요</div>'}<div class="drill" id="drill-au"></div></div>
     </div>
@@ -1903,6 +2152,7 @@ function renderStatsView() {
     </div></div>`;
   $('st-years').onclick = e => { const c = e.target.closest('[data-y]'); if (!c) return; statYear = c.dataset.y; renderStatsView(); };
   $('v-stats').querySelectorAll('[data-g]').forEach(el => el.onclick = () => openStatGroup(el));
+  $('v-stats').querySelectorAll('.dbar').forEach(el => el.onclick = () => openDay(el.dataset.d));
   $('v-stats').querySelectorAll('[data-more]').forEach(el => el.onclick = () => { const k = el.dataset.more; S.statOpen[k] = !S.statOpen[k]; renderStatsView(); });
   const yLabel = all ? '전체 기간' : statYear + '년';
   $('v-stats').querySelectorAll('[data-list]').forEach(el => el.onclick = () => openBookList(`${yLabel} 완독한 책`, done, el.dataset.list));
@@ -1910,7 +2160,7 @@ function renderStatsView() {
 let statGroups = {};
 function openStatGroup(el) {
   const g = el.dataset.g, row = (statGroups[g] || [])[Number(el.dataset.i)]; if (!row) return;
-  const names = { cat: '대분류', my: '개인분류', route: '어디서 읽었나', au: '저자' };
+  const names = { cat: '대분류', my: '개인분류', route: '어디서 읽었나', au: '저자', plat: '종이책 · E북' };
   const span = statYear === '전체' ? '전체 기간' : statYear + '년 완독';
   if (g === 'month') openBookList(`${statYear === '전체' ? '' : statYear + '년 '}${row.k} 완독`, row.bs, '최근 완독');
   else openBookList(`${names[g]} · ${row.k}`, row.bs, '최근 완독', span);
@@ -2056,7 +2306,7 @@ function updateBook(saved) { const i = S.books.findIndex(x => x.ID === saved.ID)
 
 /* ---------- 서재: 목표 · 오늘의 문장 · 반납 알림 ---------- */
 function libraryTopHtml() {
-  let html = '';
+  let html = readStripHtml();
   // 반납 임박
   const due = S.books.filter(b => { const d = dayDiff(b['반납일']); return d !== null && d <= 3; })
     .sort((a, b) => dayDiff(a['반납일']) - dayDiff(b['반납일']));
@@ -2129,7 +2379,7 @@ function hitsHtml(q) {
 }
 function openSnipInBook(id) {
   const s = S.snips.find(x => x.ID === id); if (!s) return;
-  S.focusSnip = id; go('book', s['책ID']);
+  S.focusSnip = id; S.bookId = s['책ID']; S.bookTab = s['유형'] === '생각' ? '생각' : '필사'; go('book', s['책ID']);
   setTimeout(() => {
     const el = document.getElementById('s-' + id);
     if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2200); }
@@ -2142,18 +2392,23 @@ function bookExtrasHtml(b) {
   let h = '';
   if (b['상태'] === '읽을예정') {
     h += `<div class="panel2"><h4>읽고 싶은 책</h4><div class="inline">
-      <button class="btn primary" onclick="startReading('${b.ID}')">오늘부터 읽기 시작</button>
-      <button class="btn" onclick="findInLibrary('${b.ID}')">${esc(S.settings.libraryName || '도서관')}에서 찾기 ↗</button></div></div>`;
+      <button class="btn primary" onclick="startReading('${b.ID}')">오늘부터 읽기 시작</button></div></div>`;
   }
+  const logs = logsOf(b.ID);
   if (b['상태'] === '읽는중') {
-    const p = progressOf(b);
+    const p = progressOf(b), eb = platOf(b) === 'E북';
+    const todayN = dailyOf(b.ID)[S.today] || 0;
     h += `<div class="panel2"><h4>읽는 중</h4>
       ${p ? `<div class="gl small" style="display:flex;justify-content:space-between;margin-bottom:5px"><span>p.${p.cur} / ${p.total}</span><span><b>${p.pct}%</b>${p.eta ? ' · 이 속도면 ' + p.eta.slice(5).replace('-', '.') + ' 완독' : ''}</span></div>
-        <div class="bar"><i style="width:${p.pct}%"></i></div>` : `<div class="small">지금 읽고 있는 쪽을 넣으면 진행률과 예상 완독일을 보여줘요.</div>`}
-      <div class="inline" style="margin-top:10px"><input class="field" id="cur-page" inputmode="numeric" placeholder="지금 몇 쪽?" value="${esc(b['현재쪽수'] || '')}">
-        <button class="btn" onclick="savePage('${b.ID}')">저장</button></div></div>`;
+        <div class="bar"><i style="width:${p.pct}%"></i></div>` : `<div class="small">읽은 곳까지 쪽수를 넣으면 진행률 · 예상 완독일 · 매일 읽은 양을 기록해요.</div>`}
+      <div class="inline" style="margin-top:10px"><input class="field" id="cur-page" inputmode="${eb ? 'decimal' : 'numeric'}" placeholder="${eb ? '몇 쪽? (45%도 돼요)' : '지금 몇 쪽?'}" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();readHere('${b.ID}')}">
+        <button class="btn primary" onclick="readHere('${b.ID}')">여기까지 읽었어요</button></div>
+      ${todayN ? `<div class="read-today">오늘 <b>${todayN}쪽</b> 읽었어요${b['현재쪽수'] ? ` · 지금 p.${esc(b['현재쪽수'])}` : ''}</div>` : b['현재쪽수'] ? `<div class="read-today">마지막으로 p.${esc(b['현재쪽수'])}까지 읽었어요</div>` : ''}
+      ${logs.length ? readLogHtml(b) : ''}</div>`;
+  } else if (logs.length) {
+    h += `<div class="panel2"><h4>독서 기록 <span class="small" style="font-weight:400">${logs.length}일 읽음</span></h4>${readLogHtml(b)}</div>`;
   }
-  if (b['반납일'] || b['상태'] === '읽는중') {
+  if (b['반납일'] || (b['상태'] === '읽는중' && /도서관|대출|대여/.test(String(b['경로'] || '')))) {
     const d = dayDiff(b['반납일']);
     h += `<div class="panel2"><h4>도서관 반납</h4><div class="inline">
       <input class="field" type="date" id="due-date" value="${esc(b['반납일'] || '')}" onchange="saveDue('${b.ID}', this.value)">
@@ -2168,11 +2423,127 @@ function bookExtrasHtml(b) {
   }
   return h;
 }
-async function savePage(id) {
-  const v = $('cur-page').value.trim();
-  if (v && isNaN(Number(v))) { toast('숫자로 입력해 주세요'); return; }
-  patchBook(id, { '현재쪽수': v === '' ? '' : Number(v) });
-  renderBook(); toast('저장했어요');
+function savePage(id) { readHere(id); }
+function readHereQuiet(id, page) {
+  const b = book(id); if (!b) return;
+  const logs = logsOf(id), todayLog = logs.find(l => l.date === S.today), prevCur = Number(b['현재쪽수']) || 0;
+  const base = logs.length ? (todayLog ? todayLog.base : null) : (prevCur && prevCur <= page ? prevCur : (b['시작일'] && String(b['시작일']).slice(0, 10) < S.today ? page : 0));
+  saveLog(id, S.today, page, base, todayLog && todayLog.m);
+  patchBook(id, { '현재쪽수': page });
+}
+/* ---------- 독서 기록: 여기까지 읽었어요 · 히스토리 · 매일 읽은 양 ---------- */
+// 한 줄 = 그날 그 책을 어디까지 읽었나. 메모 시트에 종류 '독서기록', 내용 "2026-10-21 · p.120 (p.80부터)"
+const LOG_RE = /^(\d{4}-\d{2}-\d{2})\s*·\s*p\.(\d+)(?:\s*\(p\.(\d+)부터\))?/;
+function parseLog(m) { const r = LOG_RE.exec(String(m['내용'] || '')); return r ? { m, id: m.ID, bid: m['책ID'], date: r[1], page: Number(r[2]), base: r[3] != null ? Number(r[3]) : null } : null; }
+function logsOf(bid) { return (S.logs || []).filter(m => m['책ID'] === bid).map(parseLog).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date)); }
+// 책 하나: 날짜 → 그날 읽은 쪽수
+function dailyOf(bid) {
+  const out = {}; let prev = null;
+  logsOf(bid).forEach(l => { const from = prev != null ? prev : (l.base != null ? l.base : 0); out[l.date] = (out[l.date] || 0) + Math.max(0, l.page - from); prev = l.page; });
+  return out;
+}
+// 모든 책: 날짜 → { n: 쪽수, books: {책ID: 쪽수} }
+function dailyAll() {
+  const out = {};
+  uniq((S.logs || []).map(m => m['책ID'])).forEach(bid => {
+    Object.entries(dailyOf(bid)).forEach(([d, n]) => { if (!n) return; const o = out[d] = out[d] || { n: 0, books: {} }; o.n += n; o.books[bid] = (o.books[bid] || 0) + n; });
+  });
+  return out;
+}
+function readStreak(all) {
+  let n = 0, d = S.today;
+  if (!(all[d] && all[d].n)) d = addDays(d, -1);   // 오늘 아직 안 읽었으면 어제부터 셈
+  while (all[d] && all[d].n) { n++; d = addDays(d, -1); }
+  return n;
+}
+function logText(date, page, base) { return `${date} · p.${page}${base != null ? ` (p.${base}부터)` : ''}`; }
+function saveLog(bid, date, page, base, existing) {
+  const fields = { '종류': '독서기록', '내용': logText(date, page, base), '완료': false, '마감일': '', '마감시간': '', '책ID': bid };
+  const data = Object.assign({ ID: existing ? existing.ID : 'T' + uid() }, fields);
+  const local = Object.assign({ '작성일': S.today }, existing || {}, data);
+  upsertLocal('logs', local); queue({ fn: 'saveMemo', list: 'logs', data, local });
+}
+function readHere(id, val) {
+  const b = book(id); if (!b) return;
+  let v = String(val != null ? val : ($('cur-page') ? $('cur-page').value : '')).trim().replace(/쪽|p\.?$/gi, '').trim();
+  if (!v) { toast('몇 쪽까지 읽었는지 넣어 주세요'); return; }
+  let page;
+  if (/%$/.test(v)) {
+    const pct = Number(v.replace('%', '')), total = Number(b['분량']) || 0;
+    if (isNaN(pct) || pct < 0 || pct > 100) { toast('0~100% 사이로 넣어 주세요'); return; }
+    if (!total) { toast('%로 넣으려면 책 정보에 분량(쪽수)이 있어야 해요'); return; }
+    page = Math.round(total * pct / 100);
+  } else { page = Number(v); if (isNaN(page) || page < 0) { toast('숫자로 넣어 주세요'); return; } page = Math.round(page); }
+  const total = Number(b['분량']) || 0; if (total && page > total) page = total;
+  const logs = logsOf(id), prevCur = Number(b['현재쪽수']) || 0;
+  const todayLog = logs.find(l => l.date === S.today);
+  const base = logs.length ? (todayLog ? todayLog.base : null) : (prevCur && prevCur <= page ? prevCur : (b['시작일'] && String(b['시작일']).slice(0, 10) < S.today ? page : 0));
+  saveLog(id, S.today, page, logs.length && !todayLog ? null : base, todayLog && todayLog.m);
+  patchBook(id, { '현재쪽수': page });
+  const n = dailyOf(id)[S.today] || 0;
+  rerenderBookish(id);
+  if (total && page >= total && b['상태'] === '읽는중') { toast('마지막 쪽까지 읽었어요!'); setTimeout(() => { if (confirm('다 읽었네요! 오늘 날짜로 완독 처리할까요?')) finish(id, true); }, 300); }
+  else toast(n ? `오늘 ${n}쪽 읽었어요 · p.${page}까지` : `p.${page}까지 기록했어요`);
+}
+function rerenderBookish(id) { if (S.view === 'book' && S.bookId === id) renderBook(); else if (S.view === 'library') renderList(); else if (S.view === 'stats') renderStatsView(); }
+function readLogHtml(b) {
+  const logs = logsOf(b.ID), daily = dailyOf(b.ID);
+  if (!logs.length) return '';
+  const open = !!S.logOpen, rows = logs.slice().reverse(), shown = open ? rows : rows.slice(0, 3);
+  return `<div class="readlog">${shown.map(l => `<div class="rl" onclick="openLogEdit('${l.id}')"><b>${l.date.slice(5).replace('-', '.')} (${WD[dateOf(l.date).getDay()]})</b><span>p.${l.page}까지 ${daily[l.date] ? `<em>+${daily[l.date]}쪽</em>` : ''}</span></div>`).join('')}</div>
+    ${rows.length > 3 ? `<button class="more-btn" onclick="S.logOpen=!S.logOpen;renderBook()">${open ? '접기' : `기록 ${rows.length}개 모두 보기`}</button>` : ''}`;
+}
+function openLogEdit(lid) {
+  const m = (S.logs || []).find(x => x.ID === resolveId(lid)); const l = m && parseLog(m); if (!l) return;
+  const b = book(l.bid) || {};
+  modal(`<h3>독서 기록 고치기 <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'] || '')}</span></h3>
+    <div class="row"><div><label>날짜</label><input class="field" type="date" id="lg-date" value="${l.date}"></div>
+      <div><label>여기까지 (쪽)</label><input class="field" id="lg-page" inputmode="numeric" value="${l.page}"></div></div>
+    <div class="actions"><button class="btn danger" onclick="removeLog('${m.ID}')">삭제</button><button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn primary grow" onclick="saveLogEdit('${m.ID}')">저장</button></div>`);
+}
+function saveLogEdit(lid) {
+  const m = (S.logs || []).find(x => x.ID === resolveId(lid)); const l = m && parseLog(m); if (!l) return;
+  const date = $('lg-date').value, page = Number($('lg-page').value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(page)) { toast('날짜와 쪽수를 확인해 주세요'); return; }
+  const clash = logsOf(l.bid).find(x => x.date === date && x.id !== l.id);
+  if (clash) { S.logs = S.logs.filter(x => x.ID !== clash.id); queue({ fn: 'deleteMemo', list: 'logs', id: clash.id }); }
+  saveLog(l.bid, date, Math.round(page), l.base, m);
+  const last = logsOf(l.bid).slice(-1)[0]; if (last) patchBook(l.bid, { '현재쪽수': last.page });
+  closeModal(); rerenderLogs(); toast('고쳤어요');
+}
+function removeLog(lid) {
+  if (!confirm('이 날의 기록을 지울까요?')) return;
+  const id = resolveId(lid), m = (S.logs || []).find(x => x.ID === id); if (!m) return;
+  S.logs = S.logs.filter(x => x.ID !== id); queue({ fn: 'deleteMemo', list: 'logs', id });
+  closeModal(); rerenderLogs(); toast('지웠어요');
+}
+function rerenderLogs() { if (S.view === 'book') renderBook(); else if (S.view === 'stats') renderStatsView(); else if (S.view === 'library') renderList(); }
+// 서재 위: 오늘 읽은 양 · 연속 기록
+function readStripHtml() {
+  if (!(S.logs || []).length) return '';
+  const all = dailyAll(), t = all[S.today], st = readStreak(all);
+  let week = 0; for (let i = 0; i < 7; i++) { const d = all[addDays(S.today, -i)]; if (d) week += d.n; }
+  return `<div class="read-strip" onclick="go('stats');setTimeout(()=>{const e=$('daily-panel');if(e)e.scrollIntoView({block:'start'})},80)">
+    <div>${t ? `오늘 <b>${t.n}쪽</b> 읽었어요` : '오늘은 아직 기록이 없어요'}${st >= 2 ? ` · 🔥 ${st}일 연속` : ''}</div><span>이번 주 ${week.toLocaleString()}쪽 ›</span></div>`;
+}
+// 통계: 최근 30일 매일 읽은 양
+function dailyPanelHtml() {
+  if (!(S.logs || []).length) return `<div class="panel" id="daily-panel"><h3>매일 독서 기록</h3><div class="drill">책 화면의 ‘여기까지 읽었어요’로 읽은 쪽수를 남기면 하루하루 얼마나 읽었는지 여기 쌓여요.</div></div>`;
+  const all = dailyAll(), days = Array.from({ length: 30 }, (_, i) => addDays(S.today, i - 29));
+  const vals = days.map(d => (all[d] ? all[d].n : 0)), max = Math.max(1, ...vals);
+  const sum = vals.reduce((a, b) => a + b, 0), readDays = vals.filter(Boolean).length;
+  let week = 0; vals.slice(-7).forEach(v => week += v);
+  return `<div class="panel" id="daily-panel"><h3>매일 독서 기록<small>최근 30일 · 막대를 누르면 그날 읽은 책</small></h3>
+    <div class="dsum"><div><b>${week.toLocaleString()}</b><span>이번 주 (쪽)</span></div><div><b>${readDays ? Math.round(sum / readDays) : 0}</b><span>읽은 날 평균 (쪽)</span></div><div><b>${readStreak(all)}</b><span>연속 (일)</span></div></div>
+    <div class="dbars">${days.map((d, i) => `<div class="dbar ${d === S.today ? 'dtoday' : ''}" data-d="${d}" title="${d} · ${vals[i]}쪽"><span class="fill" style="height:${vals[i] / max * 100}%"></span></div>`).join('')}</div>
+    <div class="dlabels"><span>${days[0].slice(5).replace('-', '.')}</span><span>${days[15].slice(5).replace('-', '.')}</span><span>오늘</span></div>
+    <div class="drill" id="drill-day"></div></div>`;
+}
+function openDay(d) {
+  const all = dailyAll(), o = all[d], el = $('drill-day'); if (!el) return;
+  document.querySelectorAll('.dbar').forEach(x => x.classList.toggle('on', x.dataset.d === d));
+  el.innerHTML = o ? `<b>${d.slice(5).replace('-', '.')} (${WD[dateOf(d).getDay()]}) · ${o.n}쪽</b><br>${Object.entries(o.books).map(([bid, n]) => `<a onclick="go('book','${bid}')">${esc((book(bid) || {})['제목'] || '')}</a> ${n}쪽`).join(' · ')}` : `${d.slice(5).replace('-', '.')} · 기록 없음`;
 }
 async function saveDue(id, v) {
   patchBook(id, { '반납일': v });
@@ -2181,13 +2552,6 @@ async function saveDue(id, v) {
 async function startReading(id) {
   patchBook(id, { '상태': '읽는중', '시작일': S.today });
   renderBook(); toast('읽기 시작! 오늘부터 기록해요');
-}
-function findInLibrary(id) {
-  const b = book(id); const q = String(b['제목']).replace(/\(.*?\)/g, '').trim();
-  const tpl = S.settings.libraryUrl;
-  const url = tpl && tpl.includes('{q}') ? tpl.replace('{q}', encodeURIComponent(q))
-    : 'https://search.naver.com/search.naver?query=' + encodeURIComponent(q + ' 도서관 소장');
-  window.open(url, '_blank');
 }
 let ratingPick = 0;
 function openRating(id) {
@@ -2210,10 +2574,6 @@ function openSettings() {
   const st = S.settings;
   modal(`<h3>설정</h3>
     <label>${S.today.slice(0, 4)}년 독서 목표 (권)</label><input class="field" id="set-goal" inputmode="numeric" value="${esc(st.goal)}" placeholder="예: 60">
-    <label>자주 가는 도서관 이름</label><input class="field" id="set-libname" value="${esc(st.libraryName)}" placeholder="예: 강남구 통합도서관">
-    <label>도서관 검색 주소 <span style="font-weight:400;color:var(--faint)">검색어 자리에 {q}</span></label>
-    <input class="field" id="set-liburl" value="${esc(st.libraryUrl)}" placeholder="https://…?searchKeyword={q}">
-    <div class="small" style="margin-top:6px;line-height:1.6">도서관 누리집에서 아무 책이나 검색한 뒤, 주소창의 주소를 복사해 붙여넣고 검색어 부분만 {q}로 바꾸세요. 비워 두면 네이버 검색으로 찾아요.</div>
     <div class="actions"><button class="btn" onclick="closeModal()">취소</button>
       <button class="btn primary grow" onclick="saveSettingsUI()">저장</button></div>
     ${themePickerHtml()}
@@ -2225,19 +2585,24 @@ function openSettings() {
     <button class="note-link" onclick="openPatchNotes()">업데이트 내역 <span>v${APP_VERSION}</span></button>`);
 }
 async function saveSettingsUI() {
-  const r = await call('saveSettings', { goal: $('set-goal').value.trim(), libraryName: $('set-libname').value.trim(), libraryUrl: $('set-liburl').value.trim() });
+  const r = await call('saveSettings', { goal: $('set-goal').value.trim(), libraryName: S.settings.libraryName || '', libraryUrl: S.settings.libraryUrl || '' });
   S.settings = r; closeModal(); toast('저장했어요');
   if (S.view === 'library') renderLibrary(); else if (S.view === 'stats') renderStatsView(); else if (S.view === 'book') renderBook();
 }
 
 /* ---------- 키워드 정리 ---------- */
 function openKwManager(filter) {
-  const list = keywordStats().filter(k => !filter || k.kw.includes(filter));
-  modal(`<h3>키워드 정리 <span style="font-weight:400;color:var(--faint);font-size:13px">${keywordStats().length}개</span></h3>
-    <input class="field" id="kw-filter" placeholder="키워드 찾기" value="${esc(filter || '')}" oninput="openKwManager(this.value);setTimeout(()=>{const e=$('kw-filter');e.focus();e.setSelectionRange(e.value.length,e.value.length)},0)">
-    <div class="kw-list">${list.map(k => `<div class="kw-row" data-k="${esc(k.kw)}"><b>#${esc(k.kw)}</b><span>문장 ${k.n} · 책 ${k.books.size}</span></div>`).join('') || '<div class="small" style="padding:10px">없어요</div>'}</div>
+  const all = keywordStats();
+  const draw = f => {
+    const el = $('kw-list'); if (!el) return;
+    el.innerHTML = all.filter(k => !f || k.kw.includes(f.trim().replace(/^#/, ''))).map(k => `<div class="kw-row" data-k="${esc(k.kw)}"><b>#${esc(k.kw)}</b><span>문장 ${k.n} · 책 ${k.books.size}</span></div>`).join('') || '<div class="small" style="padding:10px">없어요</div>';
+    el.querySelectorAll('.kw-row').forEach(r => r.onclick = () => openKwEdit(r.dataset.k));
+  };
+  modal(`<h3>키워드 정리 <span style="font-weight:400;color:var(--faint);font-size:13px">${all.length}개</span></h3>
+    <input class="field" id="kw-filter" type="search" placeholder="키워드 찾기" value="${esc(filter || '')}" autocomplete="off">
+    <div class="kw-list" id="kw-list"></div>
     <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
-  document.querySelectorAll('.kw-row').forEach(r => r.onclick = () => openKwEdit(r.dataset.k));
+  draw(filter); liveInput('kw-filter', draw);
 }
 function openKwEdit(k) {
   const others = keywordStats().map(x => x.kw).filter(x => x !== k);
@@ -2476,17 +2841,15 @@ async function takeShared() {
 }
 function openSharePicker(q) {
   const sh = S.shared; if (!sh) return;
-  const order = { '읽는중': 0, '읽을예정': 2, '완독': 1 };
-  const nq = String(q || '').toLowerCase().replace(/\s+/g, '');
-  const list = S.books.filter(b => !nq || (String(b['제목']) + String(b['저자'])).toLowerCase().replace(/\s+/g, '').includes(nq))
-    .sort((a, b) => (order[a['상태']] ?? 3) - (order[b['상태']] ?? 3) || String(b['시작일'] || b['등록일'] || '').localeCompare(String(a['시작일'] || a['등록일'] || '')))
-    .slice(0, 30);
+  const list = pickBooks(q);
+  const items = l => l.map(b => `<button class="al-item" onclick="useShared('${b.ID}')">${spine(b)}<div><b>${esc(b['제목'])}</b><span>${esc(b['저자'] || '')}${b['상태'] === '읽는중' ? ' · 읽는 중' : ''}</span></div></button>`).join('') || '<div class="al-msg">찾는 책이 없어요. 먼저 책을 추가해 주세요.</div>';
   const what = sh.files.length ? `사진 ${sh.files.length}장` : `글 ${sh.text.length.toLocaleString()}자`;
   modal(`<h3>어느 책에 넣을까요? <span style="font-weight:400;color:var(--faint);font-size:13px">공유받은 ${what}</span></h3>
     ${sh.text && !sh.files.length ? `<div class="share-peek">${esc(sh.text.slice(0, 140))}${sh.text.length > 140 ? '…' : ''}</div>` : ''}
-    <input class="field" id="sp-q" placeholder="책 제목 · 저자 찾기" value="${esc(q || '')}" oninput="openSharePicker(this.value);const e=$('sp-q');e.focus();e.setSelectionRange(e.value.length,e.value.length)">
-    <div class="share-list">${list.map(b => `<button class="al-item" onclick="useShared('${b.ID}')">${spine(b)}<div><b>${esc(b['제목'])}</b><span>${esc(b['저자'] || '')}${b['상태'] === '읽는중' ? ' · 읽는 중' : ''}</span></div></button>`).join('') || '<div class="al-msg">찾는 책이 없어요. 먼저 책을 추가해 주세요.</div>'}</div>
+    <input class="field" id="sp-q" type="search" placeholder="책 제목 · 저자 찾기" value="${esc(q || '')}" autocomplete="off">
+    <div class="share-list" id="sp-list">${items(list)}</div>
     <div class="actions"><button class="btn" onclick="S.shared=null;closeModal()">취소</button></div>`);
+  liveInput('sp-q', v => { const el = $('sp-list'); if (el) el.innerHTML = items(pickBooks(v)); });
 }
 function useShared(id) {
   const sh = S.shared; S.shared = null; if (!sh) return;
@@ -2567,8 +2930,20 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.4';
+const APP_VERSION = '2.5';
 const PATCH_NOTES = [
+  { v: '2.5', d: '2026.10.21', t: '독서 기록 · 내 생각 · 여러 글 고르기', items: [
+    '책 화면이 ‘필사 · 메모’와 ‘내 생각 · 서평’ 두 칸으로 나뉘었어요. 한줄평도 서평 칸에 함께 보여요',
+    '📖 여기까지 읽었어요: 읽은 쪽수를 남기면 날짜별 기록이 쌓이고, 그날 몇 쪽 읽었는지 보여줘요. E북은 45%처럼 넣어도 돼요',
+    '서재 위에 오늘 읽은 양 · 연속 기록, 통계에 최근 30일 매일 읽은 양 막대',
+    '＋ 버튼과 앱 아이콘 길게 누르기에 ‘여기까지 읽었어요’ · ‘필사 쓰기’ 바로가기',
+    '문장 입력 중간 저장: 창이 닫혀도 쓰던 내용이 남아 있고, ‘중간 저장’으로 창을 닫지 않고 저장해요',
+    '노트에서 ☑ 선택으로 여러 글을 골라 상태 · 묶음을 한 번에 바꾸거나 지워요',
+    '노트 글감이 노트 탭을 열 때마다 새로 골라져요',
+    '필사 넣기 · 책 찾기 · 키워드 찾기 칸에서 한글이 자음 · 모음으로 쪼개지던 문제를 고쳤어요',
+    '종이책 · E북 · 오디오북 구분: 책 목록 표시, 서재에서 골라 보기, 통계. 책 화면의 표시를 누르면 바로 바꿔요',
+    '🪄 카테고리 자동 분류: 같은 저자 · 시리즈 · 제목으로 찾고, 모르면 AI가 내 분류 이름에 맞춰 골라요. 통계에서 분류 없는 책을 한꺼번에 채울 수도 있어요',
+    '쓰지 않는 도서관 찾기 기능을 뺐어요 (반납일은 도서관에서 빌린 책에만 보여요)'] },
   { v: '2.4', d: '2026.10.18', t: '나만의 노트 · 음성 · 링크', items: [
     '노트 탭: 내 글을 모아 두고 써요. 상태(메모 · 초안 · 완성 · 발행), 묶음, 키워드, 발행 링크, 글자 수 · 원고지 매수',
     '쓰는 동안 자동 저장, 저장 버튼을 누를 때마다 고친 내역이 남아 되돌릴 수 있어요',
@@ -2874,26 +3249,33 @@ function memoToSnip(id) {
 }
 
 /* ----- 책 고르기 (공유 · 빠른 입력 · 메모 옮기기 공통) ----- */
-function openBookPicker(title, cb, peek, q) {
-  S.pickCb = cb;
+function pickBooks(q) {
   const order = { '읽는중': 0, '완독': 1, '읽을예정': 2 };
   const nq = String(q || '').toLowerCase().replace(/\s+/g, '');
-  const list = S.books.filter(b => !nq || (String(b['제목']) + String(b['저자'])).toLowerCase().replace(/\s+/g, '').includes(nq))
+  return S.books.filter(b => !nq || (String(b['제목']) + String(b['저자'])).toLowerCase().replace(/\s+/g, '').includes(nq))
     .sort((a, b) => (order[a['상태']] ?? 3) - (order[b['상태']] ?? 3) || String(b['시작일'] || b['등록일'] || '').localeCompare(String(a['시작일'] || a['등록일'] || '')))
     .slice(0, 30);
+}
+function openBookPicker(title, cb, peek, q) {
+  S.pickCb = cb;
+  const draw = v => {
+    const el = $('bp-list'); if (!el) return;
+    el.innerHTML = pickBooks(v).map(b => `<button class="al-item" data-b="${b.ID}">${spine(b)}<div><b>${esc(b['제목'])}</b><span>${esc(b['저자'] || '')}${b['상태'] === '읽는중' ? ' · 읽는 중' : ''}</span></div></button>`).join('') || '<div class="al-msg">찾는 책이 없어요.</div>';
+    el.querySelectorAll('[data-b]').forEach(x => x.onclick = () => { const f = S.pickCb; S.pickCb = null; closeModal(); if (f) f(x.dataset.b); });
+  };
   modal(`<h3>${esc(title)}</h3>
     ${peek ? `<div class="share-peek">${esc(peek)}${peek.length >= 140 ? '…' : ''}</div>` : ''}
-    <input class="field" id="bp-q" placeholder="책 제목 · 저자 찾기" value="${esc(q || '')}">
-    <div class="share-list">${list.map(b => `<button class="al-item" data-b="${b.ID}">${spine(b)}<div><b>${esc(b['제목'])}</b><span>${esc(b['저자'] || '')}${b['상태'] === '읽는중' ? ' · 읽는 중' : ''}</span></div></button>`).join('') || '<div class="al-msg">찾는 책이 없어요.</div>'}</div>
+    <input class="field" id="bp-q" type="search" placeholder="책 제목 · 저자 찾기" value="${esc(q || '')}" autocomplete="off">
+    <div class="share-list" id="bp-list"></div>
     <div class="actions"><button class="btn" onclick="S.pickCb=null;S.shared=null;closeModal()">취소</button></div>`);
-  $('bp-q').oninput = e => { const v = e.target.value; openBookPicker(title, cb, peek, v); const el = $('bp-q'); el.focus(); el.setSelectionRange(v.length, v.length); };
-  document.querySelectorAll('.share-list [data-b]').forEach(x => x.onclick = () => { const f = S.pickCb; S.pickCb = null; closeModal(); if (f) f(x.dataset.b); });
+  draw(q); liveInput('bp-q', draw);
 }
 
 /* ----- + 버튼: 어디서든 빠르게 ----- */
 function openQuickMenu() {
   modal(`<h3>무엇을 남길까요?</h3>
     <div class="qmenu">
+      <button onclick="openQuickRead()"><b>📖 여기까지 읽었어요</b><span>읽는 중인 책에 쪽수 기록</span></button>
       <button onclick="openQuickSheet('')"><b>✎ 메모</b><span>떠오른 생각을 바로</span></button>
       <button onclick="closeModal();startRecording('memo')"><b>🎙 음성 메모</b><span>말하면 메모 · 할 일로 정리</span></button>
       <button onclick="closeModal();newNote()"><b>✍ 새 글</b><span>나만의 노트에 쓰기</span></button>
@@ -2911,6 +3293,24 @@ function openQuickSheet(force) {
   bindQuick('qq', () => { closeModal(); if (S.view === 'memo') renderMemoView(); });
   setTimeout(() => { const t = $('qq'); if (t) t.focus(); }, 60);
 }
+// 여기까지 읽었어요: 읽는 중인 책들에 바로 쪽수 넣기 (앱 아이콘 길게 눌러도 열려요)
+function openQuickRead() {
+  const list = S.books.filter(b => b['상태'] === '읽는중').sort((a, b) => String((logsOf(b.ID).slice(-1)[0] || {}).date || b['시작일'] || '').localeCompare(String((logsOf(a.ID).slice(-1)[0] || {}).date || a['시작일'] || '')));
+  if (!list.length) { toast('읽는 중인 책이 없어요'); return; }
+  modal(`<h3>어디까지 읽었어요?</h3>
+    ${list.map(b => { const p = progressOf(b), today = dailyOf(b.ID)[S.today] || 0, eb = platOf(b) === 'E북'; return `<div class="panel2" style="margin-top:10px">
+      <div style="display:flex;gap:10px;align-items:center">${spine(b)}<div style="min-width:0;flex:1"><b style="display:block;font-size:14px">${esc(b['제목'])}</b>
+        <span class="small">${p ? `p.${p.cur} / ${p.total} · ${p.pct}%` : b['현재쪽수'] ? `p.${esc(b['현재쪽수'])}` : '아직 기록 없음'}${today ? ` · 오늘 +${today}쪽` : ''}</span></div></div>
+      <div class="inline" style="margin-top:8px"><input class="field" id="qr-${b.ID}" inputmode="${eb ? 'decimal' : 'numeric'}" placeholder="${eb ? '몇 쪽? (45%도 돼요)' : '몇 쪽까지?'}" onkeydown="if(event.key==='Enter'){event.preventDefault();quickReadSave('${b.ID}')}">
+        <button class="btn primary" onclick="quickReadSave('${b.ID}')">기록</button></div></div>`; }).join('')}
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+  setTimeout(() => { const el = $('qr-' + list[0].ID); if (el) el.focus(); }, 80);
+}
+function quickReadSave(id) {
+  const el = $('qr-' + id); if (!el) return;
+  const v = el.value.trim(); if (!v) { toast('몇 쪽까지 읽었는지 넣어 주세요'); return; }
+  closeModal(); readHere(id, v);
+}
 function quickSnip(photo) {
   openBookPicker(photo ? '어느 책을 찍을까요?' : '어느 책의 필사인가요?', id => { go('book', id); if (photo) openScan(); else openSnipForm(null); });
 }
@@ -2918,7 +3318,7 @@ function quickSnip(photo) {
 function takeQuick() {
   const q = new URLSearchParams(location.search).get('quick'); if (!q) return;
   history.replaceState({ view: S.view, id: S.bookId || '' }, '', location.pathname);
-  if (q === 'memo') openQuickSheet(''); else if (q === 'todo') openQuickSheet('할일'); else if (q === 'snip') quickSnip(false); else if (q === 'note') newNote(); else if (q === 'voice') startRecording('memo');
+  if (q === 'read') openQuickRead(); else if (q === 'memo') openQuickSheet(''); else if (q === 'todo') openQuickSheet('할일'); else if (q === 'snip') quickSnip(false); else if (q === 'note') newNote(); else if (q === 'voice') startRecording('memo');
 }
 
 /* ===================================================================
@@ -3223,41 +3623,95 @@ function wordStats(t) {
   return { all, nows, ms: Math.ceil(all / 200), min: Math.max(1, Math.round(nows / 500)) };
 }
 
-function renderNoteList() {
+function noteMatches() {
   const q = S.noteQ.trim().toLowerCase();
-  const groups = uniq(S.notes.map(n => String(n['묶음'] || '').trim())).sort();
   let list = S.notes.filter(n => (S.noteFilter === '전체' || n['상태'] === S.noteFilter) && (!S.noteGroup || n['묶음'] === S.noteGroup));
-  if (q) list = list.filter(n => (String(n['제목']) + ' ' + n['본문'] + ' ' + n['키워드']).toLowerCase().includes(q.replace(/^#/, '')));
-  list.sort((a, b) => Number(b['수정시각'] || 0) - Number(a['수정시각'] || 0) || String(b['수정일'] || '').localeCompare(String(a['수정일'] || '')));
-  const seed = writingSeed();
-  $('v-notes').innerHTML = `
-    <div class="view-head ai-head"><div><h1>노트</h1><p>${S.notes.length ? `글 ${S.notes.length}편` : '내 글을 모아 두는 곳이에요'}</p></div>
-      <button class="btn primary" onclick="newNote()">✍ 새 글</button></div>
-    <input class="field" id="n-q" placeholder="제목 · 내용 · #키워드 찾기" value="${esc(S.noteQ)}" style="margin:10px 0 8px">
-    <div class="chips" id="n-f">${['전체', ...NOTE_STATES].map(x => `<button class="chip ${S.noteFilter === x ? 'on' : ''}" data-f="${x}">${x}</button>`).join('')}
-      ${groups.length ? `<select class="field n-group" id="n-g"><option value="">모든 묶음</option>${groups.map(g => `<option ${S.noteGroup === g ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>` : ''}</div>
-    ${seed && !q ? `<div class="seed"><div class="lb"><span>글감</span><button onclick="S.seedShift=(S.seedShift||0)+1;renderNoteList()">다른 글감 ↻</button></div>
-      <div class="tx">${esc(String(seed['내용']).slice(0, 220))}${String(seed['내용']).length > 220 ? '…' : ''}</div>
-      <div class="mt">${esc((book(seed['책ID']) || {})['제목'] || '')}${seed['쪽수'] ? ' · p.' + esc(seed['쪽수']) : ''}</div>
-      <button class="btn" style="margin-top:10px" onclick="newNote('${seed.ID}')">이 문장으로 글쓰기</button></div>` : ''}
-    <div class="note-list">${list.map(n => `<div class="note-card" onclick="openNote('${n.ID}')">
-        <div class="nc-top"><span class="nst st-${NOTE_STATES.indexOf(n['상태'])}">${esc(n['상태'] || '초안')}</span>${n['묶음'] ? `<span class="small">${esc(n['묶음'])}</span>` : ''}</div>
+  if (q) { const terms = q.replace(/^#/, '').split(/\s+/).filter(Boolean); list = list.filter(n => { const hay = (String(n['제목']) + ' ' + n['본문'] + ' ' + n['키워드']).toLowerCase(); return terms.every(t => hay.includes(t)); }); }
+  return list.sort((a, b) => Number(b['수정시각'] || 0) - Number(a['수정시각'] || 0) || String(b['수정일'] || '').localeCompare(String(a['수정일'] || '')));
+}
+function noteCardsHtml() {
+  const list = noteMatches(), sel = S.noteSel;
+  return list.map(n => `<div class="note-card ${sel && sel.has(n.ID) ? 'sel' : ''}" data-n="${n.ID}">
+        <div class="nc-top">${sel ? '<span class="sel-check">✓</span>' : ''}<span class="nst st-${NOTE_STATES.indexOf(n['상태'])}">${esc(n['상태'] || '초안')}</span>${n['묶음'] ? `<span class="small">${esc(n['묶음'])}</span>` : ''}</div>
         <div class="nc-t">${esc(n['제목'] || '제목 없음')}</div>
         <div class="nc-x">${esc(plainText(n['본문']).slice(0, 140))}</div>
         <div class="nc-m">${esc(String(n['수정일'] || n['작성일'] || '').slice(0, 10))} · ${wordStats(n['본문']).nows.toLocaleString()}자${n['키워드'] ? ' · ' + splitKw(n['키워드']).slice(0, 3).map(k => '#' + esc(k)).join(' ') : ''}</div>
-      </div>`).join('') || `<div class="empty">${q || S.noteFilter !== '전체' ? '찾는 글이 없어요' : '아직 쓴 글이 없어요. ✍ 새 글로 시작해 보세요.'}</div>`}</div>`;
-  $('n-q').oninput = e => { S.noteQ = e.target.value; renderNoteList(); const el = $('n-q'); el.focus(); el.setSelectionRange(S.noteQ.length, S.noteQ.length); };
-  $('n-f').onclick = e => { const c = e.target.closest('[data-f]'); if (!c) return; S.noteFilter = c.dataset.f; renderNoteList(); };
-  if ($('n-g')) $('n-g').onchange = e => { S.noteGroup = e.target.value; renderNoteList(); };
+      </div>`).join('') || `<div class="empty">${S.noteQ.trim() || S.noteFilter !== '전체' ? '찾는 글이 없어요' : '아직 쓴 글이 없어요. ✍ 새 글로 시작해 보세요.'}</div>`;
 }
-// 글감: 날짜마다 바뀌는, 오래 묵은 필사 하나
+function drawNoteCards() {
+  const el = $('note-list'); if (!el) return;
+  el.innerHTML = noteCardsHtml();
+  const seed = $('seed-box'); if (seed) seed.classList.toggle('hidden', !!S.noteQ.trim() || !!S.noteSel);
+  renderSelBar();
+}
+function renderNoteList() {
+  const groups = uniq(S.notes.map(n => String(n['묶음'] || '').trim())).sort();
+  const seed = writingSeed();
+  $('v-notes').innerHTML = `
+    <div class="view-head ai-head"><div><h1>노트</h1><p>${S.notes.length ? `글 ${S.notes.length}편` : '내 글을 모아 두는 곳이에요'}</p></div>
+      <div style="display:flex;gap:6px">${S.notes.length ? `<button class="btn" onclick="toggleNoteSel()">${S.noteSel ? '선택 끝' : '☑ 선택'}</button>` : ''}<button class="btn primary" onclick="newNote()">✍ 새 글</button></div></div>
+    <input class="field" id="n-q" type="search" placeholder="제목 · 내용 · #키워드 찾기" value="${esc(S.noteQ)}" style="margin:10px 0 8px" autocomplete="off">
+    <div class="chips" id="n-f">${['전체', ...NOTE_STATES].map(x => `<button class="chip ${S.noteFilter === x ? 'on' : ''}" data-f="${x}">${x}</button>`).join('')}
+      ${groups.length ? `<select class="field n-group" id="n-g"><option value="">모든 묶음</option>${groups.map(g => `<option ${S.noteGroup === g ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>` : ''}</div>
+    ${seed ? `<div class="seed ${S.noteQ.trim() || S.noteSel ? 'hidden' : ''}" id="seed-box"><div class="lb"><span>오늘의 글감</span><button onclick="S.seedRand=Math.random();renderNoteList()">다른 글감 ↻</button></div>
+      <div class="tx">${esc(String(seed['내용']).slice(0, 220))}${String(seed['내용']).length > 220 ? '…' : ''}</div>
+      <div class="mt">${esc((book(seed['책ID']) || {})['제목'] || '')}${seed['쪽수'] ? ' · p.' + esc(seed['쪽수']) : ''}</div>
+      <button class="btn" style="margin-top:10px" onclick="newNote('${seed.ID}')">이 문장으로 글쓰기</button></div>` : ''}
+    <div class="note-list" id="note-list"></div>`;
+  drawNoteCards();
+  liveInput('n-q', v => { S.noteQ = v; drawNoteCards(); });
+  $('n-f').onclick = e => { const c = e.target.closest('[data-f]'); if (!c) return; S.noteFilter = c.dataset.f; [...$('n-f').querySelectorAll('[data-f]')].forEach(x => x.classList.toggle('on', x === c)); drawNoteCards(); };
+  if ($('n-g')) $('n-g').onchange = e => { S.noteGroup = e.target.value; drawNoteCards(); };
+  $('note-list').onclick = e => {
+    const c = e.target.closest('[data-n]'); if (!c) return;
+    if (!S.noteSel) { openNote(c.dataset.n); return; }
+    const id = c.dataset.n; if (S.noteSel.has(id)) S.noteSel.delete(id); else S.noteSel.add(id);
+    c.classList.toggle('sel', S.noteSel.has(id)); renderSelBar();
+  };
+}
+/* ----- 여러 글 고르기 → 상태 · 묶음 한 번에 ----- */
+function toggleNoteSel() { S.noteSel = S.noteSel ? null : new Set(); renderNoteList(); }
+function renderSelBar() {
+  let bar = $('selbar');
+  if (!S.noteSel || S.view !== 'notes') { if (bar) bar.remove(); $('fab').classList.toggle('hidden', !['library', 'memo', 'notes', 'stats'].includes(S.view)); return; }
+  if (!bar) { bar = document.createElement('div'); bar.id = 'selbar'; bar.className = 'selbar'; document.body.appendChild(bar); }
+  $('fab').classList.add('hidden');
+  const n = S.noteSel.size, shown = noteMatches();
+  const allOn = shown.length && shown.every(x => S.noteSel.has(x.ID));
+  bar.innerHTML = `<div class="in"><div class="top"><b>${n}개 골랐어요</b><span><button onclick="selAllNotes(${allOn ? 0 : 1})">${allOn ? '모두 풀기' : '보이는 글 모두'}</button> · <button onclick="toggleNoteSel()">닫기</button></span></div>
+    <div class="row2">${NOTE_STATES.map(st => `<button class="btn" ${n ? '' : 'disabled'} onclick="bulkNote({ '상태': '${st}' })">→ ${st}</button>`).join('')}
+      <button class="btn" ${n ? '' : 'disabled'} onclick="bulkGroup()">묶음</button>
+      <button class="btn danger" ${n ? '' : 'disabled'} onclick="bulkDelete()">삭제</button></div></div>`;
+}
+function selAllNotes(on) { const shown = noteMatches(); shown.forEach(x => on ? S.noteSel.add(x.ID) : S.noteSel.delete(x.ID)); drawNoteCards(); }
+function queueNote(n, snapshot) {
+  const data = {}; ['ID', '제목', '본문', '상태', '묶음', '키워드', '발행링크'].forEach(k => data[k] = n[k] ?? '');
+  queue({ fn: 'saveNote', data, local: Object.assign({}, n), args: [!!snapshot] });
+}
+function bulkNote(patch) {
+  const ids = [...S.noteSel]; let c = 0;
+  ids.forEach(id => { const n = noteOf(id); if (!n) return; Object.assign(n, patch); n['수정일'] = S.today; n['수정시각'] = Date.now(); queueNote(n, false); c++; });
+  closeModal(); S.noteSel = new Set(); drawNoteCards();
+  toast(`${c}편을 ${patch['상태'] ? '‘' + patch['상태'] + '’로' : '‘' + (patch['묶음'] || '묶음 없음') + '’ 묶음으로'} 바꿨어요`);
+}
+function bulkGroup() {
+  const groups = uniq(S.notes.map(n => String(n['묶음'] || '').trim())).sort();
+  modal(`<h3>묶음 바꾸기 <span style="font-weight:400;color:var(--faint);font-size:13px">${S.noteSel.size}편</span></h3>
+    <input class="field" id="bg-name" list="bg-groups" placeholder="묶음 이름 (비우면 묶음 없음)">${datalist('bg-groups', groups)}
+    <div class="actions"><button class="btn" onclick="closeModal()">취소</button><button class="btn primary grow" onclick="bulkNote({ '묶음': $('bg-name').value.trim() })">바꾸기</button></div>`);
+  setTimeout(() => $('bg-name') && $('bg-name').focus(), 50);
+}
+function bulkDelete() {
+  const ids = [...S.noteSel]; if (!ids.length || !confirm(`글 ${ids.length}편을 지울까요? 되돌릴 수 없어요.`)) return;
+  ids.forEach(id => { const rid = resolveId(id); S.notes = S.notes.filter(x => x.ID !== rid); queue({ fn: 'deleteNote', id: rid }); });
+  S.noteSel = new Set(); renderNoteList(); toast(`${ids.length}편을 지웠어요`);
+}
+// 글감: 노트 탭을 열 때마다 바뀌는 내 필사 하나
 function writingSeed() {
   const pool = S.snips.filter(s => String(s['내용']).length > 60 && String(s['내용']).length < 600);
   if (!pool.length) return null;
-  pool.sort((a, b) => String(a['작성일'] || '').localeCompare(String(b['작성일'] || '')));
-  const old = pool.slice(0, Math.max(30, Math.floor(pool.length / 2)));
-  let h = 0; for (const c of S.today + (S.seedShift || 0)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return old[h % old.length];
+  if (S.seedRand == null) S.seedRand = Math.random();
+  return pool[Math.floor(S.seedRand * pool.length) % pool.length];
 }
 function plainText(t) { return String(t || '').replace(/^#{1,3}\s+/gm, '').replace(/^>\s?/gm, '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/\[\[(.+?)\]\]/g, '$1'); }
 
@@ -3422,17 +3876,23 @@ function relatedSnips(n, limit) {
   }).filter(x => x.sc >= 3).sort((a, b) => b.sc - a.sc);
   return scored.slice(0, limit || 30).map(x => x.s);
 }
+function relListHtml(n, q) {
+  const qq = String(q || '').trim().toLowerCase();
+  const terms = qq.replace(/^#/, '').split(/\s+/).filter(Boolean);
+  const list = qq ? S.snips.filter(s => { const hay = (s['내용'] + ' ' + s['제목'] + ' ' + s['키워드'] + ' ' + ((book(s['책ID']) || {})['제목'] || '')).toLowerCase(); return terms.every(t => hay.includes(t)); }).slice(0, 40) : relatedSnips(n, 30);
+  const sub = $('rel-sub'); if (sub) sub.textContent = qq ? `찾은 문장 ${list.length}${list.length >= 40 ? '+' : ''}` : '쓰는 글과 맞는 내 필사';
+  return list.map(s => { const b = book(s['책ID']) || {}; return `<button class="mini" onclick="insertSnip('${s.ID}')">
+      <b>${esc(s['제목'] || b['제목'] || '')}</b><span>${esc(String(s['내용']).slice(0, 140))}${String(s['내용']).length > 140 ? '…' : ''}</span>
+      <em>${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''} · 누르면 인용으로 넣어요</em></button>`; }).join('') || `<div class="al-msg">${qq ? '찾는 문장이 없어요' : '아직 이어지는 필사가 없어요. 키워드를 달거나 몇 문장 더 쓰면 찾아줘요.'}</div>`;
+}
 function openRelated(q) {
   const n = collectNote(); if (!n) return;
-  const qq = String(q || '').trim().toLowerCase();
-  const list = qq ? S.snips.filter(s => (s['내용'] + ' ' + s['제목'] + ' ' + s['키워드'] + ' ' + ((book(s['책ID']) || {})['제목'] || '')).toLowerCase().includes(qq.replace(/^#/, ''))).slice(0, 40) : relatedSnips(n, 30);
-  modal(`<h3>필사 넣기 <span style="font-weight:400;color:var(--faint);font-size:13px">${qq ? '찾은 문장' : '쓰는 글과 맞는 내 필사'}</span></h3>
-    <input class="field" id="rel-q" placeholder="문장 · 책 · #키워드 찾기" value="${esc(q || '')}">
-    <div class="rel-list">${list.map(s => { const b = book(s['책ID']) || {}; return `<button class="mini" onclick="insertSnip('${s.ID}')">
-      <b>${esc(s['제목'] || b['제목'] || '')}</b><span>${esc(String(s['내용']).slice(0, 140))}${String(s['내용']).length > 140 ? '…' : ''}</span>
-      <em>${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''} · 누르면 인용으로 넣어요</em></button>`; }).join('') || `<div class="al-msg">${qq ? '찾는 문장이 없어요' : '아직 이어지는 필사가 없어요. 키워드를 달거나 몇 문장 더 쓰면 찾아줘요.'}</div>`}</div>
+  modal(`<h3>필사 넣기 <span id="rel-sub" style="font-weight:400;color:var(--faint);font-size:13px"></span></h3>
+    <input class="field" id="rel-q" type="search" placeholder="문장 · 책 · #키워드 찾기" value="${esc(q || '')}" autocomplete="off">
+    <div class="rel-list" id="rel-list"></div>
     <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
-  $('rel-q').oninput = e => { const v = e.target.value; openRelated(v); const el = $('rel-q'); el.focus(); el.setSelectionRange(v.length, v.length); };
+  $('rel-list').innerHTML = relListHtml(n, q);
+  liveInput('rel-q', v => { const el = $('rel-list'); if (el) el.innerHTML = relListHtml(n, v); });
 }
 function insertSnip(id) {
   const s = S.snips.find(x => x.ID === id); if (!s) return;
@@ -3458,16 +3918,19 @@ function openLink(t) {
   if (!r) { toast('이어진 책이나 글을 찾지 못했어요'); return; }
   if (r.kind === 'book') go('book', r.id); else openNote(r.id);
 }
-function openLinkPicker(q) {
+function linkListHtml(q) {
   const qq = normT(q);
   const bs = S.books.filter(b => !qq || normT(b['제목'] + b['저자']).includes(qq)).slice(0, 12);
   const ns = S.notes.filter(n => n.ID !== resolveId(S.noteId) && n['제목'] && (!qq || normT(n['제목']).includes(qq))).slice(0, 8);
+  return (bs.map(b => `<button class="al-item" onclick="insertLink(${esc(JSON.stringify(b['제목']))})">${spine(b)}<div><b>${esc(b['제목'])}</b><span>책 · ${esc(b['저자'] || '')}</span></div></button>`).join('')
+    + ns.map(n => `<button class="al-item" onclick="insertLink(${esc(JSON.stringify(n['제목']))})"><div class="spine nspine">글</div><div><b>${esc(n['제목'])}</b><span>내 글</span></div></button>`).join('')) || '<div class="al-msg">찾는 책이나 글이 없어요</div>';
+}
+function openLinkPicker(q) {
   modal(`<h3>책이나 글 잇기 <span style="font-weight:400;color:var(--faint);font-size:13px">[[제목]]으로 들어가요</span></h3>
-    <input class="field" id="lk-q" placeholder="책 · 글 제목 찾기" value="${esc(q || '')}">
-    <div class="share-list">${bs.map(b => `<button class="al-item" onclick="insertLink(${esc(JSON.stringify(b['제목']))})">${spine(b)}<div><b>${esc(b['제목'])}</b><span>책 · ${esc(b['저자'] || '')}</span></div></button>`).join('')}
-      ${ns.map(n => `<button class="al-item" onclick="insertLink(${esc(JSON.stringify(n['제목']))})"><div class="spine nspine">글</div><div><b>${esc(n['제목'])}</b><span>내 글</span></div></button>`).join('')}</div>
+    <input class="field" id="lk-q" type="search" placeholder="책 · 글 제목 찾기" value="${esc(q || '')}" autocomplete="off">
+    <div class="share-list" id="lk-list">${linkListHtml(q)}</div>
     <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
-  $('lk-q').oninput = e => { const v = e.target.value; openLinkPicker(v); const el = $('lk-q'); el.focus(); el.setSelectionRange(v.length, v.length); };
+  liveInput('lk-q', v => { const el = $('lk-list'); if (el) el.innerHTML = linkListHtml(v); });
 }
 function insertLink(title) {
   closeModal();
@@ -3602,7 +4065,7 @@ function renderMoreView() {
       <button onclick="go('ai')"><span class="mi">✨</span><b>AI 비서</b><span>내 필사 · 글 · 메모를 근거로 답해요</span></button>
       <button onclick="exportMarkdown()"><span class="mi">⬇️</span><b>전체 내보내기 (백업)</b><span>책 · 필사 · 글 · 메모를 마크다운 파일로</span></button>
       <button onclick="openLockSettings()"><span class="mi">🔒</span><b>앱 잠금</b><span>${locked ? '켜짐 · 열 때 비밀번호' : '꺼짐 · 열 때 비밀번호를 물어요'}</span></button>
-      <button onclick="openSettings()"><span class="mi">⚙️</span><b>설정</b><span>목표 · 도서관 · 밝기 · 디자인 · 서버 연결</span></button>
+      <button onclick="openSettings()"><span class="mi">⚙️</span><b>설정</b><span>목표 · 밝기 · 디자인 · 서버 연결</span></button>
       <button onclick="openPatchNotes()"><span class="mi">🗒</span><b>업데이트 내역</b><span>v${APP_VERSION}</span></button>
     </div>`;
 }
@@ -3739,7 +4202,9 @@ renderBook = function () {
 /* ===== 이벤트 · 시작 ===== */
 $('nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) go(b.dataset.v); };
 $('q').addEventListener('input', e => { S.q = e.target.value; S.hitLimit = 30; renderList(); });
-$('filters').addEventListener('click', e => { const c = e.target.closest('[data-f]'); if (!c) return; S.filter = c.dataset.f; renderFilters(); renderList(); });
+$('filters').addEventListener('click', e => {
+  const p = e.target.closest('[data-p]'); if (p) { S.plat = S.plat === p.dataset.p ? '' : p.dataset.p; renderFilters(); renderList(); return; }
+  const c = e.target.closest('[data-f]'); if (!c) return; S.filter = c.dataset.f; renderFilters(); renderList(); });
 $('list').addEventListener('click', e => { const c = e.target.closest('.book'); if (c) go('book', c.dataset.id); });
 $('fab').onclick = () => openQuickMenu();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
