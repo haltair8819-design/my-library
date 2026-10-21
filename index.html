@@ -650,6 +650,11 @@ html[data-mode="dark"] .badge.plat.eb{background:#222C3A;color:#9DB7DE}
 .selbar .row2 .btn{padding:6px 11px;font-size:13px}
 .cat-auto{margin-top:6px;font-size:12px;color:var(--sub)}
 .snip{position:relative}
+.spell-box{background:var(--accent-soft);border-radius:10px;padding:10px 12px;margin:8px 0 2px;font-size:13px}
+.spell-box .sp-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+.spell-box .sp-head button{border:0;background:none;color:var(--accent);font-weight:600;cursor:pointer;font-size:12.5px;padding:0}
+.spell-box .fix{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+.spell-box .fix .btn{padding:4px 10px;font-size:12.5px}
 .drag-h{position:absolute;top:0;right:0;bottom:0;width:52px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--faint);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
 #snip-list .snip:has(.drag-h){padding-right:56px}
 .snip.dragging{z-index:20;box-shadow:0 10px 30px rgba(0,0,0,.18);opacity:.96;transition:none}
@@ -1082,9 +1087,9 @@ function spine(b) {
   return `<div class="spine" style="background:${spineColor(b)}">${esc(String(b['제목']).slice(0, 8))}</div>`;
 }
 const snipsOf = id => S.snips.filter(s => s['책ID'] === id);
-// 종류는 두 갈래: 필사(책 문장 + 거기 단 메모) · 내 생각(감상 · 독후감). 예전 '메모' · '서평' 종류도 각각 여기에 들어가요
-const isThought = s => s['유형'] === '생각' || s['유형'] === '서평';
-const KIND_LABEL = { '필사': '필사', '생각': '내 생각' };
+// 칸은 두 개: 필사(책 문장, ＋메모 달기 가능) · 내 생각 / 메모(감상 · 독후감 · 따로 쓴 메모). 예전 '서평'은 내 생각으로
+const isThought = s => s['유형'] === '생각' || s['유형'] === '서평' || s['유형'] === '메모';
+const KIND_LABEL = { '필사': '필사', '생각': '내 생각 · 메모' };
 // 필사에 단 메모는 내용 끝에 "[메모]" 한 줄로 붙여 저장해요 (시트 칸을 늘리지 않으려고)
 const MEMO_SEP = '\n\n[메모] ';
 function sText(s) { const t = String((s && s['내용']) || ''); const i = t.indexOf(MEMO_SEP); return i >= 0 ? t.slice(0, i) : t; }
@@ -1124,7 +1129,7 @@ function renderStats() {
     `<div class="stat"><b>${done}</b><span>${y}년 완독</span></div>` +
     `<div class="stat"><b>${reading}</b><span>읽는 중</span></div>` +
     (() => { const nT = S.snips.filter(isThought).length; return `<div class="stat tap" onclick="openAllSnips('필사')"><b>${(S.snips.length - nT).toLocaleString()}</b><span>필사 ›</span></div>` +
-      `<div class="stat tap" onclick="openAllSnips('생각')"><b>${nT.toLocaleString()}</b><span>내 생각 ›</span></div>`; })();
+      `<div class="stat tap" onclick="openAllSnips('생각')"><b>${nT.toLocaleString()}</b><span>생각 · 메모 ›</span></div>`; })();
   $('goal').innerHTML = goalHtml();
 }
 function renderFilters() {
@@ -1132,7 +1137,7 @@ function renderFilters() {
     + '<span class="chip-sep"></span>' + PLATS.filter(p => p !== '오디오북' || S.books.some(b => platOf(b) === p)).map(p => `<button class="chip sub ${S.plat === p ? 'on' : ''}" data-p="${p}">${p}</button>`).join('');
 }
 function bookCard(b) {
-  const mine = snipsOf(b.ID), nT = mine.filter(isThought).length, nM = mine.filter(x => x['유형'] === '메모').length, nQ = mine.length - nT - nM;
+  const mine = snipsOf(b.ID), nM = mine.filter(x => x['유형'] === '메모').length, nT = mine.filter(isThought).length - nM, nQ = mine.length - nT - nM;
   const cat = [b['대분류'], b['개인분류']].filter(Boolean).join(' · ');
   return `<div class="book" data-id="${b.ID}">
     ${spine(b)}
@@ -1146,8 +1151,8 @@ function bookCard(b) {
         ${dueBadge(b)}
         ${b['별점'] ? `<span class="stars">${'★'.repeat(Number(b['별점']) || 0)}</span>` : ''}
         ${nQ ? `<span class="badge tapb" data-tab="필사">필사 ${nQ}</span>` : ''}
-        ${nM ? `<span class="badge tapb plat" data-tab="필사">메모 ${nM}</span>` : ''}
         ${nT ? `<span class="badge tapb think" data-tab="생각">내 생각 ${nT}</span>` : ''}
+        ${nM ? `<span class="badge tapb plat" data-tab="생각">메모 ${nM}</span>` : ''}
         ${cat ? `<span>${esc(cat)}</span>` : ''}
         ${period(b) ? `<span>${period(b)}</span>` : ''}
       </div>
@@ -1222,20 +1227,20 @@ function renderBook() {
     ${bookExtrasHtml(b)}
     <div class="seg book-tabs" id="book-tabs">
       <button data-t="필사" class="${tab === '필사' ? 'on' : ''}">필사<span>${quotes.length}</span></button>
-      <button data-t="생각" class="${tab === '생각' ? 'on' : ''}">내 생각<span>${thoughts.length}</span></button></div>
+      <button data-t="생각" class="${tab === '생각' ? 'on' : ''}">내 생각 · 메모<span>${thoughts.length}</span></button></div>
     ${tab === '필사' ? `
     <div class="sec-head tight"><h2>필사</h2>
       <div style="display:flex;gap:6px">${selBtn(quotes)}${S.snipSel || reo ? '' : `<button class="btn" onclick="openScan()">📷 사진</button><button class="btn" onclick="openSnipForm(null,'인용')">+ 문장</button>`}</div></div>
     ${reoNote}
     ${quotes.length ? `<div id="snip-list">${quotes.map(snipHtml).join('')}</div>`
     : '<div class="empty">아직 필사한 문장이 없어요.<br>‘+ 문장 추가’로 시작해 보세요.</div>'}` : `
-    <div class="sec-head tight"><h2>내 생각</h2>
-      <div style="display:flex;gap:6px">${selBtn(thoughts)}${S.snipSel || reo ? '' : `<button class="btn" onclick="openSnipForm(null,'생각')">+ 내 생각</button>`}</div></div>
+    <div class="sec-head tight"><h2>내 생각 · 메모</h2>
+      <div style="display:flex;gap:6px">${selBtn(thoughts)}${S.snipSel || reo ? '' : `<button class="btn" onclick="openSnipForm(null,'생각')">+ 내 생각</button><button class="btn" onclick="openSnipForm(null,'메모')">+ 메모</button>`}</div></div>
     ${reoNote}
-    <div class="sec-sub">읽으며 든 생각, 다 읽고 쓴 감상문 · 독후감을 모아 둬요.</div>
+    <div class="sec-sub">읽으며 든 생각, 감상문 · 독후감, 따로 적어 둔 메모를 모아 둬요.</div>
     ${b['별점'] || b['한줄평'] ? `<div class="snip thought" onclick="openRating('${b.ID}')"><div class="stitle">한줄평 ${b['별점'] ? `<span class="stars">${starText(b['별점'])}</span>` : ''}</div><div class="txt">${esc(b['한줄평'] || '')}</div></div>` : ''}
     ${thoughts.length ? `<div id="snip-list">${thoughts.map(snipHtml).join('')}</div>`
-    : '<div class="empty">아직 남긴 생각이 없어요.<br>‘+ 내 생각’으로 감상을 남겨 보세요.</div>'}`}
+    : '<div class="empty">아직 남긴 생각이나 메모가 없어요.<br>‘+ 내 생각’, ‘+ 메모’로 남겨 보세요.</div>'}`}
   `;
   $('book-tabs').onclick = e => { const t = e.target.closest('[data-t]'); if (!t) return; S.bookTab = t.dataset.t; if (S.snipSel) S.snipSel = new Set(); renderBook(); };
   renderSnipSelBar();
@@ -1377,7 +1382,7 @@ function bulkSnipType(type) {
   });
   const label = (SNIP_TYPES.find(t => t[0] === type) || [])[1];
   S.snipSel = new Set(); renderBook();
-  toast(c ? `${c}개를 ‘${label}’(으)로 바꿨어요${(type === '생각') !== (S.bookTab === '생각') ? ' · 옆 칸으로 옮겨졌어요' : ''}` : '바뀐 게 없어요');
+  toast(c ? `${c}개를 ‘${label}’(으)로 바꿨어요${(type !== '인용') !== (S.bookTab === '생각') ? ' · 옆 칸으로 옮겨졌어요' : ''}` : '바뀐 게 없어요');
 }
 function bulkSnipDelete() {
   const ids = [...S.snipSel].map(resolveId); if (!ids.length || !confirm(`${ids.length}개를 지울까요? 되돌릴 수 없어요.`)) return;
@@ -1541,16 +1546,18 @@ function openSnipForm(id, forceType) {
   const bookKw = uniq(snipsOf(b.ID).flatMap(x => String(x['키워드'] || '').split(',').map(k => k.trim())));
   const kwSuggest = uniq([...bookKw, ...allKw]).slice(0, 14);
   modal(`
-    <h3>${s ? (isThought(s) ? '내 생각 고치기' : '문장 수정') : snipType === '생각' ? '내 생각 쓰기' : '필사 추가'} <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span><span class="draft-state" id="draft-state"></span></h3>
+    <h3>${s ? (s['유형'] === '메모' ? '메모 고치기' : isThought(s) ? '내 생각 고치기' : '문장 수정') : snipType === '생각' ? '내 생각 쓰기' : snipType === '메모' ? '메모 쓰기' : '필사 추가'} <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span><span class="draft-state" id="draft-state"></span></h3>
     <div id="draft-note"></div>
-    <div class="seg" id="seg">${['인용','생각'].concat(snipType === '메모' ? ['메모'] : []).map(t => `<button data-t="${t}" class="${snipType === t ? 'on' : ''}">${t === '인용' ? '필사 (책 문장)' : t === '생각' ? '내 생각 (감상 · 독후감)' : '메모'}</button>`).join('')}</div>
+    <div class="seg" id="seg">${['인용','생각','메모'].map(t => `<button data-t="${t}" class="${snipType === t ? 'on' : ''}">${t === '인용' ? '필사' : t === '생각' ? '내 생각' : '메모'}</button>`).join('')}</div>
     <label>제목 <span style="font-weight:400;color:var(--faint)">내가 붙이는 표제</span><button type="button" class="kw-ai" data-ai-title onclick="aiTitle(this)">AI 제목</button></label>
     <input class="field" id="f-ttl" value="${esc(s ? s['제목'] : '')}" placeholder="예: 과학은 믿음을 싫어한다">
     <label>내용</label>
     <div class="ftools"><label class="ftool">📷 사진에서<input type="file" accept="image/*" hidden onchange="snipPhoto(this)"></label>
       <button type="button" class="ftool" onclick="toggleDictate(this,'f-txt')">🎤 받아쓰기</button>
       <button type="button" class="ftool" onclick="startRecording('snip', recSnipDone)">🎙 읽어서 넣기</button>
-      <button type="button" class="ftool" onclick="pasteClip(this)">📋 붙여넣기</button></div>
+      <button type="button" class="ftool" onclick="pasteClip(this)">📋 붙여넣기</button>
+      <button type="button" class="ftool" onclick="snipSpell(this)">✓ 맞춤법</button></div>
+    <div id="spell-out"></div>
     <textarea class="field" id="f-txt" placeholder="책 속 문장이나 생각을 적어 주세요">${esc(s ? sText(s) : '')}</textarea>
     <div id="memo-wrap" class="${s && sMemo(s) ? '' : 'hidden'}"><label>메모 <span style="font-weight:400;color:var(--faint)">이 문장에 덧붙이는 내 메모</span></label>
       <textarea class="field" id="f-memo" style="min-height:70px" placeholder="떠오른 것, 찾아볼 것, 연결되는 생각">${esc(s ? sMemo(s) : '')}</textarea></div>
@@ -1568,7 +1575,8 @@ function openSnipForm(id, forceType) {
       <button class="btn primary grow" onclick="submitSnip(${s ? `'${s.ID}'` : 'null'},false)">저장</button>
     </div>`);
   bindSnipDraft(s);
-  $('seg').onclick = e => { const t = e.target.closest('button'); if (!t) return; snipType = t.dataset.t; [...$('seg').children].forEach(x => x.classList.toggle('on', x === t)); snipDraftSoon(); };
+  $('seg').onclick = e => { const t = e.target.closest('button'); if (!t) return; snipType = t.dataset.t; [...$('seg').children].forEach(x => x.classList.toggle('on', x === t)); snipDraftSoon(); memoAddVis(); };
+  memoAddVis();
   document.querySelectorAll('[data-kw]').forEach(c => c.onclick = () => {
     const cur = $('f-kw').value.split(',').map(x => x.trim()).filter(Boolean);
     if (!cur.includes(c.dataset.kw)) cur.push(c.dataset.kw);
@@ -1576,6 +1584,34 @@ function openSnipForm(id, forceType) {
   });
   $('f-txt').addEventListener('paste', onSnipPaste);
   setTimeout(() => { const el = s ? $('f-txt') : $('f-ttl'); if (el) el.focus(); }, 50);
+}
+/* ----- 맞춤법 검사 (문장 입력 창 · 노트) ----- */
+async function snipSpell(btn) {
+  const txt = $('f-txt').value.trim(), memo = $('f-memo') ? $('f-memo').value.trim() : '', ttl = $('f-ttl').value.trim();
+  if (!txt && !memo) { toast('내용을 먼저 적어 주세요'); return; }
+  const out = $('spell-out'); btn.disabled = true;
+  out.innerHTML = '<div class="spell-box"><span class="spin"></span> 맞춤법을 살펴보는 중…</div>';
+  try {
+    const r = await rpc('noteAssist', { mode: 'spell', '제목': ttl, '본문': [txt, memo].filter(Boolean).join('\n\n') });
+    if (!$('spell-out')) return;
+    S.spellFix = (r.fixes || []).filter(f => f && f.from && f.to && f.from !== f.to && ['f-ttl', 'f-txt', 'f-memo'].some(k => $(k) && $(k).value.includes(f.from)));
+    renderSpell();
+  } catch (e) { if ($('spell-out')) out.innerHTML = `<div class="spell-box">⚠ ${esc(e.message || e)}</div>`; }
+  finally { if (btn.isConnected) btn.disabled = false; }
+}
+function renderSpell() {
+  const out = $('spell-out'); if (!out) return;
+  const list = S.spellFix || [];
+  out.innerHTML = `<div class="spell-box">${list.length ? `<div class="sp-head"><b>고칠 곳 ${list.length}개</b><span><button type="button" onclick="applySpell(-1)">모두 바꾸기</button> · <button type="button" onclick="$('spell-out').innerHTML=''">닫기</button></span></div>
+    ${list.map((f, i) => `<div class="fix"><div><s>${esc(f.from)}</s> → <b>${esc(f.to)}</b>${f.why ? `<div class="small">${esc(f.why)}</div>` : ''}</div><button type="button" class="btn" onclick="applySpell(${i})">바꾸기</button></div>`).join('')}`
+    : `<div class="sp-head"><span>맞춤법에서 눈에 띄는 곳이 없어요 👍</span><button type="button" onclick="$('spell-out').innerHTML=''">닫기</button></div>`}</div>`;
+}
+function applySpell(i) {
+  const list = S.spellFix || [], picks = i < 0 ? list.slice() : [list[i]];
+  let n = 0;
+  picks.forEach(f => { for (const k of ['f-txt', 'f-memo', 'f-ttl']) { const el = $(k); if (el && el.value.includes(f.from)) { el.value = el.value.replace(f.from, f.to); n++; break; } } });
+  S.spellFix = i < 0 ? [] : list.filter((_, j) => j !== i);
+  snipDraftSoon(); renderSpell(); toast(n ? `${n}곳을 고쳤어요` : '이미 바뀌어 있어요');
 }
 function submitSnip(id, keepOpen) {
   id = resolveId(id);
@@ -1609,6 +1645,12 @@ const hhmm = () => { const d = new Date(); return String(d.getHours()).padStart(
 function snipDraftKey(s) { return s ? 'id:' + s.ID : 'new:' + S.bookId; }
 function snipFormValues() {
   return { type: snipType, ttl: $('f-ttl') ? $('f-ttl').value : '', txt: $('f-txt') ? $('f-txt').value : '', memo: $('f-memo') ? $('f-memo').value : '', page: $('f-page') ? $('f-page').value : '', kw: $('f-kw') ? $('f-kw').value : '' };
+}
+function memoAddVis() {   // ＋ 메모 달기는 필사에서만 (내 생각 · 메모는 그 자체가 내 글이라)
+  const add = $('memo-add'), wrap = $('memo-wrap'); if (!add || !wrap) return;
+  const hasMemo = !!($('f-memo') && $('f-memo').value.trim());
+  add.classList.toggle('hidden', snipType !== '인용' || !wrap.classList.contains('hidden'));
+  if (snipType !== '인용' && !hasMemo) wrap.classList.add('hidden');
 }
 function showMemoField() { $('memo-wrap').classList.remove('hidden'); $('memo-add').classList.add('hidden'); setTimeout(() => $('f-memo').focus(), 30);
 }
@@ -3203,8 +3245,12 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.5.6';
+const APP_VERSION = '2.6';
 const PATCH_NOTES = [
+  { v: '2.6', d: '2026.10.22', t: '내 생각 · 메모 칸, 맞춤법 검사', items: [
+    '책 화면 칸이 ‘필사’와 ‘내 생각 · 메모’로 바뀌었어요. 예전 메모는 내 생각 · 메모 칸으로 옮겨 보여요',
+    '문장 추가할 때 필사 · 내 생각 · 메모 중에서 골라요. 필사에 ＋ 메모 달기도 그대로 있어요',
+    '✓ 맞춤법: 문장 입력 창과 노트 쓰기 도구에서 틀린 곳만 골라 보여주고, 하나씩 또는 모두 바꿔요'] },
   { v: '2.5.6', d: '2026.10.21', t: '예전 메모 → 필사', items: [
     '예전에 ‘메모’로 저장된 문장에 메모 표시가 붙고, 책 목록에도 메모 개수가 따로 보여요',
     '꾹 눌러 고른 뒤 ‘메모만’ 또는 ‘이 칸 모두’로 고르고 → 필사를 누르면 한 번에 필사로 바뀌어요 (전에는 메모가 안 바뀌던 문제 고침)',
@@ -4040,7 +4086,7 @@ function renderNoteEditor() {
     <div class="ne-tools" id="ne-tools">
       <button onclick="mdWrap('## ','')" title="소제목">소제목</button><button onclick="mdWrap('> ','')" title="인용">❝ 인용</button>
       <button onclick="mdWrap('**','**')" title="굵게"><b>굵게</b></button><button onclick="mdWrap('- ','')" title="목록">• 목록</button>
-      <button onclick="openLinkPicker()" title="책이나 글 잇기">[[ ]] 잇기</button><button onclick="openRelated()" title="연결된 필사">📚 필사 넣기</button>
+      <button onclick="openLinkPicker()" title="책이나 글 잇기">[[ ]] 잇기</button><button onclick="openRelated()" title="연결된 필사">📚 필사 넣기</button><button onclick="openNoteAI();runNoteAI('spell')" title="맞춤법 검사">✓ 맞춤법</button>
       ${voiceBtns('ne-body', 'note', 'recNoteDone')}</div>
     <textarea class="ne-body" id="ne-body" placeholder="쓰고 싶은 이야기를 적어 보세요.&#10;[[책 제목]]처럼 쓰면 책과 이어져요.">${esc(n['본문'])}</textarea>`}
     <div class="ne-count" id="ne-count">${ws.nows.toLocaleString()}자 (공백 포함 ${ws.all.toLocaleString()}) · 원고지 ${ws.ms}매 · 읽는 데 ${ws.min}분</div>
