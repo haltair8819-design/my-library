@@ -649,6 +649,12 @@ html[data-mode="dark"] .badge.plat.eb{background:#222C3A;color:#9DB7DE}
 .selbar .row2{display:flex;gap:6px;flex-wrap:wrap}
 .selbar .row2 .btn{padding:6px 11px;font-size:13px}
 .cat-auto{margin-top:6px;font-size:12px;color:var(--sub)}
+.snip{position:relative}
+body:has(#selbar) .wrap{padding-bottom:190px}
+body:has(#selbar) .toast{bottom:calc(200px + env(safe-area-inset-bottom))}
+.snip.sel{box-shadow:0 0 0 2px var(--accent) inset}
+.snip-check{position:absolute;top:10px;right:10px;margin:0;background:var(--card)}
+.snip.sel .snip-check{background:var(--accent);border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -1044,7 +1050,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 /* ===== 도우미 ===== */
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
+function toast(msg) { const t = $('toast'); t.style.pointerEvents = ''; t.onclick = null; t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
 const PALETTE = ['#5B7A6A','#8C5E4A','#4F6684','#8A7347','#6E5A80','#3F7378','#94604F','#5E6E45','#7A4E64','#55657A'];
 const PALETTE_BUNKO = ['#2B5797','#B23A48','#2E7D5B','#C0841A','#5B4B8A','#1F7A8C','#8C3B6E','#3E4A61','#A0522D','#4F7A28'];
 function spineColor(b) { const k = b['대분류'] || b['제목'] || ''; let h = 0; for (const c of k) h = (h * 31 + c.charCodeAt(0)) >>> 0;
@@ -1157,7 +1163,10 @@ function renderBook() {
     String(x.ID).localeCompare(String(y.ID)));
   const tags = [b['대분류'], b['중분류'], b['개인분류'], b['경로']].filter(Boolean);
   const plat = platOf(b);
-  const quotes = snips.filter(s => s['유형'] !== '생각'), thoughts = snips.filter(s => s['유형'] === '생각');
+  const isThought = s => s['유형'] === '생각' || s['유형'] === '서평';
+  const quotes = snips.filter(s => !isThought(s)), thoughts = snips.filter(isThought);
+  S.snipShown = (S.bookTab === '생각' ? thoughts : quotes).map(x => x.ID);
+  const selBtn = list => list.length ? `<button class="btn" onclick="toggleSnipSel()">${S.snipSel ? '선택 끝' : '☑ 선택'}</button>` : '';
   const tab = S.bookTab === '생각' ? '생각' : '필사';
   $('v-book').style.setProperty('--bc', spineColor(b));
   $('v-book').innerHTML = `
@@ -1186,23 +1195,62 @@ function renderBook() {
       <button data-t="생각" class="${tab === '생각' ? 'on' : ''}">내 생각 · 서평<span>${thoughts.length}</span></button></div>
     ${tab === '필사' ? `
     <div class="sec-head tight"><h2>필사 · 메모</h2>
-      <div style="display:flex;gap:8px"><button class="btn" onclick="openScan()">📷 사진으로</button><button class="btn" onclick="openSnipForm(null,'인용')">+ 문장 추가</button></div></div>
+      <div style="display:flex;gap:6px">${selBtn(quotes)}${S.snipSel ? '' : `<button class="btn" onclick="openScan()">📷 사진</button><button class="btn" onclick="openSnipForm(null,'인용')">+ 문장</button>`}</div></div>
     ${quotes.length ? quotes.map(snipHtml).join('')
     : '<div class="empty">아직 필사한 문장이 없어요.<br>‘+ 문장 추가’로 시작해 보세요.</div>'}` : `
     <div class="sec-head tight"><h2>내 생각 · 서평</h2>
-      <button class="btn" onclick="openSnipForm(null,'생각')">+ 내 생각 쓰기</button></div>
+      <div style="display:flex;gap:6px">${selBtn(thoughts)}${S.snipSel ? '' : `<button class="btn" onclick="openSnipForm(null,'생각')">+ 생각</button><button class="btn" onclick="openSnipForm(null,'서평')">+ 서평</button>`}</div></div>
     <div class="sec-sub">책을 읽으며 든 생각, 다 읽고 난 서평을 모아 둬요.</div>
     ${b['별점'] || b['한줄평'] ? `<div class="snip thought" onclick="openRating('${b.ID}')"><div class="stitle">한줄평 ${b['별점'] ? `<span class="stars">${starText(b['별점'])}</span>` : ''}</div><div class="txt">${esc(b['한줄평'] || '')}</div></div>` : ''}
     ${thoughts.length ? thoughts.map(snipHtml).join('')
     : '<div class="empty">아직 남긴 생각이 없어요.<br>‘+ 내 생각 쓰기’로 서평을 남겨 보세요.</div>'}`}
   `;
-  $('book-tabs').onclick = e => { const t = e.target.closest('[data-t]'); if (!t) return; S.bookTab = t.dataset.t; renderBook(); };
+  $('book-tabs').onclick = e => { const t = e.target.closest('[data-t]'); if (!t) return; S.bookTab = t.dataset.t; if (S.snipSel) S.snipSel = new Set(); renderBook(); };
+  renderSnipSelBar();
+}
+/* ----- 책 안의 문장 여러 개 고르기 → 종류 한 번에 바꾸기 · 지우기 ----- */
+const SNIP_TYPES = [['인용', '필사'], ['메모', '메모'], ['생각', '내 생각'], ['서평', '서평']];
+function snipTap(id) {
+  if (!S.snipSel) { openSnipForm(id); return; }
+  if (S.snipSel.has(id)) S.snipSel.delete(id); else S.snipSel.add(id);
+  const el = document.getElementById('s-' + id); if (el) el.classList.toggle('sel', S.snipSel.has(id));
+  renderSnipSelBar();
+}
+function toggleSnipSel() { S.snipSel = S.snipSel ? null : new Set(); renderBook(); }
+function renderSnipSelBar() {
+  let bar = $('selbar');
+  if (!S.snipSel || S.view !== 'book') { if (bar && !(S.view === 'notes' && S.noteSel)) bar.remove(); return; }
+  if (!bar) { bar = document.createElement('div'); bar.id = 'selbar'; bar.className = 'selbar'; document.body.appendChild(bar); }
+  const n = S.snipSel.size, shown = S.snipShown || [], allOn = shown.length && shown.every(id => S.snipSel.has(id));
+  bar.innerHTML = `<div class="in"><div class="top"><b>${n}개 골랐어요</b><span><button onclick="selAllSnips(${allOn ? 0 : 1})">${allOn ? '모두 풀기' : '이 칸 모두'}</button> · <button onclick="toggleSnipSel()">닫기</button></span></div>
+    <div class="row2">${SNIP_TYPES.map(([t, label]) => `<button class="btn" ${n ? '' : 'disabled'} onclick="bulkSnipType('${t}')">→ ${label}</button>`).join('')}
+      <button class="btn danger" ${n ? '' : 'disabled'} onclick="bulkSnipDelete()">삭제</button></div></div>`;
+}
+function selAllSnips(on) { (S.snipShown || []).forEach(id => on ? S.snipSel.add(id) : S.snipSel.delete(id)); renderBook(); }
+function bulkSnipType(type) {
+  let c = 0;
+  [...S.snipSel].forEach(id => {
+    const x = S.snips.find(y => y.ID === resolveId(id)); if (!x || x['유형'] === type) return;
+    const data = { ID: x.ID, '책ID': x['책ID'], '유형': type, '내용': x['내용'], '쪽수': x['쪽수'] ?? '', '제목': x['제목'] || '', '키워드': x['키워드'] || '' };
+    const local = Object.assign({}, x, { '유형': type });
+    upsertSnipLocal(local); queue({ fn: 'saveSnippet', data, local }); c++;
+  });
+  const label = (SNIP_TYPES.find(t => t[0] === type) || [])[1];
+  S.snipSel = new Set(); renderBook();
+  toast(c ? `${c}개를 ‘${label}’(으)로 바꿨어요${(type === '생각' || type === '서평') !== (S.bookTab === '생각') ? ' · 옆 칸으로 옮겨졌어요' : ''}` : '바뀐 게 없어요');
+}
+function bulkSnipDelete() {
+  const ids = [...S.snipSel].map(resolveId); if (!ids.length || !confirm(`${ids.length}개를 지울까요? 되돌릴 수 없어요.`)) return;
+  ids.forEach(id => { S.snips = S.snips.filter(x => x.ID !== id); queue({ fn: 'deleteSnippet', id }); });
+  S.snipSel = new Set(); renderBook(); toast(`${ids.length}개를 지웠어요`);
 }
 function snipHtml(s) {
-  const cls = s['유형'] === '생각' ? 'thought' : s['유형'] === '메모' ? 'memo' : 'quote';
+  const cls = s['유형'] === '생각' || s['유형'] === '서평' ? 'thought' : s['유형'] === '메모' ? 'memo' : 'quote';
+  const sel = S.snipSel && S.view === 'book';
   const kws = String(s['키워드'] || '').split(',').map(k => k.trim()).filter(Boolean);
   const meta = [s['쪽수'] !== '' && s['쪽수'] != null ? `<span class="pg">p.${esc(s['쪽수'])}</span>` : '', ...kws.map(k => `<span class="kw">#${esc(k)}</span>`)].filter(Boolean);
-  return `<div class="snip ${cls}" id="s-${s.ID}" onclick="openSnipForm('${s.ID}')">
+  return `<div class="snip ${cls} ${sel && S.snipSel.has(s.ID) ? 'sel' : ''}" id="s-${s.ID}" onclick="snipTap('${s.ID}')">
+    ${sel ? '<span class="sel-check snip-check">✓</span>' : ''}${s['유형'] === '서평' ? '<span class="badge" style="margin-bottom:6px;display:inline-block">서평</span>' : ''}
     ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}
     <div class="txt">${esc(s['내용'])}</div>
     ${meta.length ? `<div class="smeta">${meta.join('')}</div>` : ''}
@@ -1213,6 +1261,7 @@ function snipHtml(s) {
 function show(view) {
   if (view === 'notes' && S.view !== 'notes' && S.view !== 'note') S.seedRand = Math.random();   // 노트 탭에 들어올 때마다 새 글감
   if (view !== 'notes' && S.noteSel) S.noteSel = null;
+  if (view !== 'book' && S.snipSel) S.snipSel = null;
   if (S.view === 'note' && view !== 'note' && typeof collectNote === 'function') { const n = collectNote(); if (n && S.noteDirty) saveNoteNow(true); stopDictate(); }
   S.view = view;
   ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
@@ -1227,14 +1276,14 @@ function show(view) {
   else if (view === 'ai') renderAIView();
   else if (view === 'memo') { renderMemoView(); renderVoiceQueue(); processVoiceQueue(); }
   else if (view === 'notes') renderNoteList();
-  if (view !== 'notes' && $('selbar')) $('selbar').remove();
+  if (!(view === 'notes' && S.noteSel) && !(view === 'book' && S.snipSel) && $('selbar')) $('selbar').remove();
   else if (view === 'note') renderNoteEditor();
   else if (view === 'more') renderMoreView();
   else if (view === 'blist') renderBookList();
   else renderStatsView();
 }
 function go(view, id) {
-  if (view === 'book') { if (S.bookId !== id) S.bookTab = '필사'; S.bookId = id; }
+  if (view === 'book') { if (S.bookId !== id) { S.bookTab = '필사'; S.snipSel = null; } S.bookId = id; }
   if (view === 'note') S.noteId = id;
   try { history.pushState({ view, id: id || '' }, '', view === 'book' ? '?book=' + encodeURIComponent(id) : location.pathname); } catch (e) {}
   show(view); window.scrollTo(0, 0);
@@ -1270,14 +1319,14 @@ function openSnipForm(id, forceType) {
   id = resolveId(id);
   const s = id ? S.snips.find(x => x.ID === id) : null;
   const b = book(S.bookId);
-  snipType = s ? (s['유형'] || '인용') : (forceType || (S.bookTab === '생각' ? '생각' : (snipType === '생각' ? '인용' : snipType)));
+  snipType = s ? (s['유형'] || '인용') : (forceType || (S.bookTab === '생각' ? '생각' : (snipType === '생각' || snipType === '서평' ? '인용' : snipType)));
   const allKw = uniq(S.snips.flatMap(x => String(x['키워드'] || '').split(',').map(k => k.trim())));
   const bookKw = uniq(snipsOf(b.ID).flatMap(x => String(x['키워드'] || '').split(',').map(k => k.trim())));
   const kwSuggest = uniq([...bookKw, ...allKw]).slice(0, 14);
   modal(`
-    <h3>${s ? '문장 수정' : snipType === '생각' ? '내 생각 쓰기' : '문장 추가'} <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span><span class="draft-state" id="draft-state"></span></h3>
+    <h3>${s ? '문장 수정' : snipType === '생각' ? '내 생각 쓰기' : snipType === '서평' ? '서평 쓰기' : '문장 추가'} <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'])}</span><span class="draft-state" id="draft-state"></span></h3>
     <div id="draft-note"></div>
-    <div class="seg" id="seg">${['인용','생각','메모'].map(t => `<button data-t="${t}" class="${snipType === t ? 'on' : ''}">${t === '인용' ? '인용 (책 문장)' : t === '생각' ? '내 생각' : '메모'}</button>`).join('')}</div>
+    <div class="seg" id="seg">${['인용','메모','생각','서평'].map(t => `<button data-t="${t}" class="${snipType === t ? 'on' : ''}">${t === '인용' ? '필사' : t === '생각' ? '내 생각' : t}</button>`).join('')}</div>
     <label>제목 <span style="font-weight:400;color:var(--faint)">내가 붙이는 표제</span><button type="button" class="kw-ai" data-ai-title onclick="aiTitle(this)">AI 제목</button></label>
     <input class="field" id="f-ttl" value="${esc(s ? s['제목'] : '')}" placeholder="예: 과학은 믿음을 싫어한다">
     <label>내용</label>
@@ -2379,7 +2428,7 @@ function hitsHtml(q) {
 }
 function openSnipInBook(id) {
   const s = S.snips.find(x => x.ID === id); if (!s) return;
-  S.focusSnip = id; S.bookId = s['책ID']; S.bookTab = s['유형'] === '생각' ? '생각' : '필사'; go('book', s['책ID']);
+  S.focusSnip = id; S.bookId = s['책ID']; S.bookTab = s['유형'] === '생각' || s['유형'] === '서평' ? '생각' : '필사'; go('book', s['책ID']);
   setTimeout(() => {
     const el = document.getElementById('s-' + id);
     if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2200); }
@@ -2930,8 +2979,11 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.5.1';
 const PATCH_NOTES = [
+  { v: '2.5.1', d: '2026.10.21', t: '문장 여러 개 고르기 · 서평', items: [
+    '책 화면에서 ☑ 선택으로 문장을 여러 개 골라 필사 · 메모 · 내 생각 · 서평으로 한 번에 바꾸거나 지워요',
+    '‘서평’ 종류가 생겼어요. 내 생각 · 서평 칸에서 + 서평으로 따로 쓸 수 있어요'] },
   { v: '2.5', d: '2026.10.21', t: '독서 기록 · 내 생각 · 여러 글 고르기', items: [
     '책 화면이 ‘필사 · 메모’와 ‘내 생각 · 서평’ 두 칸으로 나뉘었어요. 한줄평도 서평 칸에 함께 보여요',
     '📖 여기까지 읽었어요: 읽은 쪽수를 남기면 날짜별 기록이 쌓이고, 그날 몇 쪽 읽었는지 보여줘요. E북은 45%처럼 넣어도 돼요',
