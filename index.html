@@ -650,6 +650,11 @@ html[data-mode="dark"] .badge.plat.eb{background:#222C3A;color:#9DB7DE}
 .selbar .row2 .btn{padding:6px 11px;font-size:13px}
 .cat-auto{margin-top:6px;font-size:12px;color:var(--sub)}
 .snip{position:relative}
+.drag-h{position:absolute;top:0;right:0;bottom:0;width:52px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--faint);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+#snip-list .snip:has(.drag-h){padding-right:56px}
+.snip.dragging{z-index:20;box-shadow:0 10px 30px rgba(0,0,0,.18);opacity:.96;transition:none}
+.snip.dragging .drag-h{cursor:grabbing;color:var(--accent)}
+body.no-select{user-select:none;-webkit-user-select:none}
 .totop{position:fixed;right:24px;bottom:calc(144px + env(safe-area-inset-bottom));z-index:10;width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--sub);font-size:20px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.12);opacity:0;pointer-events:none;transition:opacity .2s}
 .totop.on{opacity:1;pointer-events:auto}
 body:has(#selbar) .totop{bottom:calc(220px + env(safe-area-inset-bottom))}
@@ -965,7 +970,8 @@ function mergeSync(d) {
 }
 // 독서 기록은 메모 시트에 '독서기록' 종류로 들어가요 (서버를 바꾸지 않으려고). 앱에서는 따로 모아 써요
 S.logs = [];
-const isLogRow = m => m && m['종류'] === '독서기록';
+const isLogRow = m => m && (m['종류'] === '독서기록' || m['종류'] === '필사순서');   // 앱이 쓰는 기록 줄 (메모 화면엔 안 보임)
+const readLogs = () => (S.logs || []).filter(m => m['종류'] === '독서기록');
 function splitLogs() {
   const seen = new Set(), memos = [], logs = [];
   S.memos.concat(S.logs || []).forEach(x => { if (!x || seen.has(x.ID)) return; seen.add(x.ID); (isLogRow(x) ? logs : memos).push(x); });
@@ -1175,12 +1181,15 @@ function renderBook() {
   const b = book(S.bookId);
   if (!b) { go('library'); return; }
   // 노트 파일에서 가져온 문장 → 노트에 적힌 순서, 직접 입력한 문장 → 그 뒤에 쪽수 순서
-  const snips = sortByPage(snipsOf(b.ID));
+  const snips = orderedSnips(b.ID);
+  const reo = !!S.reorder;
   const tags = [b['대분류'], b['중분류'], b['개인분류'], b['경로']].filter(Boolean);
   const plat = platOf(b);
   const quotes = snips.filter(s => !isThought(s)), thoughts = snips.filter(isThought);
   S.snipShown = (S.bookTab === '생각' ? thoughts : quotes).map(x => x.ID);
-  const selBtn = list => list.length ? `<button class="btn" onclick="toggleSnipSel()">${S.snipSel ? '선택 끝' : '☑ 선택'}</button>` : '';
+  const selBtn = list => list.length < 1 ? '' : reo ? `<button class="btn primary" onclick="toggleReorder()">순서 완료</button>`
+    : `${S.snipSel ? '' : list.length > 1 ? `<button class="btn" onclick="toggleReorder()" title="끌어서 순서 바꾸기">↕ 순서</button>` : ''}<button class="btn" onclick="toggleSnipSel()">${S.snipSel ? '선택 끝' : '☑ 선택'}</button>`;
+  const reoNote = reo ? `<div class="draft-note"><span>≡ 손잡이를 끌어서 옮기세요. 바로 저장돼요</span>${snipOrderOf(b.ID) ? `<button type="button" onclick="resetOrder('${b.ID}')">쪽수 순으로</button>` : ''}</div>` : '';
   const tab = S.bookTab === '생각' ? '생각' : '필사';
   $('v-book').style.setProperty('--bc', spineColor(b));
   $('v-book').innerHTML = `
@@ -1209,28 +1218,94 @@ function renderBook() {
       <button data-t="생각" class="${tab === '생각' ? 'on' : ''}">내 생각<span>${thoughts.length}</span></button></div>
     ${tab === '필사' ? `
     <div class="sec-head tight"><h2>필사</h2>
-      <div style="display:flex;gap:6px">${selBtn(quotes)}${S.snipSel ? '' : `<button class="btn" onclick="openScan()">📷 사진</button><button class="btn" onclick="openSnipForm(null,'인용')">+ 문장</button>`}</div></div>
-    ${quotes.length ? quotes.map(snipHtml).join('')
+      <div style="display:flex;gap:6px">${selBtn(quotes)}${S.snipSel || reo ? '' : `<button class="btn" onclick="openScan()">📷 사진</button><button class="btn" onclick="openSnipForm(null,'인용')">+ 문장</button>`}</div></div>
+    ${reoNote}
+    ${quotes.length ? `<div id="snip-list">${quotes.map(snipHtml).join('')}</div>`
     : '<div class="empty">아직 필사한 문장이 없어요.<br>‘+ 문장 추가’로 시작해 보세요.</div>'}` : `
     <div class="sec-head tight"><h2>내 생각</h2>
-      <div style="display:flex;gap:6px">${selBtn(thoughts)}${S.snipSel ? '' : `<button class="btn" onclick="openSnipForm(null,'생각')">+ 내 생각</button>`}</div></div>
+      <div style="display:flex;gap:6px">${selBtn(thoughts)}${S.snipSel || reo ? '' : `<button class="btn" onclick="openSnipForm(null,'생각')">+ 내 생각</button>`}</div></div>
+    ${reoNote}
     <div class="sec-sub">읽으며 든 생각, 다 읽고 쓴 감상문 · 독후감을 모아 둬요.</div>
     ${b['별점'] || b['한줄평'] ? `<div class="snip thought" onclick="openRating('${b.ID}')"><div class="stitle">한줄평 ${b['별점'] ? `<span class="stars">${starText(b['별점'])}</span>` : ''}</div><div class="txt">${esc(b['한줄평'] || '')}</div></div>` : ''}
-    ${thoughts.length ? thoughts.map(snipHtml).join('')
+    ${thoughts.length ? `<div id="snip-list">${thoughts.map(snipHtml).join('')}</div>`
     : '<div class="empty">아직 남긴 생각이 없어요.<br>‘+ 내 생각’으로 감상을 남겨 보세요.</div>'}`}
   `;
   $('book-tabs').onclick = e => { const t = e.target.closest('[data-t]'); if (!t) return; S.bookTab = t.dataset.t; if (S.snipSel) S.snipSel = new Set(); renderBook(); };
   renderSnipSelBar();
+  if (reo) { $('fab').classList.add('hidden'); document.querySelectorAll('#snip-list .drag-h').forEach(h => h.addEventListener('pointerdown', startSnipDrag)); }
+}
+/* ----- 끌어서 순서 바꾸기: 책마다 순서를 메모 시트에 '필사순서' 한 줄로 저장 ----- */
+function snipOrderRow(bid) { return (S.logs || []).find(m => m['종류'] === '필사순서' && m['책ID'] === bid); }
+function snipOrderOf(bid) { const m = snipOrderRow(bid); if (!m) return null; const ids = String(m['내용'] || '').replace(/^순서:/, '').split(',').map(x => resolveId(x.trim())).filter(Boolean); return ids.length ? ids : null; }
+function orderedSnips(bid) {
+  const byPage = sortByPage(snipsOf(bid)), ids = snipOrderOf(bid);
+  if (!ids) return byPage;
+  const pos = new Map(ids.map((id, i) => [id, i]));
+  const out = ids.map(id => byPage.find(s => s.ID === id)).filter(Boolean);
+  // 순서를 정한 뒤에 새로 넣은 문장: 쪽수가 맞는 자리 (자기보다 쪽수가 작거나 같은 마지막 문장 뒤)
+  byPage.filter(s => !pos.has(s.ID)).forEach(s => {
+    const p = firstPage(s['쪽수']);
+    if (p == null) { out.push(s); return; }
+    let at = 0; out.forEach((x, i) => { const q = firstPage(x['쪽수']); if (q != null && q <= p) at = i + 1; });
+    out.splice(at, 0, s);
+  });
+  return out;
+}
+function toggleReorder() { S.reorder = !S.reorder; S.snipSel = null; renderBook(); if (!S.reorder) $('fab').classList.remove('hidden'); }
+function saveSnipOrder(bid, tabIds) {
+  // 지금 칸의 새 순서를 책 전체 순서에 끼워 넣기 (다른 칸 문장 자리는 그대로)
+  const all = orderedSnips(bid).map(s => s.ID), set = new Set(tabIds); let k = 0;
+  const full = all.map(id => set.has(id) ? tabIds[k++] : id).map(resolveId);
+  const ex = snipOrderRow(bid);
+  const data = { ID: ex ? ex.ID : 'T' + uid(), '종류': '필사순서', '내용': '순서:' + full.join(','), '완료': false, '마감일': '', '마감시간': '', '책ID': bid };
+  const local = Object.assign({ '작성일': S.today }, ex || {}, data);
+  upsertLocal('logs', local); queue({ fn: 'saveMemo', list: 'logs', data, local });
+}
+function resetOrder(bid) {
+  const ex = snipOrderRow(bid); if (!ex) return;
+  S.logs = S.logs.filter(x => x.ID !== ex.ID); queue({ fn: 'deleteMemo', list: 'logs', id: ex.ID });
+  renderBook(); toast('쪽수 순서로 되돌렸어요');
+}
+function startSnipDrag(e) {
+  const el = e.currentTarget.closest('.snip'), list = $('snip-list'); if (!el || !list) return;
+  e.preventDefault();
+  const h = e.currentTarget; try { h.setPointerCapture(e.pointerId); } catch (err) {}
+  const grab = e.clientY - el.getBoundingClientRect().top;
+  let y = e.clientY, raf = 0, moved = false; const y0 = e.clientY;
+  el.classList.add('dragging'); document.body.classList.add('no-select');
+  const place = () => {
+    const sibs = [...list.children].filter(x => x !== el);
+    let before = null;
+    for (const s of sibs) { const r = s.getBoundingClientRect(); if (y < r.top + r.height / 2) { before = s; break; } }
+    if (before !== el.nextElementSibling && !(before === null && el === list.lastElementChild)) { list.insertBefore(el, before); moved = true; }
+    el.style.transform = ''; const nat = el.getBoundingClientRect().top; el.style.transform = `translateY(${y - grab - nat}px)`;
+  };
+  const loop = () => {   // 화면 끝에 가까우면 저절로 내려가요
+    const edge = 90; let d = 0;
+    if (y < edge) d = -Math.ceil((edge - y) / 6); else if (y > innerHeight - edge - 60) d = Math.ceil((y - (innerHeight - edge - 60)) / 6);
+    if (d && Math.abs(y - y0) > 12) { window.scrollBy(0, d); place(); }
+    raf = requestAnimationFrame(loop);
+  };
+  const move = ev => { y = ev.clientY; place(); };
+  const up = () => {
+    cancelAnimationFrame(raf);
+    h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+    el.style.transform = ''; el.classList.remove('dragging'); document.body.classList.remove('no-select');
+    if (moved) { saveSnipOrder(S.bookId, [...list.children].map(x => x.id.replace(/^s-/, ''))); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 900); }
+  };
+  h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+  raf = requestAnimationFrame(loop);
 }
 /* ----- 책 안의 문장 여러 개 고르기 → 종류 한 번에 바꾸기 · 지우기 ----- */
 const SNIP_TYPES = [['인용', '필사'], ['생각', '내 생각']];
 function snipTap(id) {
+  if (S.reorder) return;
   if (!S.snipSel) { openSnipForm(id); return; }
   if (S.snipSel.has(id)) S.snipSel.delete(id); else S.snipSel.add(id);
   const el = document.getElementById('s-' + id); if (el) el.classList.toggle('sel', S.snipSel.has(id));
   renderSnipSelBar();
 }
-function toggleSnipSel() { S.snipSel = S.snipSel ? null : new Set(); renderBook(); }
+function toggleSnipSel() { S.reorder = false; S.snipSel = S.snipSel ? null : new Set(); renderBook(); }
 function renderSnipSelBar() {
   let bar = $('selbar');
   if (!S.snipSel || S.view !== 'book') { if (bar && !(S.view === 'notes' && S.noteSel)) bar.remove(); if (S.view === 'book') $('fab').classList.remove('hidden'); return; }
@@ -1285,7 +1360,7 @@ function snipHtml(s) {
   const kws = String(s['키워드'] || '').split(',').map(k => k.trim()).filter(Boolean);
   const meta = [s['쪽수'] !== '' && s['쪽수'] != null ? `<span class="pg">p.${esc(s['쪽수'])}</span>` : '', ...kws.map(k => `<span class="kw">#${esc(k)}</span>`)].filter(Boolean);
   return `<div class="snip ${cls} ${sel && S.snipSel.has(s.ID) ? 'sel' : ''}" id="s-${s.ID}" onclick="snipTap('${s.ID}')">
-    ${sel ? '<span class="sel-check snip-check">✓</span>' : ''}
+    ${sel ? '<span class="sel-check snip-check">✓</span>' : ''}${S.reorder && S.view === 'book' ? '<span class="drag-h" aria-label="끌어서 옮기기">≡</span>' : ''}
     ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}
     <div class="txt">${esc(sText(s))}</div>
     ${memo ? `<div class="smemo">✎ ${esc(memo)}</div>` : ''}
@@ -1338,6 +1413,7 @@ function show(view) {
   if (view === 'notes' && S.view !== 'notes' && S.view !== 'note') S.seedRand = Math.random();   // 노트 탭에 들어올 때마다 새 글감
   if (view !== 'notes' && S.noteSel) S.noteSel = null;
   if (view !== 'book' && S.snipSel) S.snipSel = null;
+  if (view !== 'book') S.reorder = false;
   if (S.view === 'note' && view !== 'note' && typeof collectNote === 'function') { const n = collectNote(); if (n && S.noteDirty) saveNoteNow(true); stopDictate(); }
   S.view = view;
   ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more', 'snips'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
@@ -1363,7 +1439,7 @@ function show(view) {
 S.scrollMem = {};
 function go(view, id) {
   if (S.view === 'library' || S.view === 'snips') S.scrollMem[S.view] = window.scrollY;
-  if (view === 'book') { if (S.bookId !== id) { S.bookTab = '필사'; S.snipSel = null; } S.bookId = id; if (S.view !== 'book') S.prevView = S.view; }
+  if (view === 'book') { if (S.bookId !== id) { S.bookTab = '필사'; S.snipSel = null; S.reorder = false; } S.bookId = id; if (S.view !== 'book') S.prevView = S.view; }
   if (view === 'note') S.noteId = id;
   try { history.pushState({ view, id: id || '' }, '', view === 'book' ? '?book=' + encodeURIComponent(id) : location.pathname); } catch (e) {}
   show(view); restoreScroll(view);
@@ -2669,7 +2745,7 @@ function removeLog(lid) {
 function rerenderLogs() { if (S.view === 'book') renderBook(); else if (S.view === 'stats') renderStatsView(); else if (S.view === 'library') renderList(); }
 // 서재 위: 오늘 읽은 양 · 연속 기록
 function readStripHtml() {
-  if (!(S.logs || []).length) return '';
+  if (!readLogs().length) return '';
   const all = dailyAll(), t = all[S.today], st = readStreak(all);
   let week = 0; for (let i = 0; i < 7; i++) { const d = all[addDays(S.today, -i)]; if (d) week += d.n; }
   return `<div class="read-strip" onclick="go('stats');setTimeout(()=>{const e=$('daily-panel');if(e)e.scrollIntoView({block:'start'})},80)">
@@ -2677,7 +2753,7 @@ function readStripHtml() {
 }
 // 통계: 최근 30일 매일 읽은 양
 function dailyPanelHtml() {
-  if (!(S.logs || []).length) return `<div class="panel" id="daily-panel"><h3>매일 독서 기록</h3><div class="drill">책 화면의 ‘여기까지 읽었어요’로 읽은 쪽수를 남기면 하루하루 얼마나 읽었는지 여기 쌓여요.</div></div>`;
+  if (!readLogs().length) return `<div class="panel" id="daily-panel"><h3>매일 독서 기록</h3><div class="drill">책 화면의 ‘여기까지 읽었어요’로 읽은 쪽수를 남기면 하루하루 얼마나 읽었는지 여기 쌓여요.</div></div>`;
   const all = dailyAll(), days = Array.from({ length: 30 }, (_, i) => addDays(S.today, i - 29));
   const vals = days.map(d => (all[d] ? all[d].n : 0)), max = Math.max(1, ...vals);
   const sum = vals.reduce((a, b) => a + b, 0), readDays = vals.filter(Boolean).length;
@@ -3078,8 +3154,12 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.5.3';
+const APP_VERSION = '2.5.4';
 const PATCH_NOTES = [
+  { v: '2.5.4', d: '2026.10.21', t: '끌어서 순서 바꾸기', items: [
+    '책 화면 ↕ 순서를 누르고 오른쪽 ≡ 손잡이를 끌면 필사 · 내 생각 순서를 바꿔요. 놓는 순간 저장돼요',
+    '화면 끝으로 끌면 저절로 내려가고, ‘쪽수 순으로’를 누르면 원래 순서로 돌아가요',
+    '순서를 바꾼 뒤 새로 넣은 문장은 쪽수에 맞는 자리로 들어가요'] },
   { v: '2.5.3', d: '2026.10.21', t: '쪽수 순서 · 어디서든 추가', items: [
     '필사가 쪽수 순서로 정렬돼요. 새로 넣은 문장도 맨 아래가 아니라 쪽수에 맞는 자리로 들어가고, 저장하면 그 자리로 이동해 보여줘요',
     '책 화면에서 오른쪽 아래 ＋ 버튼이 따라다녀요. 목록 중간에서도 바로 문장을 추가해요 (내 생각 칸에서는 내 생각으로)',
