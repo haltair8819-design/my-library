@@ -650,6 +650,9 @@ html[data-mode="dark"] .badge.plat.eb{background:#222C3A;color:#9DB7DE}
 .selbar .row2 .btn{padding:6px 11px;font-size:13px}
 .cat-auto{margin-top:6px;font-size:12px;color:var(--sub)}
 .snip{position:relative}
+.totop{position:fixed;right:24px;bottom:calc(144px + env(safe-area-inset-bottom));z-index:10;width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--sub);font-size:20px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.12);opacity:0;pointer-events:none;transition:opacity .2s}
+.totop.on{opacity:1;pointer-events:auto}
+body:has(#selbar) .totop{bottom:calc(220px + env(safe-area-inset-bottom))}
 .smemo{margin-top:8px;font-size:13px;color:var(--sub);background:var(--accent-soft);border-radius:8px;padding:6px 10px;white-space:pre-wrap;line-height:1.55}
 .badge.tapb{cursor:pointer}
 .badge.think{background:#F1E6DC;color:#8C5E4A}
@@ -1172,11 +1175,7 @@ function renderBook() {
   const b = book(S.bookId);
   if (!b) { go('library'); return; }
   // 노트 파일에서 가져온 문장 → 노트에 적힌 순서, 직접 입력한 문장 → 그 뒤에 쪽수 순서
-  const fileOrder = s => s['출처'] === '노트파일' || s['출처'] === 'PDF' ? 0 : 1;
-  const snips = snipsOf(b.ID).sort((x, y) =>
-    fileOrder(x) - fileOrder(y) ||
-    (fileOrder(x) ? (Number(x['쪽수']) || 99999) - (Number(y['쪽수']) || 99999) : 0) ||
-    String(x.ID).localeCompare(String(y.ID)));
+  const snips = sortByPage(snipsOf(b.ID));
   const tags = [b['대분류'], b['중분류'], b['개인분류'], b['경로']].filter(Boolean);
   const plat = platOf(b);
   const quotes = snips.filter(s => !isThought(s)), thoughts = snips.filter(isThought);
@@ -1234,7 +1233,8 @@ function snipTap(id) {
 function toggleSnipSel() { S.snipSel = S.snipSel ? null : new Set(); renderBook(); }
 function renderSnipSelBar() {
   let bar = $('selbar');
-  if (!S.snipSel || S.view !== 'book') { if (bar && !(S.view === 'notes' && S.noteSel)) bar.remove(); return; }
+  if (!S.snipSel || S.view !== 'book') { if (bar && !(S.view === 'notes' && S.noteSel)) bar.remove(); if (S.view === 'book') $('fab').classList.remove('hidden'); return; }
+  $('fab').classList.add('hidden');
   if (!bar) { bar = document.createElement('div'); bar.id = 'selbar'; bar.className = 'selbar'; document.body.appendChild(bar); }
   const n = S.snipSel.size, shown = S.snipShown || [], allOn = shown.length && shown.every(id => S.snipSel.has(id));
   bar.innerHTML = `<div class="in"><div class="top"><b>${n}개 골랐어요</b><span><button onclick="selAllSnips(${allOn ? 0 : 1})">${allOn ? '모두 풀기' : '이 칸 모두'}</button> · <button onclick="toggleSnipSel()">닫기</button></span></div>
@@ -1258,6 +1258,25 @@ function bulkSnipDelete() {
   const ids = [...S.snipSel].map(resolveId); if (!ids.length || !confirm(`${ids.length}개를 지울까요? 되돌릴 수 없어요.`)) return;
   ids.forEach(id => { S.snips = S.snips.filter(x => x.ID !== id); queue({ fn: 'deleteSnippet', id }); });
   S.snipSel = new Set(); renderBook(); toast(`${ids.length}개를 지웠어요`);
+}
+// 쪽수 순서로 정렬: "36, 37"은 36쪽. 쪽수 없는 노트 문장은 바로 앞 문장 자리에 붙어 있고, 쪽수 없는 새 문장은 맨 뒤
+function firstPage(v) { const m = String(v ?? '').match(/\d+(\.\d+)?/); return m ? Number(m[0]) : null; }
+function sortByPage(list) {
+  const fromFile = s => s['출처'] === '노트파일' || s['출처'] === 'PDF';
+  const base = list.slice().sort((x, y) => (fromFile(x) ? 0 : 1) - (fromFile(y) ? 0 : 1) || String(x.ID).localeCompare(String(y.ID)));
+  let carry = 0;
+  const keyed = base.map((s, i) => {
+    const p = firstPage(s['쪽수']);
+    let k;
+    if (p != null) { k = p; if (fromFile(s)) carry = p; }
+    else k = fromFile(s) ? carry : Infinity;
+    return { s, k, i };
+  });
+  return keyed.sort((a, b) => a.k - b.k || a.i - b.i).map(x => x.s);
+}
+function flashSnip(id) {
+  setTimeout(() => { const el = document.getElementById('s-' + resolveId(id)); if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2200); }, 80);
 }
 function snipHtml(s) {
   const cls = isThought(s) ? 'thought' : s['유형'] === '메모' ? 'memo' : 'quote';
@@ -1313,6 +1332,7 @@ function renderAllSnips() {
   $('all-kind').onclick = e => { const t = e.target.closest('[data-k]'); if (!t) return; S.allKind = t.dataset.k; S.allLimit = 50; renderAllSnips(); };
 }
 
+const FAB_VIEWS = ['library', 'memo', 'notes', 'stats', 'book'];
 /* ===== 화면 전환 ===== */
 function show(view) {
   if (view === 'notes' && S.view !== 'notes' && S.view !== 'note') S.seedRand = Math.random();   // 노트 탭에 들어올 때마다 새 글감
@@ -1323,7 +1343,8 @@ function show(view) {
   ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more', 'snips'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
   $('composer').classList.toggle('hidden', view !== 'ai');
   document.body.classList.toggle('ai-mode', view === 'ai');
-  $('fab').classList.toggle('hidden', !['library', 'memo', 'notes', 'stats'].includes(view));
+  $('fab').classList.toggle('hidden', !FAB_VIEWS.includes(view));
+  $('fab').setAttribute('aria-label', view === 'book' ? '이 책에 문장 추가' : '빠르게 남기기');
   const tab = { book: 'library', snips: 'library', note: 'notes', blist: 'more', stats: 'more', ai: 'more' }[view] || view;
   document.querySelectorAll('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
   if (view === 'library') renderLibrary();
@@ -1455,7 +1476,7 @@ function submitSnip(id, keepOpen) {
       S.snipDraftOn = false; openSnipForm(data.ID);
       setTimeout(() => { const t = $('f-txt'); if (t) { t.focus(); t.setSelectionRange(pos, pos); } }, 60);
     } else { S.snipDraft0 = snipFormValues(); const st = $('draft-state'); if (st) st.textContent = '저장됨 ' + hhmm(); }
-  } else if (keepOpen) { openSnipForm(null); } else closeModal();
+  } else if (keepOpen) { flashSnip(data.ID); openSnipForm(null); } else { closeModal(); if (!id) flashSnip(data.ID); }
 }
 /* ----- 문장 입력 임시저장: 쓰다가 창이 닫혀도 다시 열면 그대로 ----- */
 const SNIP_DRAFT_KEY = 'snip_draft_v1';
@@ -3057,8 +3078,12 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.5.2';
+const APP_VERSION = '2.5.3';
 const PATCH_NOTES = [
+  { v: '2.5.3', d: '2026.10.21', t: '쪽수 순서 · 어디서든 추가', items: [
+    '필사가 쪽수 순서로 정렬돼요. 새로 넣은 문장도 맨 아래가 아니라 쪽수에 맞는 자리로 들어가고, 저장하면 그 자리로 이동해 보여줘요',
+    '책 화면에서 오른쪽 아래 ＋ 버튼이 따라다녀요. 목록 중간에서도 바로 문장을 추가해요 (내 생각 칸에서는 내 생각으로)',
+    '많이 내려가면 ↑ 맨 위로 버튼이 나타나요'] },
   { v: '2.5.2', d: '2026.10.21', t: '필사 · 내 생각 정리', items: [
     '종류를 ‘필사’와 ‘내 생각(감상 · 독후감)’ 두 가지로 정리했어요. 서평은 내 생각으로 합쳤어요',
     '메모는 따로 쓰지 않고 필사에 ＋ 메모 달기로 덧붙여요. 단 메모만 필사 아래에 보여요',
@@ -3808,7 +3833,7 @@ function renderNoteList() {
 function toggleNoteSel() { S.noteSel = S.noteSel ? null : new Set(); renderNoteList(); }
 function renderSelBar() {
   let bar = $('selbar');
-  if (!S.noteSel || S.view !== 'notes') { if (bar) bar.remove(); $('fab').classList.toggle('hidden', !['library', 'memo', 'notes', 'stats'].includes(S.view)); return; }
+  if (!S.noteSel || S.view !== 'notes') { if (bar) bar.remove(); $('fab').classList.toggle('hidden', !FAB_VIEWS.includes(S.view)); return; }
   if (!bar) { bar = document.createElement('div'); bar.id = 'selbar'; bar.className = 'selbar'; document.body.appendChild(bar); }
   $('fab').classList.add('hidden');
   const n = S.noteSel.size, shown = noteMatches();
@@ -4346,7 +4371,15 @@ $('list').addEventListener('click', e => {
   go('book', c.dataset.id);
   if (t) { S.bookTab = t.dataset.tab; renderBook(); setTimeout(() => { const el = $('book-tabs'); if (el) el.scrollIntoView({ block: 'start' }); }, 30); }
 });
-$('fab').onclick = () => openQuickMenu();
+$('fab').onclick = () => { if (S.view === 'book' && book(S.bookId)) openSnipForm(null, S.bookTab === '생각' ? '생각' : '인용'); else openQuickMenu(); };
+// 맨 위로: 아래로 많이 내려가면 나타나요
+(() => {
+  const up = document.createElement('button'); up.id = 'totop'; up.className = 'totop'; up.setAttribute('aria-label', '맨 위로'); up.textContent = '↑';
+  up.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.body.appendChild(up);
+  let tick = false;
+  window.addEventListener('scroll', () => { if (tick) return; tick = true; requestAnimationFrame(() => { tick = false; up.classList.toggle('on', window.scrollY > 700 && !['ai', 'note', 'graph'].includes(S.view)); }); }, { passive: true });
+})();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 applyMode();
