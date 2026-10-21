@@ -1132,7 +1132,7 @@ function renderFilters() {
     + '<span class="chip-sep"></span>' + PLATS.filter(p => p !== '오디오북' || S.books.some(b => platOf(b) === p)).map(p => `<button class="chip sub ${S.plat === p ? 'on' : ''}" data-p="${p}">${p}</button>`).join('');
 }
 function bookCard(b) {
-  const mine = snipsOf(b.ID), nT = mine.filter(isThought).length, nQ = mine.length - nT;
+  const mine = snipsOf(b.ID), nT = mine.filter(isThought).length, nM = mine.filter(x => x['유형'] === '메모').length, nQ = mine.length - nT - nM;
   const cat = [b['대분류'], b['개인분류']].filter(Boolean).join(' · ');
   return `<div class="book" data-id="${b.ID}">
     ${spine(b)}
@@ -1146,6 +1146,7 @@ function bookCard(b) {
         ${dueBadge(b)}
         ${b['별점'] ? `<span class="stars">${'★'.repeat(Number(b['별점']) || 0)}</span>` : ''}
         ${nQ ? `<span class="badge tapb" data-tab="필사">필사 ${nQ}</span>` : ''}
+        ${nM ? `<span class="badge tapb plat" data-tab="필사">메모 ${nM}</span>` : ''}
         ${nT ? `<span class="badge tapb think" data-tab="생각">내 생각 ${nT}</span>` : ''}
         ${cat ? `<span>${esc(cat)}</span>` : ''}
         ${period(b) ? `<span>${period(b)}</span>` : ''}
@@ -1334,15 +1335,18 @@ function startSnipDrag(e) {
   const move = ev => { y = ev.clientY; place(); };
   const up = () => {
     cancelAnimationFrame(raf);
-    h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+    window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+    if (S.dragEnd === up) S.dragEnd = null;
     el.style.transform = ''; el.classList.remove('dragging'); document.body.classList.remove('no-select');
     if (moved) { saveSnipOrder(S.bookId, [...list.children].map(x => x.id.replace(/^s-/, ''))); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 900); }
   };
-  h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+  if (S.dragEnd) S.dragEnd();   // 혹시 끝나지 않은 끌기가 있으면 먼저 마무리
+  S.dragEnd = up;
+  window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
   raf = requestAnimationFrame(loop);
 }
 /* ----- 책 안의 문장 여러 개 고르기 → 종류 한 번에 바꾸기 · 지우기 ----- */
-const SNIP_TYPES = [['인용', '필사'], ['생각', '내 생각']];
+const SNIP_TYPES = [['인용', '필사'], ['메모', '메모'], ['생각', '내 생각']];
 function snipTap(id) {
   if (!S.snipSel) { openSnipForm(id); return; }
   if (S.snipSel.has(id)) S.snipSel.delete(id); else S.snipSel.add(id);
@@ -1356,15 +1360,17 @@ function renderSnipSelBar() {
   $('fab').classList.add('hidden');
   if (!bar) { bar = document.createElement('div'); bar.id = 'selbar'; bar.className = 'selbar'; document.body.appendChild(bar); }
   const n = S.snipSel.size, shown = S.snipShown || [], allOn = shown.length && shown.every(id => S.snipSel.has(id));
-  bar.innerHTML = `<div class="in"><div class="top"><b>${n}개 골랐어요</b><span><button onclick="selAllSnips(${allOn ? 0 : 1})">${allOn ? '모두 풀기' : '이 칸 모두'}</button> · <button onclick="toggleSnipSel()">완료</button></span></div>
+  const memos = shown.filter(id => (S.snips.find(x => x.ID === id) || {})['유형'] === '메모');
+  bar.innerHTML = `<div class="in"><div class="top"><b>${n}개 골랐어요</b><span>${memos.length ? `<button onclick="selMemoSnips()">메모만 (${memos.length})</button> · ` : ''}<button onclick="selAllSnips(${allOn ? 0 : 1})">${allOn ? '모두 풀기' : '이 칸 모두'}</button> · <button onclick="toggleSnipSel()">완료</button></span></div>
     <div class="row2">${SNIP_TYPES.map(([t, label]) => `<button class="btn" ${n ? '' : 'disabled'} onclick="bulkSnipType('${t}')">→ ${label}</button>`).join('')}
       <button class="btn danger" ${n ? '' : 'disabled'} onclick="bulkSnipDelete()">삭제</button></div></div>`;
 }
+function selMemoSnips() { S.snipSel = new Set((S.snipShown || []).filter(id => (S.snips.find(x => x.ID === id) || {})['유형'] === '메모')); renderBook(); }
 function selAllSnips(on) { (S.snipShown || []).forEach(id => on ? S.snipSel.add(id) : S.snipSel.delete(id)); renderBook(); }
 function bulkSnipType(type) {
   let c = 0;
   [...S.snipSel].forEach(id => {
-    const x = S.snips.find(y => y.ID === resolveId(id)); if (!x || x['유형'] === type || (type === '인용' && !isThought(x))) return;
+    const x = S.snips.find(y => y.ID === resolveId(id)); if (!x || x['유형'] === type) return;
     const data = { ID: x.ID, '책ID': x['책ID'], '유형': type, '내용': x['내용'], '쪽수': x['쪽수'] ?? '', '제목': x['제목'] || '', '키워드': x['키워드'] || '' };
     const local = Object.assign({}, x, { '유형': type });
     upsertSnipLocal(local); queue({ fn: 'saveSnippet', data, local }); c++;
@@ -1404,7 +1410,7 @@ function snipHtml(s) {
   const kws = String(s['키워드'] || '').split(',').map(k => k.trim()).filter(Boolean);
   const meta = [s['쪽수'] !== '' && s['쪽수'] != null ? `<span class="pg">p.${esc(s['쪽수'])}</span>` : '', ...kws.map(k => `<span class="kw">#${esc(k)}</span>`)].filter(Boolean);
   return `<div class="snip ${cls} ${sel && S.snipSel.has(s.ID) ? 'sel' : ''}" id="s-${s.ID}" onclick="snipTap('${s.ID}')">
-    ${sel ? '<span class="sel-check snip-check">✓</span>' : ''}${sel ? '<span class="drag-h" aria-label="끌어서 옮기기">≡</span>' : ''}
+    ${sel ? '<span class="sel-check snip-check">✓</span>' : ''}${sel ? '<span class="drag-h" aria-label="끌어서 옮기기">≡</span>' : ''}${s['유형'] === '메모' ? '<span class="badge plat" style="display:inline-block;margin-bottom:6px">메모</span>' : ''}
     ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}
     <div class="txt">${esc(sText(s))}</div>
     ${memo ? `<div class="smemo">✎ ${esc(memo)}</div>` : ''}
@@ -3197,8 +3203,12 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.5.5';
+const APP_VERSION = '2.5.6';
 const PATCH_NOTES = [
+  { v: '2.5.6', d: '2026.10.21', t: '예전 메모 → 필사', items: [
+    '예전에 ‘메모’로 저장된 문장에 메모 표시가 붙고, 책 목록에도 메모 개수가 따로 보여요',
+    '꾹 눌러 고른 뒤 ‘메모만’ 또는 ‘이 칸 모두’로 고르고 → 필사를 누르면 한 번에 필사로 바뀌어요 (전에는 메모가 안 바뀌던 문제 고침)',
+    '끌어서 옮긴 뒤 손을 떼도 가끔 끝난 걸 몰라 순서가 저장되지 않던 문제를 고쳤어요'] },
   { v: '2.5.5', d: '2026.10.21', t: '꾹 눌러서 고르기 · 순서', items: [
     '문장을 꾹 누르면(컴퓨터는 마우스를 꾹) 고르기 · 순서 바꾸기가 한 번에 켜져요. 눌러서 더 고르고, ≡ 손잡이로 끌어 옮겨요. 노트 글도 꾹 누르면 골라져요',
     '순서를 바꿔도 저장이 안 되던 문제를 고쳤어요. 이 기기에 먼저 저장하고 시트에도 올려요',
