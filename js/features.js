@@ -317,6 +317,9 @@ function openSettings() {
       <div class="small" style="line-height:1.6">${Store.ready() ? '연결됨 · 마지막으로 받은 데이터는 이 기기에 저장돼 있어 바로 열려요.' : '아직 연결 안 됨'}${S.outbox.length ? `<br>시트에 올라가길 기다리는 기록 ${S.outbox.length}개` : ''}</div>
       <div class="actions" style="margin-top:8px"><button class="btn" onclick="Store.openSetup()">연결 바꾸기</button>
         <button class="btn" onclick="resetLocal()">새로 불러오기</button></div></div>
+    <div class="panel2" style="margin-top:12px"><h4>새 저장소 (함께 쓰기 준비)</h4>
+      <div class="small" style="line-height:1.6">구글 로그인 후 지금 기록을 Supabase로 복사해요. 시트는 백업으로 그대로 남아요.${(() => { try { const d = JSON.parse(LS.get('sb_migrated') || 'null'); return d ? `<br>마지막으로 옮김: ${esc(String(d.at).slice(0, 16).replace('T', ' '))}` : ''; } catch (e) { return ''; } })()}</div>
+      <div class="actions" style="margin-top:8px"><button class="btn primary grow" onclick="openMigrate()">구글 로그인 · 새 저장소로 옮기기</button></div></div>
     <button class="note-link" onclick="openShareCheck()">공유 받기 점검 <span>공유 목록에 안 보일 때</span></button>
     <button class="note-link" onclick="openPatchNotes()">업데이트 내역 <span>v${APP_VERSION}</span></button>`);
 }
