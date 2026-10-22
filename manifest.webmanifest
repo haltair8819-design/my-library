@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "나의 서재",
   "short_name": "나의 서재",
   "description": "책 기록과 필사를 한곳에",
@@ -113,5 +114,6 @@
         }
       ]
     }
-  ]
+  ],
+  "orientation": "portrait"
 }
