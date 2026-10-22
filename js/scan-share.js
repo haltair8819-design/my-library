@@ -271,7 +271,7 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.9';   // index.html의 ?v= 값과 같이 올려요
+const APP_VERSION = '2.9.1';   // index.html의 ?v= 값과 같이 올려요
 const PATCH_NOTES = [
   { v: '2.9', d: '2026.10.22', t: 'Supabase로 저장 · 노트 파일 가져오기', items: [
     '설정 → 새 저장소에서 옮기기를 마치면 ‘Supabase로 바꾸기’로 이 기기의 저장 위치를 바꿀 수 있어요 (시트로 돌아가기도 돼요)',

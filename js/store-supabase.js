@@ -27,18 +27,19 @@ async function sbLogout() { try { await sbClient().auth.signOut(); } catch (e) {
 
 /* ----- 시트 기록 → Supabase 표 모양으로 ----- */
 function migrationRows(uid) {
-  const now = Date.now();
+  // 고친 시각: 시트의 '수정시각'을 그대로 써요 → 여러 번 옮겨도 Supabase에서 더 나중에 고친 건 덮어쓰지 않아요
+  const mt = o => Number(o && o['수정시각']) || 1;
   const strip = o => { const d = Object.assign({}, o); delete d.ID; return d; };
-  const books = S.books.map(b => ({ user_id: uid, id: String(b.ID), data: strip(b), shared: true, mtime: now }));
+  const books = S.books.map(b => ({ user_id: uid, id: String(b.ID), data: strip(b), shared: true, mtime: mt(b) }));
   const snippets = S.snips.map(s => ({ user_id: uid, id: String(s.ID), book_id: s['책ID'] ? String(s['책ID']) : null,
-    kind: s['유형'] === '서평' ? '생각' : (s['유형'] || '인용'), data: strip(s), shared: false, mtime: now }));
-  const notes = (S.notes || []).filter(n => !isTemp(n.ID)).map(n => ({ user_id: uid, id: String(n.ID), data: strip(n), mtime: Number(n['수정시각']) || now }));
-  const memos = (S.memos || []).filter(m => !isLogRow(m)).map(m => ({ user_id: uid, id: String(m.ID), data: strip(m), mtime: now }));
+    kind: s['유형'] === '서평' ? '생각' : (s['유형'] || '인용'), data: strip(s), shared: false, mtime: mt(s) }));
+  const notes = (S.notes || []).filter(n => !isTemp(n.ID)).map(n => ({ user_id: uid, id: String(n.ID), data: strip(n), mtime: mt(n) }));
+  const memos = (S.memos || []).filter(m => !isLogRow(m)).map(m => ({ user_id: uid, id: String(m.ID), data: strip(m), mtime: mt(m) }));
   const reads = [];
-  (S.logs || []).filter(isReadRow).forEach(m => { const l = parseLog(m); if (l && l.bid) reads.push({ user_id: uid, id: String(m.ID), book_id: String(l.bid), day: l.date, page: l.page, base_page: l.base, mtime: now }); });
+  (S.logs || []).filter(isReadRow).forEach(m => { const l = parseLog(m); if (l && l.bid) reads.push({ user_id: uid, id: String(m.ID), book_id: String(l.bid), day: l.date, page: l.page, base_page: l.base, mtime: mt(m) }); });
   // 필사 순서: 책마다 가장 최근 것 (시트 · 이 기기 중)
   const orders = [];
-  uniq(S.books.map(b => b.ID)).forEach(bid => { const ids = snipOrderOf(bid); if (ids && ids.length) orders.push({ user_id: uid, book_id: String(bid), ids: ids.map(String), mtime: now }); });
+  uniq(S.books.map(b => b.ID)).forEach(bid => { const ids = snipOrderOf(bid); if (ids && ids.length) { const row = snipOrderRow(bid), lo = localOrders()[bid]; orders.push({ user_id: uid, book_id: String(bid), ids: ids.map(String), mtime: Math.max(row ? parseOrder(row).at : 0, lo ? lo.at || 0 : 0) || 1 }); } });
   // 같은 ID가 두 번 있으면 뒤의 것 하나만 (한 번에 올릴 때 겹치면 오류가 나서)
   const dedupe = (list, key) => [...new Map(list.map(x => [x[key], x])).values()];
   return { books: dedupe(books, 'id'), snippets: dedupe(snippets, 'id'), notes: dedupe(notes, 'id'), memos: dedupe(memos, 'id'),

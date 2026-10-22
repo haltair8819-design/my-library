@@ -323,7 +323,8 @@ function openSettings() {
         <button class="btn" onclick="resetLocal()">새로 불러오기</button></div></div>
     <div class="panel2" style="margin-top:12px"><h4>새 저장소 (함께 쓰기 준비)</h4>
       <div class="small" style="line-height:1.6">구글 로그인 후 지금 기록을 Supabase로 복사해요. 시트는 백업으로 그대로 남아요.${(() => { try { const d = JSON.parse(LS.get('sb_migrated') || 'null'); return d ? `<br>마지막으로 옮김: ${esc(String(d.at).slice(0, 16).replace('T', ' '))}` : ''; } catch (e) { return ''; } })()}</div>
-      <div class="actions" style="margin-top:8px"><button class="btn primary grow" onclick="openMigrate()">구글 로그인 · 새 저장소로 옮기기</button></div></div>`}
+      <div class="actions" style="margin-top:8px"><button class="btn primary grow" onclick="openMigrate()">구글 로그인 · 새 저장소로 옮기기</button></div>
+      <button class="note-link" onclick="if(confirm('다른 기기에서 이미 옮겼다면, 이 기기는 옮기기 없이 Supabase로 바꿔요. 바꾼 뒤 구글 로그인을 해 주세요.'))useStore('supabase')">이미 옮겼어요 · 이 기기도 Supabase로 <span>다른 기기에서 옮긴 뒤</span></button></div>`}
     <button class="note-link" onclick="openShareCheck()">공유 받기 점검 <span>공유 목록에 안 보일 때</span></button>
     <button class="note-link" onclick="openPatchNotes()">업데이트 내역 <span>v${APP_VERSION}</span></button>`);
 }
