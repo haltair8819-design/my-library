@@ -660,3 +660,46 @@ body:has(#selbar) .toast{bottom:calc(200px + env(safe-area-inset-bottom))}
 #snip-list .snip,.note-card{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 #snip-list .snip:has(.drag-h){user-select:none;-webkit-user-select:none}
 .snip.sel .snip-check{background:var(--accent);border-color:var(--accent)}
+
+/* ===== v2.10 같이 쓰기 ===== */
+.nav button{position:relative}
+.tg-dot{position:absolute;top:6px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:#D9534F}
+.tg-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.tg-head p{display:flex;align-items:center;gap:4px}
+.tg-av{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;flex:none;
+  background:var(--accent-soft);color:var(--accent);font-size:12.5px;font-weight:700;font-style:normal}
+.tg-av.p{background:#F6E3DC;color:#A0533A}
+html[data-mode="dark"] .tg-av.p{background:#3A2A24;color:#E4A58D}
+.tg-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tg-col{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:10px;border-radius:10px;background:var(--bg,transparent);border:1px solid var(--line)}
+.tg-col>b{font-size:13.5px}
+.tg-num{display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--sub)}
+.tg-num b{font-size:17px;color:var(--ink,inherit);margin-right:2px}
+.tg-both{display:flex;gap:12px;align-items:center;padding:8px 0;cursor:pointer;border-top:1px solid var(--line)}
+.tg-both:first-of-type{border-top:0}
+.tg-both .spine{width:44px;min-height:64px;flex:none;font-size:9px}
+.grow{flex:1;min-width:0}
+.tg-bt{font-weight:600;font-size:14px;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tg-prog{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;font-size:12px;color:var(--sub);margin-top:4px}
+.tg-prog span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tg-prog em{font-style:normal;min-width:44px;text-align:right}
+.tg-prog .bar{height:6px}
+.tg-prog.p .bar i{background:#C8775A}
+.tg-shelf{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.tg-shelf button{flex:none;width:76px;border:0;background:none;padding:0;text-align:left;cursor:pointer;color:inherit}
+.tg-shelf .spine{width:76px;min-height:108px;font-size:10px}
+.tg-shelf span{display:block;font-size:12px;margin-top:5px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tg-shelf em{font-style:normal;font-size:11px;color:var(--faint)}
+.tg-day{font-size:12px;color:var(--faint);font-weight:600;margin:10px 0 2px}
+.tg-day:first-child{margin-top:0}
+.tg-feed{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:13.5px;line-height:1.5;cursor:pointer}
+.tg-feed .tg-av{width:22px;height:22px;font-size:11px;margin-top:1px}
+.tg-also{display:flex;gap:10px;align-items:center;cursor:pointer;font-size:13.5px}
+.tg-inv{display:flex;gap:12px;align-items:flex-start;border-color:var(--accent)}
+.tg-check{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:12px;cursor:pointer;flex-wrap:wrap}
+.tg-check input{width:18px;height:18px;accent-color:var(--accent)}
+.kw.shared{background:var(--accent-soft);color:var(--accent)}
+.snip.spoil{cursor:pointer}
+.spoil>:not(.spoil-l){filter:blur(6px);user-select:none;pointer-events:none}
+.spoil-l{font-size:12.5px;color:var(--sub);margin-bottom:6px}
+.selbar .row2+.row2{margin-top:6px}

@@ -316,7 +316,10 @@ function openSettings() {
     ${Store.kind === 'supabase' ? `<div class="panel2" style="margin-top:12px"><h4>계정 · 저장</h4>
       <div class="small" style="line-height:1.6">${esc((sbSession() || { user: {} }).user.email || '')} 계정 · Supabase에 저장 중${S.outbox.length ? `<br>올라가길 기다리는 기록 ${S.outbox.length}개` : ''}</div>
       <div class="actions" style="margin-top:8px"><button class="btn" onclick="if(confirm('로그아웃할까요?'))sbLogout()">로그아웃</button>
-        <button class="btn" onclick="resetLocal()">새로 불러오기</button>${API.url ? `<button class="btn" onclick="if(confirm('구글 시트 저장으로 돌아갈까요? Supabase의 기록은 그대로 남아요.'))useStore('sheets')">시트로 돌아가기</button>` : ''}</div></div>` : `
+        <button class="btn" onclick="resetLocal()">새로 불러오기</button>${API.url ? `<button class="btn" onclick="if(confirm('구글 시트 저장으로 돌아갈까요? Supabase의 기록은 그대로 남아요.'))useStore('sheets')">시트로 돌아가기</button>` : ''}</div></div>
+    <div class="panel2" style="margin-top:12px"><h4>같이 쓰기</h4>
+      <label class="tg-check" style="margin-top:0"><input type="checkbox" ${togetherOn() ? 'checked' : ''} onchange="tgSaveOpt('together', this.checked)"> ‘함께’ 탭 쓰기 <span class="small">끄면 탭이 숨겨져요 (보여준 기록은 그대로)</span></label>
+      <div class="actions" style="margin-top:8px"><button class="btn" onclick="openShareSettings()">보여줄 것 설정</button><button class="btn" onclick="closeModal();go('together')">함께 탭으로</button></div></div>` : `
     <div class="panel2" style="margin-top:12px"><h4>서버 연결</h4>
       <div class="small" style="line-height:1.6">${Store.ready() ? '연결됨 · 마지막으로 받은 데이터는 이 기기에 저장돼 있어 바로 열려요.' : '아직 연결 안 됨'}${S.outbox.length ? `<br>시트에 올라가길 기다리는 기록 ${S.outbox.length}개` : ''}</div>
       <div class="actions" style="margin-top:8px"><button class="btn" onclick="Store.openSetup()">연결 바꾸기</button>

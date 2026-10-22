@@ -8,7 +8,7 @@ async function boot() {
   const startBook = new URLSearchParams(location.search).get('book');
   const route = () => {
     const st = history.state;   // 새로고침해도 보던 탭 그대로
-    if (!startBook && st && ['memo', 'graph', 'stats', 'notes', 'more'].includes(st.view)) S.view = st.view;
+    if (!startBook && st && (['memo', 'graph', 'stats', 'notes', 'more'].includes(st.view) || (['together', 'plib'].includes(st.view) && togetherOn()))) S.view = st.view;
     if (!startBook && st && st.view === 'note' && st.id && noteOf(st.id)) { S.view = 'note'; S.noteId = resolveId(st.id); }
     if (startBook && book(startBook)) { S.bookId = startBook; S.view = 'book'; }
     history.replaceState({ view: S.view, id: S.bookId || '' }, '');

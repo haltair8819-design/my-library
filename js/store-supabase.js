@@ -243,7 +243,7 @@ async function sbSaveBook(b) {
   if (!id) { id = sbNewId('B'); d['등록일'] = sbToday(); if (!d['상태']) d['상태'] = d['완독일'] ? '완독' : '읽는중'; }
   if (d['완독일'] && d['상태'] !== '완독') d['상태'] = '완독';
   d['완독일수'] = sbDays(d['시작일'], d['완독일']);
-  return sbPut('books', id, d);
+  return sbPut('books', id, d, { shared: d['공개'] !== false });
 }
 async function sbFinishBook(id) {
   const cur = await sbGet('books', id); if (!cur) throw new Error('책을 찾을 수 없어요.');
@@ -253,13 +253,13 @@ async function sbFinishBook(id) {
   return sbPut('books', id, d);
 }
 async function sbUpdateBookFields(id, patch) {
-  const allowed = ['현재쪽수', '반납일', '별점', '한줄평', '상태', '시작일', '플랫폼', '대분류', '중분류', '개인분류'];
+  const allowed = ['현재쪽수', '반납일', '별점', '한줄평', '상태', '시작일', '플랫폼', '대분류', '중분류', '개인분류', '공개'];
   const cur = await sbGet('books', id); if (!cur) throw new Error('책을 찾을 수 없어요.');
   const d = Object.assign({}, cur.data);
   Object.keys(patch || {}).forEach(k => { if (allowed.includes(k)) d[k] = patch[k]; });
   if (d['현재쪽수'] !== undefined && d['현재쪽수'] !== '') d['현재쪽수'] = Number(d['현재쪽수']) || '';
   if (d['별점'] !== undefined && d['별점'] !== '') d['별점'] = Math.max(1, Math.min(5, Number(d['별점']) || 0)) || '';
-  return sbPut('books', id, d);
+  return sbPut('books', id, d, { shared: d['공개'] !== false });
 }
 async function sbDeleteBook(id) {
   await sbq(sbClient().from('snippets').update({ deleted: true, mtime: Date.now() }).eq('user_id', sbUid()).eq('book_id', id));
@@ -278,7 +278,8 @@ async function sbSaveSnippet(s) {
   let id = id0;
   if (!id) { id = sbNewId('S'); d['작성일'] = sbToday(); if (!d['출처']) d['출처'] = '직접입력'; }
   const kind = d['유형'] === '서평' ? '생각' : (d['유형'] || '인용');
-  return sbPut('snippets', id, d, { book_id: String(d['책ID']), kind });
+  // 짝꿍에게 보여주기: 필사 · 내 생각 중 '공개'로 고른 것만 (메모는 항상 나만)
+  return sbPut('snippets', id, d, { book_id: String(d['책ID']), kind, shared: d['공개'] === true && kind !== '메모' });
 }
 async function sbDeleteSnippet(id) { await sbSoftDelete('snippets', id); return id; }
 

@@ -95,7 +95,7 @@ function renderBook() {
       <div>
         <div class="dtitle">${esc(b['제목'])}</div>
         <div class="dauthor">${esc(b['저자'])}${b['옮긴이'] ? ' 지음 · ' + esc(b['옮긴이']) + ' 옮김' : ''}${b['출판사'] ? ' · ' + esc(b['출판사']) : ''}</div>
-        <div class="tags"><span class="tag tap" onclick="togglePlat('${b.ID}')" title="눌러서 종이책 · E북 바꾸기">${plat === 'E북' ? '📱 E북' : plat === '오디오북' ? '🎧 오디오북' : '📕 종이책'}</span>${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <div class="tags"><span class="tag tap" onclick="togglePlat('${b.ID}')" title="눌러서 종이책 · E북 바꾸기">${plat === 'E북' ? '📱 E북' : plat === '오디오북' ? '🎧 오디오북' : '📕 종이책'}</span>${tgShareTag(b)}${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
       </div>
     </div>
     <div class="grid">
@@ -105,6 +105,7 @@ function renderBook() {
       <div><b>${b['완독일수'] ? esc(b['완독일수']) + '일' : (b['상태'] === '읽는중' ? '읽는 중' : '–')}</b><span>기간</span></div>
     </div>
     ${b['상태'] === '읽는중' || b['상태'] === '중단' ? `<div class="actions"><button class="btn primary grow" onclick="finish('${b.ID}')">오늘 완독했어요</button></div>` : ''}
+    ${tgBookHtml(b)}
     ${bookExtrasHtml(b)}
     <div class="seg book-tabs" id="book-tabs">
       <button data-t="필사" class="${tab === '필사' ? 'on' : ''}">필사<span>${quotes.length}</span></button>
@@ -249,7 +250,8 @@ function renderSnipSelBar() {
   const memos = shown.filter(id => (S.snips.find(x => x.ID === id) || {})['유형'] === '메모');
   bar.innerHTML = `<div class="in"><div class="top"><b>${n}개 골랐어요</b><span>${memos.length ? `<button onclick="selMemoSnips()">메모만 (${memos.length})</button> · ` : ''}<button onclick="selAllSnips(${allOn ? 0 : 1})">${allOn ? '모두 풀기' : '이 칸 모두'}</button> · <button onclick="toggleSnipSel()">완료</button></span></div>
     <div class="row2">${SNIP_TYPES.map(([t, label]) => `<button class="btn" ${n ? '' : 'disabled'} onclick="bulkSnipType('${t}')">→ ${label}</button>`).join('')}
-      <button class="btn danger" ${n ? '' : 'disabled'} onclick="bulkSnipDelete()">삭제</button></div></div>`;
+      <button class="btn danger" ${n ? '' : 'disabled'} onclick="bulkSnipDelete()">삭제</button></div>
+    ${togetherOn() ? `<div class="row2"><button class="btn" ${n ? '' : 'disabled'} onclick="bulkSnipShare(true)">👀 보여주기</button><button class="btn" ${n ? '' : 'disabled'} onclick="bulkSnipShare(false)">🔒 나만 보기</button></div>` : ''}</div>`;
 }
 function selMemoSnips() { S.snipSel = new Set((S.snipShown || []).filter(id => (S.snips.find(x => x.ID === id) || {})['유형'] === '메모')); renderBook(); }
 function selAllSnips(on) { (S.snipShown || []).forEach(id => on ? S.snipSel.add(id) : S.snipSel.delete(id)); renderBook(); }
@@ -294,7 +296,8 @@ function snipHtml(s) {
   const memo = sMemo(s);
   const sel = S.snipSel && S.view === 'book';
   const kws = String(s['키워드'] || '').split(',').map(k => k.trim()).filter(Boolean);
-  const meta = [s['쪽수'] !== '' && s['쪽수'] != null ? `<span class="pg">p.${esc(s['쪽수'])}</span>` : '', ...kws.map(k => `<span class="kw">#${esc(k)}</span>`)].filter(Boolean);
+  const meta = [s['쪽수'] !== '' && s['쪽수'] != null ? `<span class="pg">p.${esc(s['쪽수'])}</span>` : '', ...kws.map(k => `<span class="kw">#${esc(k)}</span>`),
+    togetherOn() && isShared(s) && s['유형'] !== '메모' ? '<span class="kw shared" title="짝꿍에게 보여주는 중">👀 보여주는 중</span>' : ''].filter(Boolean);
   return `<div class="snip ${cls} ${sel && S.snipSel.has(s.ID) ? 'sel' : ''}" id="s-${s.ID}" onclick="snipTap('${s.ID}')">
     ${sel ? '<span class="sel-check snip-check">✓</span>' : ''}${sel ? '<span class="drag-h" aria-label="끌어서 옮기기">≡</span>' : ''}${s['유형'] === '메모' ? '<span class="badge plat" style="display:inline-block;margin-bottom:6px">메모</span>' : ''}
     ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}
@@ -351,12 +354,12 @@ function show(view) {
   if (view !== 'book' && S.snipSel) S.snipSel = null;
   if (S.view === 'note' && view !== 'note' && typeof collectNote === 'function') { const n = collectNote(); if (n && S.noteDirty) saveNoteNow(true); stopDictate(); }
   S.view = view;
-  ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more', 'snips'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
+  ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more', 'snips', 'together', 'pbook', 'plib'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
   $('composer').classList.toggle('hidden', view !== 'ai');
   document.body.classList.toggle('ai-mode', view === 'ai');
   $('fab').classList.toggle('hidden', !FAB_VIEWS.includes(view));
   $('fab').setAttribute('aria-label', view === 'book' ? '이 책에 문장 추가' : '빠르게 남기기');
-  const tab = { book: 'library', snips: 'library', note: 'notes', blist: 'more', stats: 'more', ai: 'more' }[view] || view;
+  const tab = { book: 'library', snips: 'library', note: 'notes', blist: 'more', stats: 'more', ai: 'more', pbook: 'together', plib: 'together' }[view] || view;
   document.querySelectorAll('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
   if (view === 'library') renderLibrary();
   else if (view === 'book') renderBook();
@@ -364,18 +367,22 @@ function show(view) {
   else if (view === 'ai') renderAIView();
   else if (view === 'memo') { renderMemoView(); renderVoiceQueue(); processVoiceQueue(); }
   else if (view === 'notes') renderNoteList();
-  if (!(view === 'notes' && S.noteSel) && !(view === 'book' && S.snipSel) && $('selbar')) $('selbar').remove();
+  else if (view === 'together') { renderTogether(); tgRefresh(true); }
+  else if (view === 'pbook') renderPartnerBook();
+  else if (view === 'plib') renderPartnerLib();
   else if (view === 'note') renderNoteEditor();
   else if (view === 'more') renderMoreView();
   else if (view === 'blist') renderBookList();
   else if (view === 'snips') renderAllSnips();
   else renderStatsView();
+  if (!(view === 'notes' && S.noteSel) && !(view === 'book' && S.snipSel) && $('selbar')) $('selbar').remove();
 }
 S.scrollMem = {};
 function go(view, id) {
   if (S.view === 'library' || S.view === 'snips') S.scrollMem[S.view] = window.scrollY;
   if (view === 'book') { if (S.bookId !== id) { S.bookTab = '필사'; S.snipSel = null; } S.bookId = id; if (S.view !== 'book') S.prevView = S.view; }
   if (view === 'note') S.noteId = id;
+  if (view === 'pbook') id = S.pbookId;
   try { history.pushState({ view, id: id || '' }, '', view === 'book' ? '?book=' + encodeURIComponent(id) : location.pathname); } catch (e) {}
   show(view); restoreScroll(view);
 }
@@ -397,6 +404,8 @@ window.addEventListener('popstate', e => {
   if (st.view === 'book' && st.id && book(st.id)) { S.bookId = st.id; show('book'); }
   else if (st.view === 'blist' && S.blist) show('blist');
   else if (st.view === 'snips') show('snips');
+  else if (st.view === 'pbook' && st.id) { S.pbookId = st.id; show(togetherOn() ? 'pbook' : 'library'); }
+  else if (['together', 'plib'].includes(st.view)) show(togetherOn() ? st.view : 'library');
   else if (st.view === 'note' && st.id && noteOf(st.id)) { S.noteId = resolveId(st.id); show('note'); }
   else show(['graph', 'stats', 'ai', 'memo', 'notes', 'more'].includes(st.view) ? st.view : 'library');
 });
@@ -448,6 +457,7 @@ function openSnipForm(id, forceType) {
     <label>키워드 <span style="font-weight:400;color:var(--faint)">쉼표로 구분</span><button type="button" class="kw-ai" onclick="aiKeywords(this)">AI 추천</button></label>
     <input class="field" id="f-kw" value="${esc(s ? s['키워드'] : '')}" placeholder="예: 자유, 사랑">
     ${kwSuggest.length ? `<div class="suggest">${kwSuggest.map(k => `<button class="chip" data-kw="${esc(k)}">#${esc(k)}</button>`).join('')}</div>` : ''}
+    ${togetherOn() ? `<label class="tg-check" id="f-share-w"><input type="checkbox" id="f-share" ${(s ? isShared(s) : tgShareNew()) ? 'checked' : ''}> 👀 ${tgHasPartner() ? esc(tgName()) + '에게 ' : '짝꿍에게 '}보여주기</label>` : ''}
     <div class="actions">
       ${s ? `<button class="btn danger" onclick="removeSnip('${s.ID}')">삭제</button>` : ''}
       <button class="btn" onclick="closeModal()">취소</button>
@@ -500,6 +510,7 @@ function submitSnip(id, keepOpen) {
   const memoV = $('f-memo') ? $('f-memo').value.trim() : '';
   const data = { ID: id || ('T' + uid()), '책ID': S.bookId, '유형': snipType, '내용': $('f-txt').value.trim() + ($('f-txt').value.trim() && memoV ? MEMO_SEP + memoV : ''),
     '쪽수': $('f-page').value.trim().replace(/\s*p$/i, ''), '제목': $('f-ttl').value.trim(), '키워드': normKw($('f-kw').value) };
+  if ($('f-share')) data['공개'] = $('f-share').checked && snipType !== '메모';
   if (!data['내용']) { toast('내용을 입력해 주세요'); return; }
   const prev = S.snips.find(x => x.ID === data.ID);
   const local = Object.assign({ '출처': '직접입력', '작성일': S.today }, prev || {}, data, { '책제목': (book(S.bookId) || {})['제목'] || '' });
@@ -532,6 +543,7 @@ function memoAddVis() {   // ＋ 메모 달기는 필사에서만 (내 생각 ·
   const hasMemo = !!($('f-memo') && $('f-memo').value.trim());
   add.classList.toggle('hidden', snipType !== '인용' || !wrap.classList.contains('hidden'));
   if (snipType !== '인용' && !hasMemo) wrap.classList.add('hidden');
+  const sw = $('f-share-w'); if (sw) sw.classList.toggle('hidden', snipType === '메모');   // 메모는 항상 나만
 }
 function showMemoField() { $('memo-wrap').classList.remove('hidden'); $('memo-add').classList.add('hidden'); setTimeout(() => $('f-memo').focus(), 30);
 }
