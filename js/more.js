@@ -160,7 +160,14 @@ $('list').addEventListener('click', e => {
   go('book', c.dataset.id);
   if (t) { S.bookTab = t.dataset.tab; renderBook(); setTimeout(() => { const el = $('book-tabs'); if (el) el.scrollIntoView({ block: 'start' }); }, 30); }
 });
-$('fab').onclick = () => { if (S.view === 'book' && book(S.bookId)) openSnipForm(null, S.bookTab === '생각' ? '생각' : '인용'); else openQuickMenu(); };
+// ＋ 버튼: 지금 보고 있는 탭에 맞는 것만 (서재 → 책 추가, 노트 → 새 글, 메모 → 메모 · 할 일, 책 → 문장)
+$('fab').onclick = () => {
+  if (S.view === 'book' && book(S.bookId)) openSnipForm(null, S.bookTab === '생각' ? '생각' : '인용');
+  else if (S.view === 'library') openBookForm(null);
+  else if (S.view === 'notes') newNote();
+  else if (S.view === 'memo') openMemoAdd();
+  else openQuickMenu();
+};
 // 맨 위로: 아래로 많이 내려가면 나타나요
 (() => {
   const up = document.createElement('button'); up.id = 'totop'; up.className = 'totop'; up.setAttribute('aria-label', '맨 위로'); up.textContent = '↑';

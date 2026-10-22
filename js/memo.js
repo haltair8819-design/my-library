@@ -245,6 +245,18 @@ function openQuickMenu() {
     </div>
     <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
 }
+// 메모 탭의 ＋: 보고 있는 칸이 할 일이면 바로 할 일, 메모면 바로 메모
+function openMemoAdd() {
+  if (S.memoFilter === '할 일') { openQuickSheet('할일'); return; }
+  if (S.memoFilter === '메모') { openQuickSheet(''); return; }
+  modal(`<h3>무엇을 남길까요?</h3>
+    <div class="qmenu">
+      <button onclick="openQuickSheet('')"><b>✎ 메모</b><span>떠오른 생각을 바로</span></button>
+      <button onclick="openQuickSheet('할일')"><b>☑ 할 일</b><span>"금요일까지 반납"처럼 날짜도</span></button>
+      <button onclick="closeModal();startRecording('memo')"><b>🎙 음성 메모</b><span>말하면 메모 · 할 일로 정리</span></button>
+    </div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+}
 function openQuickSheet(force) {
   modal(`<h3>${force === '할일' ? '할 일' : '빠른 메모'}</h3>${quickBox('qq', force)}
     <div class="small" style="margin-top:8px;color:var(--faint)">"내일", "금요일", "10월 20일", "3시" 같은 말은 날짜로 알아들어요.</div>

@@ -346,7 +346,8 @@ function renderAllSnips() {
   $('all-kind').onclick = e => { const t = e.target.closest('[data-k]'); if (!t) return; S.allKind = t.dataset.k; S.allLimit = 50; renderAllSnips(); };
 }
 
-const FAB_VIEWS = ['library', 'memo', 'notes', 'stats', 'book'];
+const FAB_VIEWS = ['library', 'memo', 'notes', 'book'];
+const FAB_LABEL = { library: '책 추가', notes: '새 글', memo: '메모 · 할 일 추가', book: '이 책에 문장 추가' };
 /* ===== 화면 전환 ===== */
 function show(view) {
   if (view === 'notes' && S.view !== 'notes' && S.view !== 'note') S.seedRand = Math.random();   // 노트 탭에 들어올 때마다 새 글감
@@ -358,7 +359,7 @@ function show(view) {
   $('composer').classList.toggle('hidden', view !== 'ai');
   document.body.classList.toggle('ai-mode', view === 'ai');
   $('fab').classList.toggle('hidden', !FAB_VIEWS.includes(view));
-  $('fab').setAttribute('aria-label', view === 'book' ? '이 책에 문장 추가' : '빠르게 남기기');
+  $('fab').setAttribute('aria-label', FAB_LABEL[view] || '빠르게 남기기');
   const tab = { book: 'library', snips: 'library', note: 'notes', blist: 'more', stats: 'more', ai: 'more', pbook: 'together', plib: 'together' }[view] || view;
   document.querySelectorAll('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
   if (view === 'library') renderLibrary();
@@ -591,7 +592,9 @@ const BOOK_FIELDS = [
 ];
 function openBookForm(id) {
   S.formBookId = id || '';
-  const b = id ? book(id) : { '시작일': S.today, '상태': '읽는중', '플랫폼': '종이책' };
+  // 새 책: 서재에서 보고 있는 칸(읽고 싶은 · 읽는 중 · 완독)으로 바로 들어가게
+  const st = !id && S.view === 'library' && ['읽을예정', '완독'].includes(S.filter) ? S.filter : '읽는중';
+  const b = id ? book(id) : { '시작일': st === '읽는중' ? S.today : '', '완독일': st === '완독' ? S.today : '', '상태': st, '플랫폼': '종이책' };
   const field = ([k, type, req]) => {
     const v = esc(b[k] ?? '');
     let input;
@@ -605,7 +608,7 @@ function openBookForm(id) {
   };
   const f = Object.fromEntries(BOOK_FIELDS.map(x => [x[0], field(x)]));
   modal(`
-    <h3>${id ? '책 정보 수정' : '새 책 추가'}</h3>
+    <h3>${id ? '책 정보 수정' : '새 책 추가'}${id ? '' : ` <span style="font-weight:400;color:var(--faint);font-size:13px">${({ '읽는중': '읽는 중인 책', '읽을예정': '읽고 싶은 책', '완독': '다 읽은 책' })[b['상태']] || ''}으로 담아요</span>`}</h3>
     <div class="al-box">
       <input class="field" id="al-q" type="search" placeholder="책 검색: 제목 · 저자 · ISBN" value="${id ? esc(String(b['제목']).replace(/\(.*?\)/g, '').trim()) : ''}" onkeydown="if(event.key==='Enter'){event.preventDefault();alSearch()}">
       <button class="btn primary" onclick="alSearch()">검색</button>
