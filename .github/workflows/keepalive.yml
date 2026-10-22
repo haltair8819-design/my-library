@@ -1,0 +1,14 @@
+# Supabase 무료 프로젝트는 1주일 동안 안 쓰면 멈춰요. 3일마다 한 번 가볍게 깨워요.
+name: Supabase 깨우기
+on:
+  schedule:
+    - cron: '17 3 */3 * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 깨우기
+        run: |
+          curl -fsS "https://zpbgssxftwckvjnrsdiw.supabase.co/rest/v1/books?select=id&limit=1" \
+            -H "apikey: sb_publishable_sCw5fIn7rEPcHrway4IZ3g_mj8Uq5ir" -o /dev/null -w "%{http_code}\n"

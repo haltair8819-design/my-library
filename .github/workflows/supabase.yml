@@ -1,0 +1,42 @@
+# Supabase 자동 배포: supabase/ 폴더가 바뀌어 main에 올라오면 표(마이그레이션)와 서버 기능을 올려요.
+# 필요한 비밀값 (저장소 Settings → Secrets and variables → Actions):
+#   SUPABASE_ACCESS_TOKEN  (Supabase 계정 → Access Tokens)
+#   SUPABASE_DB_PASSWORD   (프로젝트 만들 때 정한 DB 비밀번호)
+name: Supabase 배포
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/**', '.github/workflows/supabase.yml']
+  workflow_dispatch:
+concurrency: supabase-deploy
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: zpbgssxftwckvjnrsdiw
+    steps:
+      - uses: actions/checkout@v4
+      - name: 비밀값 확인
+        id: check
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "::warning::비밀값이 아직 없어서 배포를 건너뛰어요"; echo "ok=false" >> "$GITHUB_OUTPUT"
+          else echo "ok=true" >> "$GITHUB_OUTPUT"; fi
+      - uses: supabase/setup-cli@v1
+        if: steps.check.outputs.ok == 'true'
+        with:
+          version: 2.121.0
+      - name: 프로젝트 연결
+        if: steps.check.outputs.ok == 'true'
+        run: supabase link --project-ref "$PROJECT_REF" -p "$SUPABASE_DB_PASSWORD"
+      - name: 표 올리기 (마이그레이션)
+        if: steps.check.outputs.ok == 'true'
+        run: supabase db push -p "$SUPABASE_DB_PASSWORD"
+      - name: 서버 기능 올리기
+        if: steps.check.outputs.ok == 'true'
+        run: |
+          if [ -d supabase/functions ] && [ -n "$(ls -A supabase/functions 2>/dev/null)" ]; then
+            supabase functions deploy --project-ref "$PROJECT_REF"
+          else echo "아직 서버 기능 없음"; fi
