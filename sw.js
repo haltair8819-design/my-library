@@ -2,7 +2,7 @@
  * 앱 화면을 기기에 저장해 두고 바로 띄웁니다. 새 버전이 올라오면 뒤에서 받아 두고 알려줘요.
  * (이 파일은 거의 바꿀 일이 없어요. index.html만 고쳐 올리면 자동으로 반영됩니다.)
  */
-const SHELL = 'shell-v6';  // sw.js를 고칠 때만 숫자를 올려요
+const SHELL = 'shell-v7';  // sw.js를 고칠 때만 숫자를 올려요
 const ASSETS = 'assets-v1';
 const FILES = ['./', './index.html', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './icon-maskable-512.png'];
 
@@ -74,6 +74,23 @@ self.addEventListener('fetch', e => {
       } catch (err) { return cached || Response.error(); }
     }));
   }
+});
+
+// 폰 알림 (반납일 · 짝꿍 반응 · 같이 읽기)
+self.addEventListener('push', e => {
+  let d = {}; try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || '나의 서재', {
+    body: d.body || '', tag: d.tag || undefined, icon: './icon-192.png', badge: './icon-192.png', lang: 'ko', data: { url: d.url || './' } }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
+  e.waitUntil((async () => {
+    const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const c = list.find(x => x.url.startsWith(self.registration.scope));
+    if (c) { await c.focus(); c.postMessage({ type: 'open', url }); return; }
+    await self.clients.openWindow(url);
+  })());
 });
 
 // 새로 열린 화면이 준비될 때까지 잠깐 기다렸다가 알려줌

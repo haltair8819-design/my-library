@@ -23,7 +23,7 @@ async function sbLogin(next) {
   const { error } = await sbClient().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: back } });
   if (error) toast('⚠ 로그인을 시작하지 못했어요: ' + error.message);
 }
-async function sbLogout() { try { await sbClient().auth.signOut(); } catch (e) {} if (Store === SupabaseStore) { IDB.del(CACHE_KEY); LS.del(OUTBOX_KEY); location.replace(location.pathname); return; } toast('로그아웃했어요'); openMigrate(); }
+async function sbLogout() { try { if (typeof pushOff === 'function') await pushOff(); } catch (e) {} try { await sbClient().auth.signOut(); } catch (e) {} if (Store === SupabaseStore) { IDB.del(CACHE_KEY); LS.del(OUTBOX_KEY); location.replace(location.pathname); return; } toast('로그아웃했어요'); openMigrate(); }
 
 /* ----- 시트 기록 → Supabase 표 모양으로 ----- */
 function migrationRows(uid) {

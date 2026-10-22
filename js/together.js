@@ -16,6 +16,9 @@ const tgShareNew = () => !!(S.settings || {}).shareNew;
 const tgSpoilOn = () => (S.settings || {}).spoiler !== false;
 // 받침에 따라 이/가, 과/와
 function jo(w, a, b) { const c = String(w || '').trim().slice(-1).charCodeAt(0); return w + (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? a : b); }
+// 서버 시각(UTC) → 이 기기 날짜 · 시각
+const locDay = t => { const d = new Date(t); return isNaN(d) ? String(t || '').slice(0, 10) : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const locTime = t => { const d = new Date(t); return isNaN(d) ? '' : `${d.getMonth() + 1}.${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 const isShared = s => s && s['공개'] === true;
 const bookShared = b => b && b['공개'] !== false;
 
@@ -55,6 +58,12 @@ function tgLoad() {
       next.books = b.map(sbOut); next.snips = s.map(sbOut);
       next.logs = l.map(r => ({ id: r.id, bid: r.book_id, date: String(r.day).slice(0, 10), page: r.page, base: r.base_page }));
     }
+    // 문장 반응 (내 문장에 달린 것 · 짝꿍 문장에 단 것) · 같이 읽을 책
+    const [rx, tb] = await Promise.all([
+      sbq(sbClient().from('reactions').select('id, owner, snippet_id, user_id, kind, body, created_at').order('created_at', { ascending: true })).catch(() => []),
+      acc ? sbq(sbClient().from('together_books').select('id, pship, data, added_by, status, joined, started_at, created_at').eq('pship', acc.id).eq('deleted', false).order('created_at', { ascending: true })).catch(() => []) : Promise.resolve([])
+    ]);
+    next.reacts = rx || []; next.tbooks = tb || [];
     S.tg = next;
     try { LS.set(TG_CACHE, JSON.stringify(next)); } catch (e) {}
     return next;
@@ -64,6 +73,7 @@ function tgLoad() {
 async function tgRefresh(quiet) {
   try { await tgLoad(); } catch (e) { if (!quiet) toast('⚠ ' + (e.message || e)); return; }
   tgNav();
+  await tgAutoJoin();
   if (S.view === 'together') renderTogether();
   else if (S.view === 'pbook') renderPartnerBook();
   else if (S.view === 'plib') renderPartnerLib();
@@ -137,6 +147,7 @@ function renderTogether() {
     <div class="panel2"><h4>둘의 ${Number(tgMonth().slice(5))}월</h4><div class="tg-cols">${statCol(me.name, mineS, '')}${statCol(pn, theirS, 'p')}</div></div>
     ${both.length ? `<div class="panel2"><h4>같이 읽는 책</h4>${both.map(({ pb, mb }) => `<div class="tg-both" onclick="openPartnerBook('${pb.ID}')">${spine(mb)}<div class="grow">
       <div class="tg-bt">${esc(mb['제목'])}</div>${bar(me.name, mb, '')}${bar(pn, pb, 'p')}</div></div>`).join('')}</div>` : ''}
+    ${tgTbooksHtml()}
     <div class="panel2"><h4>${esc(pn)}의 서재 <button class="kw-ai" onclick="go('plib')">전체 ${T.books.length}권 보기 →</button></h4>
       ${reading.length ? `<div class="tg-shelf">${reading.map(b => `<button onclick="openPartnerBook('${b.ID}')">${spine(b)}<span>${esc(b['제목'])}</span><em>${tgProg(b).pct ? tgProg(b).pct + '%' : '읽는 중'}</em></button>`).join('')}</div>`
         : `<div class="small">지금 읽는 중인 책이 없어요.</div>`}</div>
@@ -173,7 +184,19 @@ function tgFeed() {
     add(pn, s['작성일'], `${ttl(b)}에서 ${isThought(s) ? '생각을' : '문장을'} 남겼어요`, `openPartnerBook('${b.ID}','${s.ID}')`, true); });
   S.snips.filter(isShared).forEach(s => { const b = book(s['책ID']); if (!b) return;
     add(me, s['작성일'], `${ttl(b)}에서 ${isThought(s) ? '생각을' : '문장을'} 보여줬어요`, `openSnipInBook('${s.ID}')`, false); });
-  return out.sort((a, b) => b.date.localeCompare(a.date) || (b.p ? 1 : 0) - (a.p ? 1 : 0)).slice(0, 25);
+  // 문장 반응
+  (T.reacts || []).forEach(r => {
+    const mineSnip = r.owner === T.me.id, fromMe = r.user_id === T.me.id;
+    if (mineSnip && fromMe) return;
+    const sn = mineSnip ? S.snips.find(x => x.ID === r.snippet_id) : T.snips.find(x => x.ID === r.snippet_id); if (!sn) return;
+    const who = fromMe ? me : pn, t = esc(sText(sn).slice(0, 24)) + (sText(sn).length > 24 ? '…' : '');
+    add(who, locDay(r.created_at), r.kind === 'heart' ? `${mineSnip ? '내' : esc(pn) + '의'} 문장에 ♡ <span class="tg-q">“${t}”</span>`
+      : `“${esc(String(r.body || '').slice(0, 60))}” <span class="tg-q">— ${mineSnip ? '내' : esc(pn) + '의'} 문장 “${t}”</span>`, `openReacts('${r.snippet_id}','${r.owner}')`, !fromMe);
+  });
+  (T.tbooks || []).forEach(tb => { const who = tb.added_by === T.me.id ? me : pn;
+    add(who, locDay(tb.created_at), `같이 읽을 책에 『${esc(tb.data['제목'] || '')}』를 담았어요`, `go('together')`, who !== me);
+    if (tb.started_at) add(who, tb.started_at, `『${esc(tb.data['제목'] || '')}』 같이 읽기 시작!`, `go('together')`, false); });
+  return out.sort((a, b) => b.date.localeCompare(a.date) || (b.p ? 1 : 0) - (a.p ? 1 : 0)).slice(0, 30);
 }
 function tgFeedHtml() {
   const f = tgFeed(); if (!f.length) return '<div class="small">아직 소식이 없어요. 책을 읽고 기록하면 여기에 보여요.</div>';
@@ -217,7 +240,8 @@ function renderPartnerBook() {
       ${h ? `<div class="spoil-l">🙈 ${firstPage(s['쪽수']) != null ? `p.${esc(s['쪽수'])} · 아직 안 읽은 부분이에요` : '스포일러가 있을 수 있어요'} · 눌러서 보기</div>` : ''}
       ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}<div class="txt">${esc(sText(s))}</div>
       ${memo ? `<div class="smemo">✎ ${esc(memo)}</div>` : ''}
-      ${s['쪽수'] !== '' && s['쪽수'] != null ? `<div class="smeta"><span class="pg">p.${esc(s['쪽수'])}</span></div>` : ''}</div>`; };
+      ${s['쪽수'] !== '' && s['쪽수'] != null ? `<div class="smeta"><span class="pg">p.${esc(s['쪽수'])}</span></div>` : ''}
+      ${reactBarHtml(s.ID, S.tg.partner.id)}</div>`; };
   const spoilReview = guard && b['한줄평'];
   el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 뒤로</button>
       ${mine ? `<button class="iconbtn" onclick="go('book','${mine.ID}')">내 기록 보기</button>` : `<button class="iconbtn" onclick="tgCopyBook('${b.ID}')">＋ 내 서재에 담기</button>`}</div>
@@ -383,3 +407,180 @@ async function tgEnd() {
   const wait = setInterval(() => { if (S.loaded) { clearInterval(wait); tgNav(); kick(); } }, 400);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') kick(); });
 })();
+
+
+/* ===================================================================
+   문장 반응 · 한마디 (v2.11): 짝꿍이 보여준 문장에 ♡ · 댓글, 내 문장엔 답글
+   =================================================================== */
+const reactsOf = (owner, sid) => (S.tg.reacts || []).filter(r => r.owner === owner && r.snippet_id === sid);
+function reactBarHtml(sid, owner) {
+  const rs = reactsOf(owner, sid), me = (S.tg.me || {}).id;
+  const hearts = rs.filter(r => r.kind === 'heart'), mine = hearts.find(r => r.user_id === me), n = rs.filter(r => r.kind === 'comment').length;
+  return `<div class="react-bar" onclick="event.stopPropagation()">
+    <button class="${mine ? 'on' : ''}" onclick="toggleHeart('${sid}','${owner}')">${mine ? '♥' : '♡'}${hearts.length ? ' ' + hearts.length : ''}</button>
+    <button onclick="openReacts('${sid}','${owner}')">💬 ${n ? n : '한마디'}</button></div>`;
+}
+// 내 문장 아래 작은 줄 (반응이 있을 때만)
+function myReactLine(s) {
+  if (!togetherOn() || !S.tg || !S.tg.me) return '';
+  const rs = reactsOf(S.tg.me.id, s.ID).filter(r => r.user_id !== S.tg.me.id || r.kind === 'comment'); if (!rs.length) return '';
+  const h = rs.filter(r => r.kind === 'heart').length, c = rs.filter(r => r.kind === 'comment').length;
+  return `<div class="react-line" onclick="event.stopPropagation();openReacts('${s.ID}','${S.tg.me.id}')">${h ? `♥ ${esc(tgName())}` : ''}${h && c ? ' · ' : ''}${c ? `💬 한마디 ${c}` : ''}</div>`;
+}
+async function toggleHeart(sid, owner) {
+  const me = S.tg.me.id, cur = reactsOf(owner, sid).find(r => r.kind === 'heart' && r.user_id === me);
+  try {
+    if (cur) { await sbq(sbClient().from('reactions').delete().eq('id', cur.id)); S.tg.reacts = S.tg.reacts.filter(r => r.id !== cur.id); }
+    else {
+      const r = await sbq(sbClient().from('reactions').insert({ owner, snippet_id: sid, kind: 'heart' }).select('id, owner, snippet_id, user_id, kind, body, created_at').single());
+      S.tg.reacts.push(r); notifyPartner('reaction', r.id);
+    }
+    LS.set(TG_CACHE, JSON.stringify(S.tg));
+  } catch (e) { toast('⚠ ' + (e.message || e)); return; }
+  reactRerender();
+}
+function reactRerender() {
+  if (S.view === 'pbook') { const y = window.scrollY; renderPartnerBook(); window.scrollTo(0, y); }
+  else if (S.view === 'book') { const y = window.scrollY; renderBook(); window.scrollTo(0, y); }
+  else if (S.view === 'together') renderTogether();
+  if ($('rx-list')) drawReacts();
+}
+let rxCur = null;
+function openReacts(sid, owner) {
+  const me = (S.tg.me || {}).id;
+  const sn = owner === me ? S.snips.find(x => x.ID === sid) : (S.tg.snips || []).find(x => x.ID === sid);
+  if (!sn) { toast('그 문장을 찾지 못했어요'); return; }
+  rxCur = { sid, owner };
+  modal(`<h3>한마디 <span style="font-weight:400;color:var(--faint);font-size:13px">${owner === me ? '내 문장' : esc(tgName()) + '의 문장'}</span></h3>
+    <div class="rx-quote">${esc(sText(sn).slice(0, 300))}${sText(sn).length > 300 ? '…' : ''}</div>
+    <div id="rx-list"></div>
+    <div class="inline" style="margin-top:10px"><textarea class="field" id="rx-in" rows="2" maxlength="1000" placeholder="${owner === me ? '답글 남기기' : '이 문장에 한마디'}" style="flex:1;min-height:44px"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendReact()}"></textarea>
+      <button class="btn primary" onclick="sendReact()">보내기</button></div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+  drawReacts();
+}
+function drawReacts() {
+  const el = $('rx-list'); if (!el || !rxCur) return;
+  const me = S.tg.me.id, rs = reactsOf(rxCur.owner, rxCur.sid);
+  const hearts = rs.filter(r => r.kind === 'heart').map(r => r.user_id === me ? '나' : tgName());
+  const cs = rs.filter(r => r.kind === 'comment');
+  el.innerHTML = (hearts.length ? `<div class="small" style="margin:8px 0">♥ ${hearts.map(esc).join(', ')}</div>` : '') +
+    (cs.length ? cs.map(r => `<div class="rx ${r.user_id === me ? 'me' : ''}">${avatar(r.user_id === me ? S.tg.me.name : tgName(), r.user_id === me ? '' : 'p')}
+      <div class="rx-b"><div>${esc(r.body)}</div><span>${esc(locTime(r.created_at))}${r.user_id === me ? ` · <a onclick="delReact('${r.id}')">지우기</a>` : ''}</span></div></div>`).join('')
+      : '<div class="small" style="margin:10px 0;color:var(--faint)">아직 한마디가 없어요</div>');
+}
+async function sendReact() {
+  const t = $('rx-in'), body = t.value.trim(); if (!body || !rxCur) return;
+  t.disabled = true;
+  try {
+    const r = await sbq(sbClient().from('reactions').insert({ owner: rxCur.owner, snippet_id: rxCur.sid, kind: 'comment', body }).select('id, owner, snippet_id, user_id, kind, body, created_at').single());
+    S.tg.reacts.push(r); LS.set(TG_CACHE, JSON.stringify(S.tg)); t.value = ''; notifyPartner('reaction', r.id);
+  } catch (e) { toast('⚠ ' + (e.message || e)); }
+  t.disabled = false; reactRerender();
+}
+async function delReact(id) {
+  if (!confirm('이 한마디를 지울까요?')) return;
+  try { await sbq(sbClient().from('reactions').delete().eq('id', id)); S.tg.reacts = S.tg.reacts.filter(r => r.id !== id); LS.set(TG_CACHE, JSON.stringify(S.tg)); } catch (e) { toast('⚠ ' + (e.message || e)); }
+  reactRerender();
+}
+
+/* ===================================================================
+   같이 읽을 책 (v2.11): 둘이 같이 담고, '같이 시작하기'를 누르면 둘 다 읽는 중으로
+   =================================================================== */
+const TB_FIELDS = ['제목', '저자', '옮긴이', '출판사', '대분류', '중분류', '분량', '표지URL', 'ISBN'];
+function tgTbooksHtml() {
+  const list = (S.tg.tbooks || []).filter(t => t.status === '예정');
+  const me = S.tg.me.id;
+  return `<div class="panel2"><h4>같이 읽을 책 <button class="kw-ai" onclick="openTbAdd()">＋ 담기</button></h4>
+    ${list.length ? list.map(t => { const d = t.data || {}; return `<div class="tg-both">${spine(d)}<div class="grow">
+      <div class="tg-bt">${esc(d['제목'] || '')}</div><div class="small">${esc(d['저자'] || '')} · ${t.added_by === me ? '내가' : esc(jo(tgName(), '이', '가'))} 담음</div>
+      <div class="inline" style="margin-top:6px"><button class="btn primary" onclick="tbStart('${t.id}')">같이 시작하기</button><button class="btn" onclick="tbRemove('${t.id}')">빼기</button></div></div></div>`; }).join('')
+      : `<div class="small">둘이 다음에 같이 읽고 싶은 책을 담아 두세요. ‘같이 시작하기’를 누르면 두 사람 서재에 모두 읽는 중으로 들어가요.</div>`}</div>`;
+}
+let tbCands = [];
+function openTbAdd() {
+  const T = S.tg; tbCands = [];
+  const wish = (list, who) => list.filter(b => b['상태'] === '읽을예정' && !(T.tbooks || []).some(t => t.status === '예정' && tgSame(t.data, b)))
+    .map(b => { tbCands.push(Object.fromEntries(TB_FIELDS.filter(k => b[k]).map(k => [k, b[k]])));
+      return `<button class="chip" onclick="tbAdd(tbCands[${tbCands.length - 1}])">${esc(who)} · ${esc(b['제목'])}</button>`; });
+  const chips = [...wish(S.books, '나'), ...wish(T.books, tgName())];
+  modal(`<h3>같이 읽을 책 담기</h3>
+    ${chips.length ? `<label>읽고 싶은 책에서 고르기</label><div class="suggest">${chips.join('')}</div>` : ''}
+    <label>책 검색</label>
+    <div class="al-box"><input class="field" id="tb-q" type="search" placeholder="제목 · 저자 · ISBN" onkeydown="if(event.key==='Enter'){event.preventDefault();tbSearch()}">
+      <button class="btn" onclick="openBarcode(v=>{$('tb-q').value=v;tbSearch()})" aria-label="바코드로 찾기">📷</button><button class="btn primary" onclick="tbSearch()">검색</button></div>
+    <div id="tb-res" class="al-res"></div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+}
+let tbList = [];
+async function tbSearch() {
+  const q = $('tb-q').value.trim(); if (!q) return;
+  $('tb-res').innerHTML = '<div class="al-msg">찾는 중…</div>';
+  try {
+    tbList = await call('bookSearch', q);
+    $('tb-res').innerHTML = tbList.length ? tbList.map((x, i) => `<button class="al-item" onclick="tbPick(${i})"><img src="${esc(x.cover)}" alt="">
+      <div><b>${esc(x.title)}</b><span>${esc(x.author)} · ${esc(x.publisher)}</span></div></button>`).join('') : '<div class="al-msg">검색 결과가 없어요</div>';
+  } catch (e) { $('tb-res').innerHTML = `<div class="al-msg">${esc(e.message || e)}</div>`; }
+}
+async function tbPick(i) {
+  const x = tbList[i]; if (!x) return;
+  $('tb-res').innerHTML = '<div class="al-msg">책 정보를 가져오는 중…</div>';
+  let d = { '제목': x.title, '저자': x.author, '출판사': x.publisher, '표지URL': x.cover, 'ISBN': x.isbn13 || x.isbn10 || '' };
+  try { const det = await call('bookDetail', x); d = Object.fromEntries(TB_FIELDS.filter(k => det[k] !== '' && det[k] != null).map(k => [k, det[k]])); } catch (e) {}
+  tbAdd(d);
+}
+async function tbAdd(data) {
+  if ((S.tg.tbooks || []).some(t => t.status === '예정' && tgSame(t.data, data))) { toast('이미 담겨 있어요'); return; }
+  try {
+    const r = await sbq(sbClient().from('together_books').insert({ pship: S.tg.partner.pship, data }).select('id, pship, data, added_by, status, joined, started_at, created_at').single());
+    S.tg.tbooks.push(r); LS.set(TG_CACHE, JSON.stringify(S.tg)); notifyPartner('together', r.id);
+    closeModal(); toast(`『${data['제목']}』를 같이 읽을 책에 담았어요`); renderTogether();
+  } catch (e) { toast('⚠ ' + (e.message || e)); }
+}
+async function tbRemove(id) {
+  const t = S.tg.tbooks.find(x => x.id === id); if (!t || !confirm(`『${t.data['제목']}』를 같이 읽을 책에서 뺄까요?`)) return;
+  try { await sbq(sbClient().from('together_books').update({ deleted: true }).eq('id', id)); S.tg.tbooks = S.tg.tbooks.filter(x => x.id !== id); LS.set(TG_CACHE, JSON.stringify(S.tg)); renderTogether(); }
+  catch (e) { toast('⚠ ' + (e.message || e)); }
+}
+// 내 서재에 '읽는 중'으로: 이미 있으면 상태만 바꾸고, 없으면 새로 넣어요
+async function tbIntoMyLibrary(data) {
+  const mine = S.books.find(b => tgSame(b, data));
+  if (mine) {
+    if (mine['상태'] !== '읽는중') patchBook(mine.ID, Object.assign({ '상태': '읽는중' }, mine['시작일'] && mine['상태'] !== '완독' ? {} : { '시작일': S.today }));
+    return mine;
+  }
+  const d = Object.assign({ ID: '', '상태': '읽는중', '시작일': S.today, '플랫폼': '종이책' }, Object.fromEntries(TB_FIELDS.filter(k => data[k] !== undefined && data[k] !== '').map(k => [k, data[k]])));
+  const saved = await call('saveBook', d); updateBook(saved); return saved;
+}
+async function tbStart(id) {
+  const t = S.tg.tbooks.find(x => x.id === id); if (!t) return;
+  if (!confirm(`『${t.data['제목']}』를 ${jo(tgName(), '과', '와')} 같이 읽기 시작할까요?\n두 사람 서재에 모두 ‘읽는 중’으로 들어가요.`)) return;
+  try {
+    await tbIntoMyLibrary(t.data);
+    const joined = uniq([...(t.joined || []), S.tg.me.id]);
+    await sbq(sbClient().from('together_books').update({ status: '읽는중', started_at: S.today, joined }).eq('id', id));
+    Object.assign(t, { status: '읽는중', started_at: S.today, joined }); LS.set(TG_CACHE, JSON.stringify(S.tg));
+    notifyPartner('together', id);
+    toast('같이 읽기 시작! 내 서재에도 읽는 중으로 넣었어요'); renderTogether();
+  } catch (e) { toast('⚠ ' + (e.message || e)); }
+}
+// 짝꿍이 '같이 시작하기'를 누른 책 → 내 앱을 열 때 내 서재에도 읽는 중으로
+let tbJoining = false;
+async function tgAutoJoin() {
+  if (tbJoining || !S.loaded || !S.tg.partner) return;
+  const me = S.tg.me.id, todo = (S.tg.tbooks || []).filter(t => t.status === '읽는중' && !(t.joined || []).includes(me));
+  if (!todo.length) return;
+  tbJoining = true;
+  try {
+    for (const t of todo) {
+      await tbIntoMyLibrary(t.data);
+      const joined = uniq([...(t.joined || []), me]);
+      await sbq(sbClient().from('together_books').update({ joined }).eq('id', t.id));
+      t.joined = joined;
+      toast(`${jo(tgName(), '과', '와')} 같이 읽기 시작: 『${t.data['제목']}』 · 내 서재에 읽는 중으로 넣었어요`);
+    }
+    LS.set(TG_CACHE, JSON.stringify(S.tg));
+    if (S.view === 'library') renderLibrary();
+  } catch (e) {} finally { tbJoining = false; }
+}

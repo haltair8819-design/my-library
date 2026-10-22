@@ -11,6 +11,8 @@ function renderMoreView() {
     <div class="more-list">
       <button onclick="go('stats')"><span class="mi">📊</span><b>독서 통계</b><span>완독 · 분류 · 달별 책 목록, 독서 리포트</span></button>
       <button onclick="go('ai')"><span class="mi">✨</span><b>AI 비서</b><span>내 필사 · 글 · 메모를 근거로 답해요</span></button>
+      ${Store.kind === 'supabase' ? `<button onclick="openNotify()"><span class="mi">🔔</span><b>폰 알림</b><span>반납일 · 짝꿍 소식</span></button>
+      <button onclick="openBackups()"><span class="mi">🗄</span><b>자동 백업</b><span>매주 일요일 · 최근 8주 보관</span></button>` : ''}
       <button onclick="openNoteImport()"><span class="mi">📥</span><b>노트 파일 가져오기</b><span>삼성노트 txt를 필사로</span></button>
       <button onclick="exportMarkdown()"><span class="mi">⬇️</span><b>전체 내보내기 (백업)</b><span>책 · 필사 · 글 · 메모를 마크다운 파일로</span></button>
       <button onclick="openLockSettings()"><span class="mi">🔒</span><b>앱 잠금</b><span>${locked ? '켜짐 · 열 때 비밀번호' : '꺼짐 · 열 때 비밀번호를 물어요'}</span></button>

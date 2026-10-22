@@ -1,7 +1,9 @@
 // 나의 서재 — 서버 기능 (Supabase Edge Function)
 // 예전 Apps Script의 AI · 책 검색을 옮긴 것. 로그인한 사람의 기록만 읽어요 (행 보안 그대로).
 // 비밀값 (Supabase → Edge Functions → Secrets): GEMINI_API_KEY, KAKAO_REST_KEY, (선택) NL_CERT_KEY, GEMINI_MODEL
+// 폰 알림 키(VAPID)는 처음 쓸 때 서버가 스스로 만들어 private.kv에 보관해요. 예약 작업은 x-cron 암호(private.kv)로 확인
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0';
+import webpush from 'npm:web-push@3.6.7';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +19,16 @@ type Ctx = { sb: any; uid: string; cache: Record<string, Row[]> };
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
+    // 예약 작업 (Supabase 안의 pg_cron이 불러요): 암호가 맞을 때만
+    const cronTok = req.headers.get('x-cron');
+    if (cronTok) {
+      const admin = adminClient();
+      const { data: tok } = await admin.rpc('app_kv_get', { key: 'cron_token' });
+      if (!tok || tok !== cronTok) return json({ ok: false, error: 'forbidden' }, 403);
+      const { fn, args } = await req.json();
+      const f = CRON_FNS[fn]; if (!f) return json({ ok: false, error: 'unknown cron ' + fn });
+      return json({ ok: true, data: await f(admin, ...(args || [])) });
+    }
     const auth = req.headers.get('Authorization') || '';
     const sb = createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), { global: { headers: { Authorization: auth } } });
     const { data: u } = await sb.auth.getUser();
@@ -446,7 +458,126 @@ async function bookDetail(_ctx: Ctx, item: Row) {
   return out;
 }
 
+/* ---------- 폰 알림 (웹 푸시) ---------- */
+const adminClient = () => createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false } });
+const kstDay = (plus = 0) => new Date(Date.now() + 9 * 3600e3 + plus * 86400e3).toISOString().slice(0, 10);
+let vapid: { pub: string; priv: string } | null = null;
+async function vapidKeys(admin: any) {
+  if (vapid) return vapid;
+  const get = async (k: string) => (await admin.rpc('app_kv_get', { key: k })).data as string | null;
+  let pub = await get('vapid_pub'), priv = await get('vapid_priv');
+  if (!pub || !priv) {   // 처음 한 번 만들어 서버에만 보관
+    const k = webpush.generateVAPIDKeys(); pub = k.publicKey; priv = k.privateKey;
+    await admin.rpc('app_kv_set', { key: 'vapid_priv', val: priv });
+    await admin.rpc('app_kv_set', { key: 'vapid_pub', val: pub });
+  }
+  return (vapid = { pub: String(pub), priv: String(priv) });
+}
+type Push = { title: string; body: string; url?: string; tag?: string };
+// 한 사람의 모든 기기에 보내기. pref: 'due' | 'together' (기기 설정에서 끈 건 건너뜀)
+async function pushTo(admin: any, uid: string, msg: Push, pref?: string) {
+  const keys = await vapidKeys(admin);
+  const { data: subs } = await admin.from('push_subs').select('endpoint, p256dh, auth, prefs').eq('user_id', uid);
+  let sent = 0;
+  for (const s of subs || []) {
+    if (pref && s.prefs && s.prefs[pref] === false) continue;
+    try {
+      const d = webpush.generateRequestDetails({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(msg),
+        { TTL: 12 * 3600, urgency: 'normal', vapidDetails: { subject: 'mailto:haltair8819@gmail.com', publicKey: keys.pub, privateKey: keys.priv } });
+      const res = await fetch(d.endpoint, { method: 'POST', headers: d.headers as Record<string, string>, body: d.body });
+      if (res.status === 404 || res.status === 410) await admin.from('push_subs').delete().eq('endpoint', s.endpoint);   // 앱을 지운 기기
+      else if (res.ok) sent++;
+    } catch (_) { /* 한 기기 실패는 넘어가요 */ }
+  }
+  return sent;
+}
+async function pushKey(_ctx: Ctx) { return (await vapidKeys(adminClient())).pub; }
+async function pushTest(ctx: Ctx) {
+  const n = await pushTo(adminClient(), ctx.uid, { title: '나의 서재', body: '알림이 잘 와요 📚', url: './', tag: 'test' });
+  if (!n) throw new Error('알림을 보낼 기기가 없어요. 알림 켜기를 먼저 눌러 주세요');
+  return n;
+}
+// 짝꿍에게 알리기: 내가 남긴 반응 · 같이 읽기를 짝꿍 폰에
+async function notify(ctx: Ctx, kind: string, id: string) {
+  const admin = adminClient();
+  const { data: me } = await ctx.sb.from('profiles').select('name').eq('user_id', ctx.uid).maybeSingle();
+  const name = (me && me.name) || '짝꿍';
+  if (kind === 'reaction') {
+    const { data: r } = await ctx.sb.from('reactions').select('owner, snippet_id, kind, body, user_id').eq('id', id).maybeSingle();
+    if (!r || r.user_id !== ctx.uid || r.owner === ctx.uid) return 0;
+    const { data: sn } = await ctx.sb.from('snippets').select('data').eq('user_id', r.owner).eq('id', r.snippet_id).maybeSingle();
+    const t = clip(String((sn && sn.data && sn.data['내용']) || '').split('\n\n[메모]')[0], 40);
+    return pushTo(admin, r.owner, { title: r.kind === 'heart' ? `${name}님이 문장에 ♡` : `${name}님의 한마디`,
+      body: r.kind === 'heart' ? `“${t}”` : `${clip(r.body, 80)} — “${t}”`, url: './?snip=' + encodeURIComponent(r.snippet_id), tag: 'react-' + r.snippet_id }, 'together');
+  }
+  if (kind === 'together') {
+    const { data: tb } = await ctx.sb.from('together_books').select('pship, data, status').eq('id', id).maybeSingle();
+    if (!tb) return 0;
+    const { data: p } = await ctx.sb.from('partnerships').select('inviter, invitee').eq('id', tb.pship).maybeSingle();
+    if (!p) return 0;
+    const other = p.inviter === ctx.uid ? p.invitee : p.inviter;
+    const title = (tb.data && tb.data['제목']) || '책';
+    return pushTo(admin, other, tb.status === '읽는중'
+      ? { title: `${name}님과 같이 읽기 시작!`, body: `『${title}』를 같이 읽어요. 내 서재에도 읽는 중으로 넣었어요`, url: './?view=together', tag: 'tb-' + id }
+      : { title: `${name}님이 같이 읽을 책을 담았어요`, body: `『${title}』`, url: './?view=together', tag: 'tb-' + id }, 'together');
+  }
+  return 0;
+}
+
+/* ---------- 자동 백업: 계정마다 전체 기록을 파일로 (최근 8개 보관) ---------- */
+const BACKUP_TABLES = ['books', 'snippets', 'notes', 'memos', 'read_logs', 'snippet_orders', 'note_versions'];
+async function backupUser(admin: any, uid: string) {
+  const out: Row = { app: '나의 서재', made: new Date().toISOString(), user_id: uid, tables: {} };
+  for (const t of BACKUP_TABLES) {
+    const list: Row[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await admin.from(t).select('*').eq('user_id', uid).range(from, from + 999);
+      if (error) throw new Error(t + ': ' + error.message);
+      list.push(...(data || [])); if (!data || data.length < 1000) break;
+    }
+    out.tables[t] = list;
+  }
+  const { data: prof } = await admin.from('profiles').select('name, email, settings').eq('user_id', uid).maybeSingle();
+  out.profile = prof || {};
+  const gz = await new Response(new Blob([JSON.stringify(out)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+  const path = `${uid}/${kstDay()}.json.gz`;
+  const { error } = await admin.storage.from('backups').upload(path, new Uint8Array(gz), { contentType: 'application/gzip', upsert: true });
+  if (error) throw new Error('백업 저장 실패: ' + error.message);
+  const { data: files } = await admin.storage.from('backups').list(uid, { limit: 100, sortBy: { column: 'name', order: 'desc' } });
+  const old = (files || []).map((f: Row) => f.name).filter((n: string) => /\.json\.gz$/.test(n)).sort().reverse().slice(8);
+  if (old.length) await admin.storage.from('backups').remove(old.map((n: string) => `${uid}/${n}`));
+  const counts: Row = {}; BACKUP_TABLES.forEach(t => counts[t] = out.tables[t].length);
+  return { path, bytes: gz.byteLength, counts };
+}
+async function backupNow(ctx: Ctx) { return backupUser(adminClient(), ctx.uid); }
+
+const CRON_FNS: Record<string, (admin: any, ...a: any[]) => Promise<unknown>> = {
+  // 반납 알림: eve = 내일 반납 (전날 저녁), am = 오늘 반납 (아침)
+  cronDue: async (admin: any, when: string) => {
+    const day = when === 'am' ? kstDay() : kstDay(1);
+    const { data, error } = await admin.rpc('due_books', { d: day });
+    if (error) throw new Error(error.message);
+    const by: Record<string, Row[]> = {};
+    (data || []).forEach((b: Row) => (by[b.user_id] = by[b.user_id] || []).push(b));
+    let sent = 0;
+    for (const [uid, list] of Object.entries(by)) {
+      const first = `『${list[0].title}』${list.length > 1 ? ` 외 ${list.length - 1}권` : ''}`;
+      sent += await pushTo(admin, uid, when === 'am'
+        ? { title: '📚 오늘 반납하는 날이에요', body: first, url: './?book=' + encodeURIComponent(list[0].id), tag: 'due-' + day }
+        : { title: '📚 내일 반납이에요', body: `${first} · 오늘 챙겨 두세요`, url: './?book=' + encodeURIComponent(list[0].id), tag: 'due-' + day }, 'due');
+    }
+    return { day, users: Object.keys(by).length, sent };
+  },
+  cronBackup: async (admin: any) => {
+    const { data: users } = await admin.from('profiles').select('user_id');
+    const res: Row[] = [];
+    for (const u of users || []) { try { res.push(await backupUser(admin, u.user_id)); } catch (e) { res.push({ user: u.user_id, error: String(e) }); } }
+    return res;
+  }
+};
+
 const FNS: Record<string, (ctx: Ctx, ...a: any[]) => Promise<unknown>> = {
   ping: async () => ({ ok: true }),
-  askAssistant, suggestKeywords, autoKeywords, scanPage, suggestTitle, noteAssist, transcribeAudio, bookSearch, bookDetail
+  askAssistant, suggestKeywords, autoKeywords, scanPage, suggestTitle, noteAssist, transcribeAudio, bookSearch, bookDetail,
+  pushKey, pushTest, notify, backupNow
 };

@@ -287,7 +287,9 @@ function quickSnip(photo) {
 }
 // 앱 아이콘 길게 누르기 → 빠른 메모 · 할 일 · 필사
 function takeQuick() {
-  const q = new URLSearchParams(location.search).get('quick'); if (!q) return;
+  const sp = new URLSearchParams(location.search);
+  if ((sp.get('snip') || sp.get('view')) && typeof openAppUrl === 'function') { openAppUrl(location.href); return; }
+  const q = sp.get('quick'); if (!q) return;
   history.replaceState({ view: S.view, id: S.bookId || '' }, '', location.pathname);
   if (q === 'read') openQuickRead(); else if (q === 'memo') openQuickSheet(''); else if (q === 'todo') openQuickSheet('할일'); else if (q === 'snip') quickSnip(false); else if (q === 'note') newNote(); else if (q === 'voice') startRecording('memo');
 }

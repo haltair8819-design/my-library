@@ -304,6 +304,7 @@ function snipHtml(s) {
     <div class="txt">${esc(sText(s))}</div>
     ${memo ? `<div class="smemo">✎ ${esc(memo)}</div>` : ''}
     ${meta.length ? `<div class="smeta">${meta.join('')}</div>` : ''}
+    ${typeof myReactLine === 'function' ? myReactLine(s) : ''}
   </div>`;
 }
 
@@ -611,6 +612,7 @@ function openBookForm(id) {
     <h3>${id ? '책 정보 수정' : '새 책 추가'}${id ? '' : ` <span style="font-weight:400;color:var(--faint);font-size:13px">${({ '읽는중': '읽는 중인 책', '읽을예정': '읽고 싶은 책', '완독': '다 읽은 책' })[b['상태']] || ''}으로 담아요</span>`}</h3>
     <div class="al-box">
       <input class="field" id="al-q" type="search" placeholder="책 검색: 제목 · 저자 · ISBN" value="${id ? esc(String(b['제목']).replace(/\(.*?\)/g, '').trim()) : ''}" onkeydown="if(event.key==='Enter'){event.preventDefault();alSearch()}">
+      <button class="btn" onclick="alScan()" title="책 뒤 바코드 찍기" aria-label="바코드로 찾기">📷 바코드</button>
       <button class="btn primary" onclick="alSearch()">검색</button>
     </div>
     <div id="al-res" class="al-res"></div>
@@ -642,7 +644,8 @@ function openBookForm(id) {
 /* 책 검색 (카카오 + 국립중앙도서관) */
 let alList = [];
 function coverPick(url, note) { return `<div class="cover-pick"><img src="${esc(url)}" alt=""><span>${esc(note)}</span></div>`; }
-async function alSearch() {
+function alScan() { openBarcode(isbn => { if (!$('al-q')) return; $('al-q').value = isbn; alSearch(true); }); }
+async function alSearch(auto) {
   const q = $('al-q').value.trim();
   if (!q) { ($('al-q') && $('al-q').focus()); return; }
   $('al-res').innerHTML = '<div class="al-msg">찾는 중…</div>';
@@ -655,6 +658,8 @@ async function alSearch() {
         <div><b>${esc(x.title)}</b><span>${esc(x.author)}${x.translator ? ' · ' + esc(x.translator) + ' 옮김' : ''} · ${esc(x.publisher)}${x.year ? ' · ' + esc(x.year) : ''}</span></div>
       </button>`).join('') : '<div class="al-msg">검색 결과가 없어요. 제목을 조금 줄여서 다시 찾아보세요.</div>';
     $('al-res').querySelectorAll('.al-item').forEach(el => el.onclick = () => alPick(alList[Number(el.dataset.i)]));
+    if (auto === true && list.length === 1) alPick(list[0]);   // 바코드로 찾은 책은 바로 채우기
+    else if (auto === true && !list.length) $('al-res').innerHTML = `<div class="al-msg">ISBN ${esc(q)}로 찾은 책이 없어요. 제목으로 검색해 보세요.</div>`;
   } catch (e) { $('al-res').innerHTML = `<div class="al-msg">${esc(e.message || e)}</div>`; }
 }
 async function alPick(item) {

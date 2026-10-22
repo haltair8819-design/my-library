@@ -39,6 +39,7 @@ document.addEventListener('visibilitychange', () => {
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
   navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.type === 'open' && typeof openAppUrl === 'function') { openAppUrl(e.data.url); return; }
     if (e.data && e.data.type === 'updated') {
       toastAction('새 버전이 있어요 · <u>눌러서 적용</u>', () => location.reload());
     }
