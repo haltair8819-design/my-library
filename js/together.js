@@ -350,7 +350,7 @@ function openShareSettings() {
       <label class="tg-check"><input type="checkbox" id="tg-new" ${tgShareNew() ? 'checked' : ''} onchange="tgSaveOpt('shareNew', this.checked)"> 새로 쓰는 필사 · 내 생각은 처음부터 보여주기</label></div>
     <div class="panel2"><h4>🔒 메모 · 노트 · 할 일 <span class="small" style="font-weight:400">항상 나만</span></h4><div class="small">이건 바꿀 수 없어요.</div></div>
     <label class="tg-check"><input type="checkbox" ${tgSpoilOn() ? 'checked' : ''} onchange="tgSaveOpt('spoiler', this.checked)"> 같이 읽는 책은 내가 읽은 곳 뒤 문장 가리기 (스포일러)</label>
-    ${tgHasPartner() ? `<button class="note-link" style="color:var(--danger,#b33)" onclick="tgEnd()">${esc(jo(tgName(), '과', '와'))} 같이 쓰기 끝내기 <span>서로 기록이 안 보이게 돼요</span></button>` : ''}
+    ${tgHasPartner() ? `<button class="btn danger" style="width:100%;margin-top:14px" onclick="tgEnd()">${esc(jo(tgName(), '과', '와'))} 같이 쓰기 끝내기</button>` : ''}
     <div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>`);
 }
 async function tgSaveName() {
