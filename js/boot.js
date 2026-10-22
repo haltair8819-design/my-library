@@ -15,7 +15,7 @@ async function boot() {
     show(S.view);
   };
   renderSync();
-  if (!Store.ready()) { show('library'); $('list').innerHTML = '<div class="empty">서버를 연결하면 서재가 열려요.</div>'; Store.openSetup(); return; }
+  if (!Store.ready()) { S.needLogin = true; show('library'); $('list').innerHTML = '<div class="empty">서버를 연결하면 서재가 열려요.</div>'; Store.openSetup(); return; }
   const c = await loadCache();
   if (c && c.books) {
     S.books = c.books; S.snips = c.snippets || []; S.memos = c.memos || []; S.logs = []; S.notes = c.notes || []; S.ver = c.ver || ''; if (c.settings) S.settings = c.settings;

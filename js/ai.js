@@ -27,7 +27,7 @@ function chatHtml(m) {
   if (m.pending) return `<div class="msg bot"><span class="thinking">내 기록을 찾아보는 중</span></div>`;
   if (m.error) return `<div class="msg bot err">${esc(m.error)}</div>`;
   const order = (m.cites || []).map(c => c.id);
-  const body = mdLite(m.text).replace(/\[([SNM]\d{6})\]/g, (all, id) => {
+  const body = mdLite(m.text).replace(/\[([SNM][A-Za-z0-9]{5,24})\]/g, (all, id) => {
     const i = order.indexOf(id);
     return i < 0 ? '' : `<span class="cite" onclick="openCite('${id}')">${i + 1}</span>`;
   });
