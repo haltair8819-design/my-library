@@ -2,7 +2,7 @@
  * 앱 화면을 기기에 저장해 두고 바로 띄웁니다. 새 버전이 올라오면 뒤에서 받아 두고 알려줘요.
  * (이 파일은 거의 바꿀 일이 없어요. index.html만 고쳐 올리면 자동으로 반영됩니다.)
  */
-const SHELL = 'shell-v5';  // sw.js를 고칠 때만 숫자를 올려요
+const SHELL = 'shell-v6';  // sw.js를 고칠 때만 숫자를 올려요
 const ASSETS = 'assets-v1';
 const FILES = ['./', './index.html', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './icon-maskable-512.png'];
 
@@ -45,11 +45,18 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // 같은 주소의 다른 파일 (아이콘 등): 저장본 우선, 뒤에서 갱신
+  // 같은 주소의 다른 파일 (js · css · 아이콘): 저장본 우선, 뒤에서 갱신.
+  // js · css는 주소 끝에 ?v=버전이 붙어서, 새 버전이 나오면 새 주소로 받아요 (예전 버전 저장본은 지움)
   if (url.origin === location.origin) {
     e.respondWith(caches.open(SHELL).then(async c => {
       const cached = await c.match(req);
-      const net = fetch(req).then(res => { if (res.ok) c.put(req, res.clone()); return res; }).catch(() => cached);
+      const net = fetch(req).then(async res => {
+        if (res.ok) {
+          await c.put(req, res.clone());
+          if (url.search) (await c.keys()).forEach(k => { const u = new URL(k.url); if (u.pathname === url.pathname && u.search !== url.search) c.delete(k); });
+        }
+        return res;
+      }).catch(() => cached);
       return cached || net;
     }));
     return;
