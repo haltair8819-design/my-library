@@ -271,7 +271,7 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.8';   // index.html의 ?v= 값과 같이 올려요
+const APP_VERSION = '2.8.1';   // index.html의 ?v= 값과 같이 올려요
 const PATCH_NOTES = [
   { v: '2.8', d: '2026.10.22', t: '새 저장소로 옮기기', items: [
     '⚙ 설정 → 새 저장소: 구글 로그인 후 지금 기록(책 · 필사 · 노트 · 메모 · 독서 기록 · 필사 순서)을 Supabase로 복사해요',

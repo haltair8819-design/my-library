@@ -83,7 +83,21 @@ async function migrateAll() {
   try {
     const user = await sbUser(); if (!user) throw new Error('로그인이 풀렸어요. 다시 로그인해 주세요');
     // 1) 시트에 남은 것 먼저 올리고, 시트에서 전체를 새로 받아 최신 상태로
-    if (S.outbox.length) { say('<span class="spin"></span> 시트에 남은 기록 올리는 중…'); await flush(); if (S.outbox.length) throw new Error('시트에 아직 못 올린 기록이 있어요. 인터넷을 확인하고 다시 눌러 주세요'); }
+    if (S.outbox.length) {
+      const total = S.outbox.length;
+      const tick = setInterval(() => say(`<span class="spin"></span> 시트에 남은 기록 올리는 중… ${(total - S.outbox.length).toLocaleString()} / ${total.toLocaleString()} (하나에 1~3초)`), 500);
+      let last = S.outbox.length, lastAt = Date.now();
+      try {
+        while (S.outbox.length && !S.outbox[0].error) {
+          await flush();
+          if (S.outbox.length !== last) { last = S.outbox.length; lastAt = Date.now(); }
+          if (Date.now() - lastAt > 60000) break;   // 1분 동안 하나도 못 올리면 멈춤
+          await new Promise(r => setTimeout(r, flushing ? 800 : 1500));
+        }
+      }
+      finally { clearInterval(tick); }
+      if (S.outbox.length) throw new Error('시트에 못 올린 기록이 있어요. 위쪽 ‘저장 실패’ 표시를 눌러 확인해 주세요');
+    }
     say('<span class="spin"></span> 시트에서 전체 기록 받는 중…');
     const ok = await refresh(true); if (!ok) throw new Error('시트에서 기록을 받지 못했어요');
     const rows = migrationRows(user.id);
