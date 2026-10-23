@@ -811,3 +811,23 @@ html[data-mode="dark"] .life-b.l3{background:#A8342A;color:#fff}
 .sh-snip .life-st{font-style:normal;font-size:11px}
 .sh-save{position:sticky;bottom:calc(70px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:14px 0 10px;box-shadow:0 6px 20px rgba(0,0,0,.1)}
 .sh-save span{flex:1;font-size:13px;color:var(--sub)}
+
+/* ===== v2.13.2 ===== */
+.msel{outline:2px solid var(--accent);outline-offset:-1px;background:var(--accent-soft)}
+.m-check{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;font-size:12px;color:#fff;margin-right:8px}
+.msel .m-check{background:var(--accent);border-color:var(--accent)}
+.memo .m-check{float:right;margin:0 0 4px 6px}
+.req-st b{font-size:14px}
+.req-add{display:flex;gap:8px;align-items:flex-end;margin-top:12px}
+.req-add .field{flex:1;min-height:52px}
+.req-list{margin-top:10px}
+.req-it{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14px;line-height:1.55}
+.req-n{width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.req-it .grow{cursor:pointer;white-space:pre-wrap}
+.req-x{border:0;background:none;color:var(--faint);font-size:15px;cursor:pointer;padding:2px 4px}
+.req-log{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-top:8px;font-size:13.5px}
+.req-log summary{cursor:pointer;font-weight:600}
+.req-log ol{margin:8px 0 2px;padding-left:20px;line-height:1.6}
+.tg-link{color:var(--accent);cursor:pointer;text-decoration:none}
+.av-zoom{text-align:center}
+.av-zoom img{width:100%;max-width:360px;aspect-ratio:1;object-fit:cover;border-radius:16px;display:block;margin:4px auto 8px}

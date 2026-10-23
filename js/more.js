@@ -47,6 +47,7 @@ function renderSettingsView() {
     ${accountPanelHtml()}
     <div class="set-sec">정보</div>
     <div class="more-list" style="margin-top:0">
+      ${row('🙋', '업데이트 해줘요!', reqRowSub(), 'openReq()')}
       ${row('🗒', '업데이트 내역', 'v' + APP_VERSION, 'openPatchNotes()')}
       ${row('📤', '공유 받기 점검', '공유 목록에 안 보일 때', 'openShareCheck()')}
     </div>

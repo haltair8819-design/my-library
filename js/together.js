@@ -152,7 +152,7 @@ function renderTogether() {
   const bar = (name, b, cls) => { const p = tgProg(b); return `<div class="tg-prog ${cls}"><span>${esc(name)}</span><div class="bar"><i style="width:${p.pct}%"></i></div><em>${b['상태'] === '완독' ? '완독' : p.cur ? 'p.' + p.cur + (p.total ? ` · ${p.pct}%` : '') : b['상태'] === '읽을예정' ? '읽고 싶은' : '–'}</em></div>`; };
   el.innerHTML = `
     <div class="view-head tg-head"><div><h1>함께</h1><p><button class="tg-pbtn" onclick="openProfile('me')">${avatar(me.name)}</button><button class="tg-pbtn" onclick="openProfile('p')">${avatar(pn, 'p')}</button> ${esc(me.name)} · ${esc(pn)}</p></div>
-      <button class="iconbtn" onclick="openShareSettings()">보여줄 것</button></div>
+      <div style="display:flex;gap:4px"><button class="iconbtn" onclick="openShared('p')">문장 모음</button><button class="iconbtn" onclick="openShareSettings()">보여줄 것</button></div></div>
     <div class="panel2"><h4>둘의 ${Number(tgMonth().slice(5))}월</h4><div class="tg-cols">${statCol(me.name, mineS, '')}${statCol(pn, theirS, 'p')}</div></div>
     ${both.length ? `<div class="panel2"><h4>둘 다 있는 책 <span class="small" style="font-weight:400">${both.length}권${nRead ? ` · 같이 읽는 중 ${nRead}` : ''}</span></h4>
       ${(S.bothAll ? both : both.slice(0, 4)).map(({ pb, mb }) => `<div class="tg-both" onclick="openPartnerBook('${pb.ID}')">${spine(mb)}<div class="grow">
@@ -244,8 +244,8 @@ function renderPartnerLib() {
   const done = all.filter(b => b['상태'] === '완독').length, reading = all.filter(b => b['상태'] === '읽는중').length;
   const shown = mine ? S.snips.filter(isShared).length : S.tg.snips.length;
   el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 함께</button>${mine ? `<button class="iconbtn" onclick="openMyProfile()">프로필 고치기</button>` : ''}</div>
-    <div class="tg-prof">${mine ? `<button class="tg-pbtn" onclick="openMyProfile()" aria-label="프로필 사진 바꾸기">${avatar(name, 'big')}</button>` : avatar(name, 'p big')}
-      <div><h1>${esc(name)}</h1><p class="small">${mine ? '내 서재' : '보기만 할 수 있어요'} · 전체 ${all.length}권 · 완독 ${done} · 읽는 중 ${reading} · 보여준 문장 ${shown}</p></div></div>
+    <div class="tg-prof">${mine ? `<button class="tg-pbtn" onclick="openMyProfile()" aria-label="프로필 사진 바꾸기">${avatar(name, 'big')}</button>` : `<button class="tg-pbtn" onclick="openAvatarZoom('p')" aria-label="프로필 사진 크게 보기">${avatar(name, 'p big')}</button>`}
+      <div><h1>${esc(name)}</h1><p class="small">${mine ? '내 서재' : '보기만 할 수 있어요'} · 전체 ${all.length}권 · 완독 ${done} · 읽는 중 ${reading} · <a class="tg-link" onclick="openShared('${mine ? 'me' : 'p'}')">보여준 문장 ${shown} ›</a></p></div></div>
     <div class="chips" id="pl-f">${FILTERS.map(f => `<button class="chip ${S.tgFilter === f ? 'on' : ''}" data-f="${f}">${FILTER_LABEL[f] || f} ${f === '전체' ? all.length : all.filter(b => b['상태'] === f).length}</button>`).join('')}</div>
     <div class="list">${list.map(b => { const p = tgProg(b), other = mine ? tgTheirs(b) : tgMine(b);
       return `<div class="book" onclick="${mine ? `go('book','${b.ID}')` : `openPartnerBook('${b.ID}')`}">${spine(b)}<div class="binfo"><div class="btitle">${esc(b['제목'])}</div>
@@ -312,7 +312,7 @@ async function tgRemoveAvatar() {
     toast('사진을 지웠어요'); openMyProfile(); tgRerenderAll();
   } catch (e) { toast('⚠ ' + (e.message || e)); }
 }
-function tgRerenderAll() { if (S.view === 'together') renderTogether(); else if (S.view === 'plib') renderPartnerLib(); else if (S.view === 'pbook') renderPartnerBook(); }
+function tgRerenderAll() { if (S.view === 'together') renderTogether(); else if (S.view === 'plib') renderPartnerLib(); else if (S.view === 'pbook') renderPartnerBook(); else if (S.view === 'shared') renderSharedView(); }
 
 /* ----- 짝꿍 책 하나 ----- */
 function openPartnerBook(id, flash) { S.pbookId = id; S.pflash = flash || ''; go('pbook'); }
@@ -471,8 +471,8 @@ function openShareSettings() {
       <div class="small">${nb}권 중 <b>${shown}권</b>을 보여주는 중이에요.</div>
       <div class="actions" style="margin-top:8px"><button class="btn primary grow" onclick="closeModal();openShareList()">책 목록에서 고르기 ›</button></div></div>
     <div class="panel2"><h4>✋ 필사 · 내 생각 <span class="small" style="font-weight:400">고른 것만</span></h4>
-      <div class="small" style="line-height:1.6">지금 <b>${ns}개</b>를 보여주는 중이에요. ‘책 목록에서 고르기’에서 책마다 필사를 모두 보여주거나 문장을 하나씩 골라요. 필사에 달아 둔 메모도 같이 보여요.</div>
-      <div class="actions" style="margin-top:8px"><button class="btn grow" onclick="closeModal();openShareList()">필사 고르기 ›</button></div>
+      <div class="small" style="line-height:1.6">지금 <b>${ns}개</b>를 보여주는 중이에요. 위 ‘책 목록에서 고르기’에서 책마다 필사를 모두 보여주거나 문장을 하나씩 골라요. 필사에 달아 둔 메모도 같이 보여요.</div>
+      <div class="actions" style="margin-top:8px"><button class="btn grow" onclick="closeModal();openShared('me')">보여준 문장 모아 보기 ›</button></div>
       <label class="tg-check"><input type="checkbox" id="tg-new" ${tgShareNew() ? 'checked' : ''} onchange="tgSaveOpt('shareNew', this.checked)"> 새로 쓰는 필사 · 내 생각은 처음부터 보여주기</label></div>
     <div class="panel2"><h4>🔒 메모 · 노트 · 할 일 <span class="small" style="font-weight:400">항상 나만</span></h4><div class="small">이건 바꿀 수 없어요.</div></div>
     <label class="tg-check"><input type="checkbox" ${tgSpoilOn() ? 'checked' : ''} onchange="tgSaveOpt('spoiler', this.checked)"> 같이 읽는 책은 내가 읽은 곳 뒤 문장 가리기 (스포일러)</label>
@@ -545,6 +545,7 @@ async function toggleHeart(sid, owner) {
 function reactRerender() {
   if (S.view === 'pbook') { const y = window.scrollY; renderPartnerBook(); window.scrollTo(0, y); }
   else if (S.view === 'book') { const y = window.scrollY; renderBook(); window.scrollTo(0, y); }
+  else if (S.view === 'shared') { const y = window.scrollY; renderSharedView(); window.scrollTo(0, y); }
   else if (S.view === 'together') renderTogether();
   if ($('rx-list')) drawReacts();
 }
@@ -782,3 +783,33 @@ function shSave() {
   toast(`저장했어요 · 책 ${nb}권 · 문장 ${ns}개`);
 }
 function shLeave() { if (shChanges() && !confirm('저장하지 않은 변경이 있어요. 그냥 나갈까요?')) return; S.shDraft = { books: {}, snips: {} }; goBack(); }
+
+
+/* ===================================================================
+   v2.13.2 보여준 문장 모음 (내가 · 짝꿍이) · 프로필 사진 크게 보기
+   =================================================================== */
+S.shdWho = 'p'; S.shdLimit = 40;
+function openShared(who) { S.shdWho = who === 'me' ? 'me' : 'p'; S.shdLimit = 40; if (S.shdWho === 'p' && !tgHasPartner()) S.shdWho = 'me'; go('shared'); }
+function renderSharedView() {
+  const el = $('v-shared'); if (!el) return;
+  const mineL = S.snips.filter(s => isShared(s) && s['유형'] !== '메모' && bookShared(book(s['책ID']))), theirL = tgHasPartner() ? S.tg.snips : [];
+  const me = S.shdWho === 'me', list0 = me ? mineL : theirL;
+  const bk = s => me ? book(s['책ID']) : (S.tg.books || []).find(b => b.ID === s['책ID']);
+  const list = list0.slice().sort((a, b) => lifeOf(b) - lifeOf(a) || String(b['작성일'] || '').localeCompare(String(a['작성일'] || '')));
+  el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 함께</button></div>
+    <div class="view-head"><h1>보여준 문장</h1><p>${me ? '짝꿍이 볼 수 있는 내 필사 · 생각이에요' : esc(tgName()) + '가 보여준 필사 · 생각이에요'}</p></div>
+    <div class="seg" id="shd-who">${tgHasPartner() ? `<button data-w="p" class="${me ? '' : 'on'}">${esc(tgName())} ${theirL.length}</button>` : ''}<button data-w="me" class="${me ? 'on' : ''}">나 ${mineL.length}</button></div>
+    <div class="life-list">${list.slice(0, S.shdLimit).map(s => { const b = bk(s) || {}, n = lifeOf(s);
+      return `<div class="life-card ${n ? 'l' + n : ''}" onclick="${me ? `openSnipInBook('${s.ID}')` : `openPartnerBook('${s['책ID']}','${s.ID}')`}">${n ? `<div class="life-st">${'★'.repeat(n)}<span>${LIFE[n]}</span></div>` : ''}
+        ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}<div class="txt">${esc(sText(s))}</div>${sMemo(s) ? `<div class="smemo">✎ ${esc(sMemo(s))}</div>` : ''}
+        <div class="life-src">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}${isThought(s) ? ' · 내 생각' : ''}</div>
+        ${reactBarHtml(s.ID, me ? S.tg.me.id : S.tg.partner.id)}</div>`; }).join('') || `<div class="empty">${me ? '아직 보여준 문장이 없어요. 보여줄 것 → 책 목록에서 고르기에서 골라 보세요.' : '아직 보여준 문장이 없어요'}</div>`}</div>
+    ${list.length > S.shdLimit ? `<button class="btn tg-more" onclick="S.shdLimit+=40;renderSharedView()">더보기 (${list.length - S.shdLimit}개 남음)</button>` : ''}`;
+  $('shd-who').onclick = e => { const t = e.target.closest('[data-w]'); if (!t) return; S.shdWho = t.dataset.w; S.shdLimit = 40; renderSharedView(); };
+}
+function openAvatarZoom(who) {
+  const T = S.tg || {}, id = who === 'p' ? (T.partner || {}).id : (T.me || {}).id, url = id && (T.av || {})[id];
+  if (!url) return;
+  modal(`<div class="av-zoom"><img src="${esc(url)}" alt="프로필 사진"><div class="small">${esc(who === 'p' ? tgName() : (T.me || {}).name || '')}</div></div>
+    <div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>`);
+}

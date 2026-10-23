@@ -87,20 +87,56 @@ function renderMemoView() {
     ${f === '전체' && !todos.length && !memos.length ? '<div class="empty">떠오른 생각이나 해야 할 일을 위 칸에 적어 보세요.<br>"내일 3시 치과", "- 책 반납하기"처럼 쓰면 할 일로 들어가요.</div>' : ''}`;
   $('memo-f').onclick = e => { const c = e.target.closest('[data-f]'); if (!c) return; S.memoFilter = c.dataset.f; renderMemoView(); };
   bindQuick('mq');
+  // 꾹 누르면 여러 개 고르기 (v2.13.2)
+  document.querySelectorAll('#v-memo [data-mid]').forEach(el => bindLongPress(el, () => { if (!S.memoSel) S.memoSel = new Set(); S.memoSel.add(el.dataset.mid); renderMemoView(); }));
+  renderMemoSelBar();
+}
+/* ----- 메모 · 할 일 여러 개 고르기 ----- */
+function memoTap(id) {
+  if (!S.memoSel) { openMemo(id); return; }
+  if (S.memoSel.has(id)) S.memoSel.delete(id); else S.memoSel.add(id);
+  const y = window.scrollY; renderMemoView(); window.scrollTo(0, y);
+}
+function memoShownIds() { return [...document.querySelectorAll('#v-memo [data-mid]')].map(e => e.dataset.mid); }
+function renderMemoSelBar() {
+  let bar = $('selbar');
+  if (!S.memoSel || S.view !== 'memo') { if (bar && S.view === 'memo') bar.remove(); if (S.view === 'memo') $('fab').classList.remove('hidden'); return; }
+  $('fab').classList.add('hidden');
+  if (!bar) { bar = document.createElement('div'); bar.id = 'selbar'; bar.className = 'selbar'; document.body.appendChild(bar); }
+  const n = S.memoSel.size, shown = memoShownIds(), allOn = shown.length && shown.every(id => S.memoSel.has(id)), dis = n ? '' : 'disabled';
+  bar.innerHTML = `<div class="in"><div class="top"><b>${n}개 골랐어요</b><span><button onclick="memoSelAll(${allOn ? 0 : 1})">${allOn ? '모두 풀기' : '보이는 것 모두'}</button> · <button onclick="S.memoSel=null;renderMemoView()">완료</button></span></div>
+    <div class="row2"><button class="btn" ${dis} onclick="memoBulk({'종류':'메모'})">→ 메모</button><button class="btn" ${dis} onclick="memoBulk({'종류':'할일'})">→ 할 일</button>
+      <button class="btn" ${dis} onclick="memoBulk({'종류':'할일','완료':true})">✓ 끝냈어요</button><button class="btn" ${dis} onclick="memoBulk({'완료':false})">안 끝냄</button>
+      <button class="btn danger" ${dis} onclick="memoBulkDel()">삭제</button></div></div>`;
+}
+function memoSelAll(on) { memoShownIds().forEach(id => on ? S.memoSel.add(id) : S.memoSel.delete(id)); renderMemoView(); }
+function memoBulk(patch) {
+  let c = 0;
+  [...S.memoSel].forEach(id => { const m = S.memos.find(x => x.ID === resolveId(id)); if (!m) return;
+    if (Object.keys(patch).every(k => k === '완료' ? isDone(m) === patch[k] : m[k] === patch[k])) return;
+    patchMemo(m.ID, patch); c++; });
+  S.memoSel = new Set(); renderMemoView(); toast(c ? `${c}개를 바꿨어요` : '바뀐 게 없어요');
+}
+function memoBulkDel() {
+  const ids = [...S.memoSel].map(resolveId); if (!ids.length || !confirm(`${ids.length}개를 지울까요?`)) return;
+  ids.forEach(id => { S.memos = S.memos.filter(x => x.ID !== id); queue({ fn: 'deleteMemo', id }); });
+  S.memoSel = new Set(); renderMemoView(); toast(`${ids.length}개를 지웠어요`);
 }
 const isDone = m => m['완료'] === true || m['완료'] === 'TRUE' || m['완료'] === 'true';
 function todoRow(m) {
   const d = m['마감일'] ? dayDiff(m['마감일']) : null, fin = isDone(m);
   const b = m['책ID'] ? book(m['책ID']) : null;
-  return `<div class="todo ${fin ? 'fin' : ''}" data-id="${m.ID}">
-    <button class="tick" onclick="toggleTodo('${m.ID}')" aria-label="${fin ? '안 끝낸 일로' : '끝냈어요'}">${fin ? '✓' : ''}</button>
-    <div class="tbody" onclick="openMemo('${m.ID}')"><div class="tt">${esc(m['내용'])}</div>
+  const sel = S.memoSel && S.memoSel.has(m.ID);
+  return `<div class="todo ${fin ? 'fin' : ''} ${sel ? 'msel' : ''}" data-id="${m.ID}" data-mid="${m.ID}">
+    ${S.memoSel ? `<span class="m-check">${sel ? '✓' : ''}</span>` : `<button class="tick" onclick="toggleTodo('${m.ID}')" aria-label="${fin ? '안 끝낸 일로' : '끝냈어요'}">${fin ? '✓' : ''}</button>`}
+    <div class="tbody" onclick="memoTap('${m.ID}')"><div class="tt">${esc(m['내용'])}</div>
       ${(m['마감일'] && !fin) || b || fin ? `<div class="tm">${fin ? (m['완료일'] ? String(m['완료일']).slice(5).replace('-', '/') + ' 끝냄' : '끝냄') : `<span class="${d < 0 ? 'late' : d === 0 ? 'due-now' : ''}">${dueLabel(m['마감일'], m['마감시간'])}</span>`}${b ? ` · 📖 ${esc(b['제목'])}` : ''}</div>` : ''}</div>
   </div>`;
 }
 function memoCard(m) {
   const b = m['책ID'] ? book(m['책ID']) : null;
-  return `<div class="memo" onclick="openMemo('${m.ID}')"><div class="mx">${esc(m['내용'])}</div>
+  const sel = S.memoSel && S.memoSel.has(m.ID);
+  return `<div class="memo ${sel ? 'msel' : ''}" data-mid="${m.ID}" onclick="memoTap('${m.ID}')">${S.memoSel ? `<span class="m-check">${sel ? '✓' : ''}</span>` : ''}<div class="mx">${esc(m['내용'])}</div>
     <div class="mm">${m['작성일'] ? String(m['작성일']).slice(5).replace('-', '/') : '방금'}${b ? ' · 📖 ' + esc(b['제목']) : ''}</div></div>`;
 }
 

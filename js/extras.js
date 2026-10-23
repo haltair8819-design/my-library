@@ -199,3 +199,71 @@ async function openBarcode(onCode) {
     if (list.length && S.view === 'library') renderLibrary();
   }, 500);
 })();
+
+
+/* ===================================================================
+   업데이트 해줘요! (v2.13.2): 바꾸고 싶은 걸 모아 두었다가 한 번에 복사 → Claude에 붙여넣기
+   업데이트가 되면 '업데이트됐어요'로 날짜 · 버전을 남기고 목록은 비워요
+   =================================================================== */
+const REQ_KEY = 'update_reqs_v1';
+function reqData() {
+  const st = (S.settings || {}).updReq;
+  if (st && Array.isArray(st.items)) return st;
+  try { return JSON.parse(LS.get(REQ_KEY) || 'null') || { items: [], log: [] }; } catch (e) { return { items: [], log: [] }; }
+}
+async function reqSave(d) {
+  d.log = (d.log || []).slice(0, 30);
+  LS.set(REQ_KEY, JSON.stringify(d));
+  S.settings = Object.assign({}, S.settings, { updReq: d });
+  if (Store.kind === 'supabase') { try { await Store.run('saveSettings', { updReq: d }); saveCache(); } catch (e) {} }
+}
+function openReq() { go('req'); }
+const reqDay = t => { const d = new Date(t); return isNaN(d) ? '' : `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
+const reqTime = t => { const d = new Date(t); return isNaN(d) ? '' : `${d.getMonth() + 1}.${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+function renderReqView() {
+  const el = $('v-req'); if (!el) return;
+  const d = reqData(), items = d.items || [], last = (d.log || [])[0];
+  const newVer = d.copiedVer && d.copiedVer !== APP_VERSION && items.length;
+  el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 설정</button></div>
+    <div class="view-head"><h1>업데이트 해줘요!</h1><p>바꾸고 싶은 걸 생각날 때마다 적어 두고, 모아서 한 번에 Claude에게 보내요.</p></div>
+    <div class="panel2 req-st">${items.length ? `<b>대기 중 ${items.length}개</b>${d.copiedAt ? ` · ${esc(reqTime(d.copiedAt))}에 복사함` : ' · 아직 안 보냄'}` : '<b>대기 중인 요청이 없어요</b>'}
+      ${last ? `<div class="small" style="margin-top:4px">마지막 업데이트: ${esc(reqDay(last.at))} · v${esc(last.ver)} · ${last.items.length}개 반영</div>` : ''}
+      ${newVer ? `<div class="notice" style="margin-top:8px">복사한 뒤 새 버전(v${esc(d.copiedVer)} → v${APP_VERSION})이 나왔어요. 반영됐으면 아래 <b>업데이트됐어요</b>를 눌러 비워 주세요.</div>` : ''}</div>
+    <div class="req-add"><textarea class="field" id="req-in" rows="2" placeholder="예: 메모도 꾹 눌러서 여러 개 고르기" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();reqAdd()}"></textarea>
+      <button class="btn primary" onclick="reqAdd()">추가</button></div>
+    <div class="req-list">${items.map((it, i) => `<div class="req-it"><span class="req-n">${i + 1}</span><div class="grow" onclick="reqEdit(${i})">${esc(it.text)}<div class="small">${esc(reqTime(it.at))}</div></div>
+      <button class="req-x" onclick="reqDel(${i})" aria-label="지우기">✕</button></div>`).join('') || '<div class="empty" style="padding:24px 0">위 칸에 적어 보세요</div>'}</div>
+    ${items.length ? `<div class="actions" style="margin-top:12px"><button class="btn primary grow" onclick="reqCopy()">📋 전체 복사 (Claude에 붙여넣기)</button></div>
+      <div class="actions"><button class="btn grow" onclick="reqDone()">✅ 업데이트됐어요 · 기록하고 비우기</button></div>` : ''}
+    ${(d.log || []).length ? `<div class="sec-head tight"><h2>지난 업데이트</h2></div>${d.log.map(l => `<details class="req-log"><summary>${esc(reqDay(l.at))} · v${esc(l.ver)} · ${l.items.length}개</summary>
+      <ol>${l.items.map(x => `<li>${esc(x.text)}</li>`).join('')}</ol></details>`).join('')}` : ''}`;
+}
+async function reqAdd() {
+  const t = $('req-in'), v = t.value.trim(); if (!v) return;
+  const d = reqData(); d.items = [...(d.items || []), { text: v, at: new Date().toISOString() }];
+  t.value = ''; await reqSave(d); renderReqView(); setTimeout(() => { const x = $('req-in'); if (x) x.focus(); }, 30);
+}
+async function reqEdit(i) {
+  const d = reqData(), it = d.items[i]; if (!it) return;
+  const v = prompt('고치기', it.text); if (v == null) return;
+  if (!v.trim()) { reqDel(i); return; }
+  it.text = v.trim(); await reqSave(d); renderReqView();
+}
+async function reqDel(i) { const d = reqData(); d.items.splice(i, 1); await reqSave(d); renderReqView(); }
+function reqText(d) {
+  return `나의 서재 앱 업데이트 요청 (지금 v${APP_VERSION} · ${S.today})\n${d.items.map((x, i) => `${i + 1}. ${x.text}`).join('\n')}\n\n업데이트해줘`;
+}
+async function reqCopy() {
+  const d = reqData(), text = reqText(d);
+  try { await navigator.clipboard.writeText(text); toast('복사했어요 · Claude 대화창에 붙여넣으세요'); }
+  catch (e) { modal(`<h3>복사해서 쓰세요</h3><textarea class="field" style="min-height:200px" onfocus="this.select()">${esc(text)}</textarea><div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>`); }
+  d.copiedAt = new Date().toISOString(); d.copiedVer = APP_VERSION; await reqSave(d); renderReqView();
+}
+async function reqDone() {
+  const d = reqData(); if (!d.items.length) return;
+  if (!confirm(`${d.items.length}개가 반영됐나요? 오늘 날짜(v${APP_VERSION})로 기록하고 목록을 비울게요.`)) return;
+  d.log = [{ at: new Date().toISOString(), ver: APP_VERSION, items: d.items }, ...(d.log || [])];
+  d.items = []; d.copiedAt = ''; d.copiedVer = '';
+  await reqSave(d); renderReqView(); toast('기록했어요 · 다음 요청을 적어 보세요');
+}
+function reqRowSub() { const d = reqData(), n = (d.items || []).length; return n ? `대기 중 ${n}개${d.copiedVer && d.copiedVer !== APP_VERSION ? ' · 새 버전 나옴' : ''}` : '바꾸고 싶은 걸 적어 두고 한 번에 복사'; }
