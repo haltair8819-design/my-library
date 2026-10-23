@@ -53,7 +53,7 @@ function mdLite(t) {
 function scrollChat() { if (S.view === 'ai' && S.chat.length) setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 30); }
 function openCite(id) {
   if (id[0] === 'N') { if (noteOf(id)) openNote(id); else toast('그 글을 찾지 못했어요'); return; }
-  if (id[0] === 'M') { if (S.memos.some(m => m.ID === id)) { go('memo'); setTimeout(() => openMemo(id), 60); } return; }
+  if (id[0] === 'M') { if (S.memos.some(m => m.ID === id)) { go('notes'); setTimeout(() => openMemo(id), 60); } return; }
   if (S.snips.some(x => x.ID === id)) openSnipInBook(id);
 }
 

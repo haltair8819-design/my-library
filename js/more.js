@@ -70,7 +70,7 @@ function otherHitsHtml(q) {
   let h = '';
   if (notes.length) h += `<div class="res-head">내 글 ${notes.length}편</div>` + notes.map(n => `<div class="hit" onclick="openNote('${n.ID}')"><div class="ht">✍ ${esc(n['제목'] || '제목 없음')}</div>
     <div class="hx">${highlight(plainText(n['본문']), q)}</div><div class="hm">${esc(n['상태'])} · ${esc(String(n['수정일'] || '').slice(0, 10))}</div></div>`).join('');
-  if (memos.length) h += `<div class="res-head">메모 · 할 일 ${memos.length}개</div>` + memos.map(m => `<div class="hit" onclick="go('memo');setTimeout(()=>openMemo('${m.ID}'),60)"><div class="hx">${m['종류'] === '할일' ? '☑ ' : '✎ '}${highlight(String(m['내용']), q)}</div></div>`).join('');
+  if (memos.length) h += `<div class="res-head">메모 · 할 일 ${memos.length}개</div>` + memos.map(m => `<div class="hit" onclick="go('notes');setTimeout(()=>openMemo('${m.ID}'),60)"><div class="hx">${m['종류'] === '할일' ? '☑ ' : '✎ '}${highlight(String(m['내용']), q)}</div></div>`).join('');
   return h;
 }
 
@@ -202,8 +202,7 @@ $('list').addEventListener('click', e => {
 $('fab').onclick = () => {
   if (S.view === 'book' && book(S.bookId)) openSnipForm(null, S.bookTab === '생각' ? '생각' : '인용');
   else if (S.view === 'library') openBookForm(null);
-  else if (S.view === 'notes') newNote();
-  else if (S.view === 'memo') openMemoAdd();
+  else if (S.view === 'notes') openNewRecord();
   else openQuickMenu();
 };
 // 맨 위로: 아래로 많이 내려가면 나타나요

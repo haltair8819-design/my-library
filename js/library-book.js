@@ -44,7 +44,7 @@ function bookCard(b) {
 function renderList() {
   const q = S.q.trim().toLowerCase();
   $('top').innerHTML = q ? '' : libraryTopHtml();
-  let rows = S.books.filter(b => q || S.filter === '전체' || b['상태'] === S.filter);   // 검색할 때는 모든 책에서
+  let rows = S.books.filter(b => q || (S.filter === '전체' ? b['상태'] !== '읽을예정' : b['상태'] === S.filter));   // 검색할 때는 모든 책에서 · 전체는 읽고 싶은 책 빼고
   if (S.plat && !q) rows = rows.filter(b => platOf(b) === S.plat);
   if (q) rows = q.startsWith('#') ? [] : rows.filter(b => ['제목','저자','옮긴이','출판사','대분류','중분류','개인분류','한줄평'].some(k => String(b[k] || '').toLowerCase().includes(q)));
   rows.sort((a, b) => String(b['완독일'] || b['시작일']).localeCompare(String(a['완독일'] || a['시작일'])));
@@ -352,13 +352,15 @@ function renderAllSnips() {
 }
 
 const FAB_VIEWS = ['library', 'memo', 'notes', 'book'];
-const FAB_LABEL = { library: '책 추가', notes: '새 글', memo: '메모 · 할 일 추가', book: '이 책에 문장 추가' };
+const FAB_LABEL = { library: '책 추가', notes: '새 기록', book: '이 책에 문장 추가' };
 /* ===== 화면 전환 ===== */
 function show(view) {
+  if (view === 'memo') view = 'notes';   // v2.14: 노트 · 메모를 '기록' 하나로
   if (view === 'notes' && S.view !== 'notes' && S.view !== 'note') S.seedRand = Math.random();   // 노트 탭에 들어올 때마다 새 글감
   if (view !== 'notes' && S.noteSel) S.noteSel = null;
   if (view !== 'book' && S.snipSel) S.snipSel = null;
   if (view !== 'memo' && S.memoSel) S.memoSel = null;
+  if (view !== 'notes' && S.recSel) S.recSel = null;
   if (S.view === 'note' && view !== 'note' && typeof collectNote === 'function') { const n = collectNote(); if (n && S.noteDirty) saveNoteNow(true); stopDictate(); }
   S.view = view;
   ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more', 'snips', 'together', 'pbook', 'plib', 'settings', 'life', 'share', 'shared', 'req'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
@@ -387,7 +389,7 @@ function show(view) {
   else if (view === 'blist') renderBookList();
   else if (view === 'snips') renderAllSnips();
   else renderStatsView();
-  if (!(view === 'notes' && S.noteSel) && !(view === 'book' && S.snipSel) && !(view === 'memo' && S.memoSel) && $('selbar')) $('selbar').remove();
+  if (!(view === 'notes' && (S.noteSel || S.recSel)) && !(view === 'book' && S.snipSel) && $('selbar')) $('selbar').remove();
 }
 S.scrollMem = {};
 function go(view, id) {

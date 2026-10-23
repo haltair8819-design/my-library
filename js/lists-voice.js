@@ -190,7 +190,7 @@ function voiceToMemo(res) {
   if (res.text) addMemo({ '종류': '메모', '내용': (res.title ? res.title + '\n' : '') + res.text });
   (res.todos || []).forEach(t => { const p = parseQuick(t, '할일'); addMemo({ '종류': '할일', '내용': p.text, '마감일': p.due, '마감시간': p.time }); });
   toast(`메모${res.todos && res.todos.length ? ` + 할 일 ${res.todos.length}개` : ''}로 정리했어요`);
-  if (S.view === 'memo') renderMemoView();
+  if (S.view === 'notes') renderMemoView();
 }
 // 16kHz 모노 16비트 WAV로 (Gemini가 읽을 수 있는 형식)
 function encodeWav(chunks, inRate, outRate) {

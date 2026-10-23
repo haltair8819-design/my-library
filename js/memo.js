@@ -100,7 +100,7 @@ function memoTap(id) {
 function memoShownIds() { return [...document.querySelectorAll('#v-memo [data-mid]')].map(e => e.dataset.mid); }
 function renderMemoSelBar() {
   let bar = $('selbar');
-  if (!S.memoSel || S.view !== 'memo') { if (bar && S.view === 'memo') bar.remove(); if (S.view === 'memo') $('fab').classList.remove('hidden'); return; }
+  if (!S.memoSel || S.view !== 'notes') { if (bar && S.view === 'notes') bar.remove(); if (S.view === 'notes') $('fab').classList.remove('hidden'); return; }
   $('fab').classList.add('hidden');
   if (!bar) { bar = document.createElement('div'); bar.id = 'selbar'; bar.className = 'selbar'; document.body.appendChild(bar); }
   const n = S.memoSel.size, shown = memoShownIds(), allOn = shown.length && shown.every(id => S.memoSel.has(id)), dis = n ? '' : 'disabled';
@@ -196,14 +196,14 @@ function toggleTodo(id) {
   const now = !isDone(m);
   const row = document.querySelector(`.todo[data-id="${id}"]`); if (row) row.classList.toggle('fin', now);
   patchMemo(id, { '완료': now });
-  setTimeout(() => { if (S.view === 'memo' && !$('modal').innerHTML) renderMemoView(); }, now ? 450 : 0);
+  setTimeout(() => { if (S.view === 'notes' && !$('modal').innerHTML) renderMemoView(); }, now ? 450 : 0);
   if (now) toast('끝냈어요 ✓');
 }
 function removeMemo(id) {
   if (!confirm('지울까요?')) return;
   id = resolveId(id);
   S.memos = S.memos.filter(x => x.ID !== id); queue({ fn: 'deleteMemo', id });
-  closeModal(); if (S.view === 'memo') renderMemoView(); toast('지웠어요');
+  closeModal(); if (S.view === 'notes') renderMemoView(); toast('지웠어요');
 }
 let memoType = '메모';
 function openMemo(id) {
@@ -229,7 +229,7 @@ function openMemo(id) {
 function saveMemoForm(id) {
   const txt = $('m-txt').value.trim(); if (!txt) { toast('내용을 입력해 주세요'); return; }
   patchMemo(id, { '종류': memoType, '내용': txt, '마감일': memoType === '할일' ? $('m-date').value : '', '마감시간': memoType === '할일' ? $('m-time').value : '', '책ID': $('m-book').value });
-  closeModal(); if (S.view === 'memo') renderMemoView(); toast('저장했어요');
+  closeModal(); if (S.view === 'notes') renderMemoView(); toast('저장했어요');
 }
 function memoToSnip(id) {
   id = resolveId(id);
@@ -297,7 +297,7 @@ function openQuickSheet(force) {
   modal(`<h3>${force === '할일' ? '할 일' : '빠른 메모'}</h3>${quickBox('qq', force)}
     <div class="small" style="margin-top:8px;color:var(--faint)">"내일", "금요일", "10월 20일", "3시" 같은 말은 날짜로 알아들어요.</div>
     <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
-  bindQuick('qq', () => { closeModal(); if (S.view === 'memo') renderMemoView(); });
+  bindQuick('qq', () => { closeModal(); if (S.view === 'notes') renderMemoView(); });
   setTimeout(() => { const t = $('qq'); if (t) t.focus(); }, 60);
 }
 // 여기까지 읽었어요: 읽는 중인 책들에 바로 쪽수 넣기 (앱 아이콘 길게 눌러도 열려요)

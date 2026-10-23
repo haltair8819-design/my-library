@@ -124,7 +124,7 @@ function renderNoteEditor() {
   const back = notesLinkingHere(n);
   const ws = wordStats(n['본문']);
   $('v-note').innerHTML = `
-    <div class="topbar"><button class="iconbtn" onclick="leaveNote()">← 노트</button>
+    <div class="topbar"><button class="iconbtn" onclick="leaveNote()">← 기록</button>
       <div class="ne-top-r"><select class="field ne-state" id="ne-state">${NOTE_STATES.map(x => `<option ${n['상태'] === x ? 'selected' : ''}>${x}</option>`).join('')}</select>
       <button class="iconbtn" onclick="noteMenu()" aria-label="더 보기">⋯</button></div></div>
     <div class="seg ne-mode"><button class="${S.noteRead ? '' : 'on'}" onclick="setNoteRead(false)">✎ 쓰기</button><button class="${S.noteRead ? 'on' : ''}" onclick="setNoteRead(true)">📖 읽기</button></div>

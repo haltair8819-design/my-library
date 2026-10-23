@@ -228,14 +228,14 @@ function renderReqView() {
     <div class="view-head"><h1>업데이트 해줘요!</h1><p>바꾸고 싶은 걸 생각날 때마다 적어 두고, 모아서 한 번에 Claude에게 보내요.</p></div>
     <div class="panel2 req-st">${items.length ? `<b>대기 중 ${items.length}개</b>${d.copiedAt ? ` · ${esc(reqTime(d.copiedAt))}에 복사함` : ' · 아직 안 보냄'}` : '<b>대기 중인 요청이 없어요</b>'}
       ${last ? `<div class="small" style="margin-top:4px">마지막 업데이트: ${esc(reqDay(last.at))} · v${esc(last.ver)} · ${last.items.length}개 반영</div>` : ''}
-      ${newVer ? `<div class="notice" style="margin-top:8px">복사한 뒤 새 버전(v${esc(d.copiedVer)} → v${APP_VERSION})이 나왔어요. 반영됐으면 아래 <b>업데이트됐어요</b>를 눌러 비워 주세요.</div>` : ''}</div>
+      ${newVer ? `<div class="notice" style="margin-top:8px">새 버전 v${APP_VERSION}이 나왔어요. 잠시 뒤 자동으로 반영됨으로 기록해요.</div>` : d.copiedAt && items.length ? `<div class="small" style="margin-top:4px">복사해서 보냈으면, 새 버전이 나올 때 자동으로 ‘반영됨’으로 기록하고 비워요.</div>` : ''}</div>
     <div class="req-add"><textarea class="field" id="req-in" rows="2" placeholder="예: 메모도 꾹 눌러서 여러 개 고르기" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();reqAdd()}"></textarea>
       <button class="btn primary" onclick="reqAdd()">추가</button></div>
     <div class="req-list">${items.map((it, i) => `<div class="req-it"><span class="req-n">${i + 1}</span><div class="grow" onclick="reqEdit(${i})">${esc(it.text)}<div class="small">${esc(reqTime(it.at))}</div></div>
       <button class="req-x" onclick="reqDel(${i})" aria-label="지우기">✕</button></div>`).join('') || '<div class="empty" style="padding:24px 0">위 칸에 적어 보세요</div>'}</div>
     ${items.length ? `<div class="actions" style="margin-top:12px"><button class="btn primary grow" onclick="reqCopy()">📋 전체 복사 (Claude에 붙여넣기)</button></div>
-      <div class="actions"><button class="btn grow" onclick="reqDone()">✅ 업데이트됐어요 · 기록하고 비우기</button></div>` : ''}
-    ${(d.log || []).length ? `<div class="sec-head tight"><h2>지난 업데이트</h2></div>${d.log.map(l => `<details class="req-log"><summary>${esc(reqDay(l.at))} · v${esc(l.ver)} · ${l.items.length}개</summary>
+      <div class="actions"><button class="btn grow" onclick="reqDone()">✅ 지금 반영됨으로 기록하고 비우기</button></div>` : ''}
+    ${(d.log || []).length ? `<div class="sec-head tight"><h2>지난 업데이트</h2></div>${d.log.map(l => `<details class="req-log"><summary>${esc(reqDay(l.at))} · v${esc(l.ver)} · ${l.items.length}개${l.auto ? ' · 자동' : ''}</summary>
       <ol>${l.items.map(x => `<li>${esc(x.text)}</li>`).join('')}</ol></details>`).join('')}` : ''}`;
 }
 async function reqAdd() {
@@ -267,3 +267,20 @@ async function reqDone() {
   await reqSave(d); renderReqView(); toast('기록했어요 · 다음 요청을 적어 보세요');
 }
 function reqRowSub() { const d = reqData(), n = (d.items || []).length; return n ? `대기 중 ${n}개${d.copiedVer && d.copiedVer !== APP_VERSION ? ' · 새 버전 나옴' : ''}` : '바꾸고 싶은 걸 적어 두고 한 번에 복사'; }
+
+// 복사해서 보낸 뒤 새 버전이 나오면 자동으로 '반영됨' 기록 · 목록 비우기 (v2.14)
+(() => {
+  const t = setInterval(async () => {
+    if (!S.loaded) return; clearInterval(t);
+    await new Promise(r => setTimeout(r, 2500));   // 서버 설정을 받아 온 뒤에
+    const d = reqData();
+    if (!(d.items || []).length || !d.copiedVer || d.copiedVer === APP_VERSION) return;
+    const sent = d.items.filter(x => !x.at || !d.copiedAt || x.at <= d.copiedAt), later = d.items.filter(x => !(sent.includes(x)));
+    if (!sent.length) return;
+    d.log = [{ at: new Date().toISOString(), ver: APP_VERSION, items: sent, auto: true }, ...(d.log || [])];
+    d.items = later; d.copiedAt = ''; d.copiedVer = '';
+    await reqSave(d);
+    toast(`업데이트 요청 ${sent.length}개를 v${APP_VERSION} 반영으로 기록했어요`);
+    if (S.view === 'req') renderReqView(); else if (S.view === 'settings') renderSettingsView();
+  }, 600);
+})();

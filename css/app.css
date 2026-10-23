@@ -833,3 +833,23 @@ html[data-mode="dark"] .life-b.l3{background:#A8342A;color:#fff}
 .av-zoom img{width:100%;max-width:360px;aspect-ratio:1;object-fit:cover;border-radius:16px;display:block;margin:4px auto 8px}
 .av-zoom img.full{aspect-ratio:auto;object-fit:contain;max-height:70vh}
 .bc-box .rx-b{max-width:80%}
+
+/* ===== v2.14 기록 ===== */
+.rec-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:10px}
+.rec{padding:14px 16px;border-top:1px solid var(--line);cursor:pointer}
+.rec:first-child{border-top:0}
+.rec-h{display:flex;align-items:center;gap:8px}
+.rec-h b{flex:1;font-size:15.5px;line-height:1.4;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rec-tag{font-size:12px;color:var(--sub);white-space:nowrap;flex:none}
+.rec-x{font-size:14px;color:var(--ink,inherit);line-height:1.6;margin-top:6px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.rec-h b:empty+.rec-tag{margin-left:auto}
+.rec-m{font-size:12px;color:var(--faint);margin-top:6px}
+.rec-sec{margin-top:10px}
+.rec-sec .group-label{display:flex;align-items:center;gap:6px}
+.rec-sec .kw-ai{margin-left:auto}
+.rec-new{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rec-new button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:0;background:var(--accent-soft);border-radius:14px;padding:14px;cursor:pointer;color:inherit}
+.rec-new button.wide{grid-column:1/3}
+.rec-new i{font-style:normal;font-size:22px}
+.rec-new b{font-size:15.5px}
+.rec-new span{font-size:12.5px;color:var(--sub);line-height:1.45}

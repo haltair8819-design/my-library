@@ -10,6 +10,7 @@ S.tg = (() => { try { return JSON.parse(LS.get(TG_CACHE) || 'null'); } catch (e)
 S.tgFilter = '읽는중';
 const togetherOn = () => Store.kind === 'supabase' && (S.settings || {}).together !== false;
 const tgHasPartner = () => !!(S.tg && S.tg.partner);
+const shelfCount = list => list.filter(b => b['상태'] !== '읽을예정').length;   // 서재 권수 = 읽고 싶은 책 빼고
 const tgName = () => (S.tg.partner && S.tg.partner.name) || '짝꿍';
 const tgMonth = () => S.today.slice(0, 7);
 const tgShareNew = () => !!(S.settings || {}).shareNew;
@@ -143,7 +144,7 @@ function renderTogether() {
   const mineS = tgMonthStats(S.books, myLogs()), theirS = tgMonthStats(T.books, T.logs);
   const statCol = (name, s, cls) => `<div class="tg-col" onclick="openProfile('${cls === 'p' ? 'p' : 'me'}')">${avatar(name, cls)}<b>${esc(name)} <span class="small" style="font-weight:400">서재 ›</span></b>
     <div class="tg-num"><span><b>${s.pages.toLocaleString()}</b>쪽 읽음</span><span><b>${s.days}</b>일 기록</span><span><b>${s.done}</b>권 완독</span><span class="tg-tot">서재 ${s.total}권</span></div></div>`;
-  mineS.total = S.books.length; theirS.total = T.books.length;
+  mineS.total = shelfCount(S.books); theirS.total = shelfCount(T.books);
   // 둘 다 서재에 있는 책: 읽는 중 → 다 읽은 책 → 읽고 싶은 책
   const rank = x => (x.pb['상태'] === '읽는중' || x.mb['상태'] === '읽는중') ? 0 : (x.pb['상태'] === '완독' && x.mb['상태'] === '완독') ? 1 : 2;
   const both = T.books.map(pb => ({ pb, mb: tgMine(pb) })).filter(x => x.mb)
@@ -161,7 +162,7 @@ function renderTogether() {
       ${mb['별점'] || pb['별점'] ? `<div class="tg-stars"><span>${esc(me.name)} <i class="stars">${mb['별점'] ? '★'.repeat(Number(mb['별점']) || 0) : '–'}</i></span><span>${esc(pn)} <i class="stars">${pb['별점'] ? '★'.repeat(Number(pb['별점']) || 0) : '–'}</i></span></div>` : ''}</div></div>`).join('')}
       ${both.length > 4 ? `<button class="btn tg-more" onclick="S.bothAll=!S.bothAll;renderTogether()">${S.bothAll ? '접기' : `모두 보기 (${both.length}권)`}</button>` : ''}</div>` : ''}
     ${tgTbooksHtml()}
-    <div class="panel2"><h4>${esc(pn)}의 서재 <button class="kw-ai" onclick="openProfile('p')">전체 ${T.books.length}권 보기 →</button></h4>
+    <div class="panel2"><h4>${esc(pn)}의 서재 <button class="kw-ai" onclick="openProfile('p')">서재 ${shelfCount(T.books)}권 보기 →</button></h4>
       ${reading.length ? `<div class="tg-shelf">${reading.map(b => `<button onclick="openPartnerBook('${b.ID}')">${spine(b)}<span>${esc(b['제목'])}</span><em>${tgProg(b).pct ? tgProg(b).pct + '%' : '읽는 중'}</em></button>`).join('')}</div>`
         : `<div class="small">지금 읽는 중인 책이 없어요.</div>`}</div>
     <div class="panel2"><h4>최근 소식</h4>${tgFeedHtml()}</div>
@@ -246,15 +247,15 @@ function renderPartnerLib() {
   if (!mine && !tgHasPartner()) { go('together'); return; }
   const name = mine ? (S.tg.me || {}).name || '나' : tgName();
   const all = mine ? S.books : S.tg.books;
-  const list = all.filter(b => S.tgFilter === '전체' || b['상태'] === S.tgFilter)
+  const list = all.filter(b => S.tgFilter === '전체' ? b['상태'] !== '읽을예정' : b['상태'] === S.tgFilter)
     .sort((a, b) => String(b['완독일'] || b['시작일'] || b['등록일'] || '').localeCompare(String(a['완독일'] || a['시작일'] || a['등록일'] || '')));
   const done = all.filter(b => b['상태'] === '완독').length, reading = all.filter(b => b['상태'] === '읽는중').length;
   const shown = sharedSnipsOf(mine).length, tab = S.plibTab === 'snips' ? 'snips' : 'books';
   el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 함께</button>${mine ? `<button class="iconbtn" onclick="openMyProfile()">프로필 고치기</button>` : ''}</div>
     <div class="tg-prof">${mine ? `<button class="tg-pbtn" onclick="openMyProfile()" aria-label="프로필 사진 바꾸기">${avatar(name, 'big')}</button>` : `<button class="tg-pbtn" onclick="openAvatarZoom('p')" aria-label="프로필 사진 크게 보기">${avatar(name, 'p big')}</button>`}
-      <div><h1>${esc(name)}</h1><p class="small">${mine ? '내 서재' : '보기만 할 수 있어요'} · 전체 ${all.length}권 · 완독 ${done} · 읽는 중 ${reading}</p></div></div>
-    <div class="seg" id="pl-tab"><button data-t="books" class="${tab === 'books' ? 'on' : ''}">서재 ${all.length}권</button><button data-t="snips" class="${tab === 'snips' ? 'on' : ''}">보여준 문장 ${shown}</button></div>
-    ${tab === 'snips' ? sharedListHtml(mine) : `<div class="chips" id="pl-f">${FILTERS.map(f => `<button class="chip ${S.tgFilter === f ? 'on' : ''}" data-f="${f}">${FILTER_LABEL[f] || f} ${f === '전체' ? all.length : all.filter(b => b['상태'] === f).length}</button>`).join('')}</div>
+      <div><h1>${esc(name)}</h1><p class="small">${mine ? '내 서재' : '보기만 할 수 있어요'} · 서재 ${shelfCount(all)}권 · 완독 ${done} · 읽는 중 ${reading}${all.length - shelfCount(all) ? ` · 읽고 싶은 ${all.length - shelfCount(all)}권` : ''}</p></div></div>
+    <div class="seg" id="pl-tab"><button data-t="books" class="${tab === 'books' ? 'on' : ''}">서재 ${shelfCount(all)}권</button><button data-t="snips" class="${tab === 'snips' ? 'on' : ''}">보여준 문장 ${shown}</button></div>
+    ${tab === 'snips' ? sharedListHtml(mine) : `<div class="chips" id="pl-f">${FILTERS.map(f => `<button class="chip ${S.tgFilter === f ? 'on' : ''}" data-f="${f}">${FILTER_LABEL[f] || f} ${f === '전체' ? shelfCount(all) : all.filter(b => b['상태'] === f).length}</button>`).join('')}</div>
     <div class="list">${list.map(b => { const p = tgProg(b), other = mine ? tgTheirs(b) : tgMine(b);
       return `<div class="book" onclick="${mine ? `go('book','${b.ID}')` : `openPartnerBook('${b.ID}')`}">${spine(b)}<div class="binfo"><div class="btitle">${esc(b['제목'])}</div>
         <div class="bauthor">${esc(b['저자'] || '')}</div>
