@@ -10,7 +10,8 @@ function renderStats() {
     `<div class="stat"><b>${done}</b><span>${y}년 완독</span></div>` +
     `<div class="stat"><b>${reading}</b><span>읽는 중</span></div>` +
     (() => { const nT = S.snips.filter(isThought).length; return `<div class="stat tap" onclick="openAllSnips('필사')"><b>${(S.snips.length - nT).toLocaleString()}</b><span>필사 ›</span></div>` +
-      `<div class="stat tap" onclick="openAllSnips('생각')"><b>${nT.toLocaleString()}</b><span>생각 · 메모 ›</span></div>`; })();
+      `<div class="stat tap" onclick="openAllSnips('생각')"><b>${nT.toLocaleString()}</b><span>생각 · 메모 ›</span></div>` +
+      `<div class="stat tap" onclick="openLife()"><b>${S.snips.filter(s => lifeOf(s) > 0).length.toLocaleString()}</b><span>인생 문장 ›</span></div>`; })();
   $('goal').innerHTML = goalHtml();
 }
 function renderFilters() {
@@ -95,7 +96,7 @@ function renderBook() {
       <div>
         <div class="dtitle">${esc(b['제목'])}</div>
         <div class="dauthor">${esc(b['저자'])}${b['옮긴이'] ? ' 지음 · ' + esc(b['옮긴이']) + ' 옮김' : ''}${b['출판사'] ? ' · ' + esc(b['출판사']) : ''}</div>
-        <div class="tags"><span class="tag tap" onclick="togglePlat('${b.ID}')" title="눌러서 종이책 · E북 바꾸기">${plat === 'E북' ? '📱 E북' : plat === '오디오북' ? '🎧 오디오북' : '📕 종이책'}</span>${tgShareTag(b)}${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <div class="tags"><span class="tag tap" onclick="togglePlat('${b.ID}')" title="눌러서 종이책 · E북 바꾸기">${plat === 'E북' ? '📱 E북' : plat === '오디오북' ? '🎧 오디오북' : '📕 종이책'}</span>${tgShareTag(b)}${snipShareTag(b)}${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
       </div>
     </div>
     <div class="grid">
@@ -251,6 +252,7 @@ function renderSnipSelBar() {
   bar.innerHTML = `<div class="in"><div class="top"><b>${n}개 골랐어요</b><span>${memos.length ? `<button onclick="selMemoSnips()">메모만 (${memos.length})</button> · ` : ''}<button onclick="selAllSnips(${allOn ? 0 : 1})">${allOn ? '모두 풀기' : '이 칸 모두'}</button> · <button onclick="toggleSnipSel()">완료</button></span></div>
     <div class="row2">${SNIP_TYPES.map(([t, label]) => `<button class="btn" ${n ? '' : 'disabled'} onclick="bulkSnipType('${t}')">→ ${label}</button>`).join('')}
       <button class="btn danger" ${n ? '' : 'disabled'} onclick="bulkSnipDelete()">삭제</button></div>
+    ${lifeSelRowHtml(n)}
     ${togetherOn() ? `<div class="row2"><button class="btn" ${n ? '' : 'disabled'} onclick="bulkSnipShare(true)">👀 보여주기</button><button class="btn" ${n ? '' : 'disabled'} onclick="bulkSnipShare(false)">🔒 나만 보기</button></div>` : ''}</div>`;
 }
 function selMemoSnips() { S.snipSel = new Set((S.snipShown || []).filter(id => (S.snips.find(x => x.ID === id) || {})['유형'] === '메모')); renderBook(); }
@@ -300,6 +302,7 @@ function snipHtml(s) {
     togetherOn() && isShared(s) && s['유형'] !== '메모' ? '<span class="kw shared" title="짝꿍에게 보여주는 중">👀 보여주는 중</span>' : ''].filter(Boolean);
   return `<div class="snip ${cls} ${sel && S.snipSel.has(s.ID) ? 'sel' : ''}" id="s-${s.ID}" onclick="snipTap('${s.ID}')">
     ${sel ? '<span class="sel-check snip-check">✓</span>' : ''}${sel ? '<span class="drag-h" aria-label="끌어서 옮기기">≡</span>' : ''}${s['유형'] === '메모' ? '<span class="badge plat" style="display:inline-block;margin-bottom:6px">메모</span>' : ''}
+    ${lifeBadge(s)}
     ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}
     <div class="txt">${esc(sText(s))}</div>
     ${memo ? `<div class="smemo">✎ ${esc(memo)}</div>` : ''}
@@ -356,12 +359,12 @@ function show(view) {
   if (view !== 'book' && S.snipSel) S.snipSel = null;
   if (S.view === 'note' && view !== 'note' && typeof collectNote === 'function') { const n = collectNote(); if (n && S.noteDirty) saveNoteNow(true); stopDictate(); }
   S.view = view;
-  ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more', 'snips', 'together', 'pbook', 'plib', 'settings'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
+  ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more', 'snips', 'together', 'pbook', 'plib', 'settings', 'life'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
   $('composer').classList.toggle('hidden', view !== 'ai');
   document.body.classList.toggle('ai-mode', view === 'ai');
   $('fab').classList.toggle('hidden', !FAB_VIEWS.includes(view));
   $('fab').setAttribute('aria-label', FAB_LABEL[view] || '빠르게 남기기');
-  const tab = { book: 'library', snips: 'library', note: 'notes', blist: 'more', stats: 'more', ai: 'more', settings: 'more', pbook: 'together', plib: 'together' }[view] || view;
+  const tab = { book: 'library', snips: 'library', note: 'notes', blist: 'more', stats: 'more', ai: 'more', settings: 'more', life: 'library', pbook: 'together', plib: 'together' }[view] || view;
   document.querySelectorAll('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
   if (view === 'library') renderLibrary();
   else if (view === 'book') renderBook();
@@ -373,6 +376,7 @@ function show(view) {
   else if (view === 'pbook') renderPartnerBook();
   else if (view === 'plib') renderPartnerLib();
   else if (view === 'settings') renderSettingsView();
+  else if (view === 'life') renderLifeView();
   else if (view === 'note') renderNoteEditor();
   else if (view === 'more') renderMoreView();
   else if (view === 'blist') renderBookList();
@@ -408,6 +412,7 @@ window.addEventListener('popstate', e => {
   else if (st.view === 'blist' && S.blist) show('blist');
   else if (st.view === 'snips') show('snips');
   else if (st.view === 'settings') show('settings');
+  else if (st.view === 'life') show('life');
   else if (st.view === 'pbook' && st.id) { S.pbookId = st.id; show(togetherOn() ? 'pbook' : 'library'); }
   else if (['together', 'plib'].includes(st.view)) show(togetherOn() ? st.view : 'library');
   else if (st.view === 'note' && st.id && noteOf(st.id)) { S.noteId = resolveId(st.id); show('note'); }
@@ -458,10 +463,11 @@ function openSnipForm(id, forceType) {
     <button type="button" class="kw-ai ${s && sMemo(s) ? 'hidden' : ''}" id="memo-add" style="padding:6px 0 0" onclick="showMemoField()">＋ 메모 달기</button>
     <label>쪽수 <span style="font-weight:400;color:var(--faint)">여러 쪽이면 36, 37</span></label>
     <input class="field" id="f-page" inputmode="decimal" style="max-width:160px" value="${esc(s ? s['쪽수'] : '')}">
+    ${lifePickHtml(s)}
     <label>키워드 <span style="font-weight:400;color:var(--faint)">쉼표로 구분</span><button type="button" class="kw-ai" onclick="aiKeywords(this)">AI 추천</button></label>
     <input class="field" id="f-kw" value="${esc(s ? s['키워드'] : '')}" placeholder="예: 자유, 사랑">
     ${kwSuggest.length ? `<div class="suggest">${kwSuggest.map(k => `<button class="chip" data-kw="${esc(k)}">#${esc(k)}</button>`).join('')}</div>` : ''}
-    ${togetherOn() ? `<label class="tg-check" id="f-share-w"><input type="checkbox" id="f-share" ${(s ? isShared(s) : tgShareNew()) ? 'checked' : ''}> 👀 ${tgHasPartner() ? esc(tgName()) + '에게 ' : '짝꿍에게 '}보여주기</label>` : ''}
+    ${togetherOn() ? `<label class="tg-check" id="f-share-w"><input type="checkbox" id="f-share" ${(s ? isShared(s) : (tgShareNew() || bookSnipShared(b))) ? 'checked' : ''}> 👀 ${tgHasPartner() ? esc(tgName()) + '에게 ' : '짝꿍에게 '}보여주기</label>` : ''}
     <div class="actions">
       ${s ? `<button class="btn danger" onclick="removeSnip('${s.ID}')">삭제</button>` : ''}
       <button class="btn" onclick="closeModal()">취소</button>
@@ -471,7 +477,7 @@ function openSnipForm(id, forceType) {
     </div>`);
   bindSnipDraft(s);
   $('seg').onclick = e => { const t = e.target.closest('button'); if (!t) return; snipType = t.dataset.t; [...$('seg').children].forEach(x => x.classList.toggle('on', x === t)); snipDraftSoon(); memoAddVis(); };
-  memoAddVis();
+  memoAddVis(); bindLifePick();
   document.querySelectorAll('[data-kw]').forEach(c => c.onclick = () => {
     const cur = $('f-kw').value.split(',').map(x => x.trim()).filter(Boolean);
     if (!cur.includes(c.dataset.kw)) cur.push(c.dataset.kw);
@@ -515,6 +521,7 @@ function submitSnip(id, keepOpen) {
   const data = { ID: id || ('T' + uid()), '책ID': S.bookId, '유형': snipType, '내용': $('f-txt').value.trim() + ($('f-txt').value.trim() && memoV ? MEMO_SEP + memoV : ''),
     '쪽수': $('f-page').value.trim().replace(/\s*p$/i, ''), '제목': $('f-ttl').value.trim(), '키워드': normKw($('f-kw').value) };
   if ($('f-share')) data['공개'] = $('f-share').checked && snipType !== '메모';
+  data['인생'] = snipLife || '';
   if (!data['내용']) { toast('내용을 입력해 주세요'); return; }
   const prev = S.snips.find(x => x.ID === data.ID);
   const local = Object.assign({ '출처': '직접입력', '작성일': S.today }, prev || {}, data, { '책제목': (book(S.bookId) || {})['제목'] || '' });

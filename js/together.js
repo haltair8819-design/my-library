@@ -330,7 +330,7 @@ function renderPartnerBook() {
   const sHtml = s => { const memo = sMemo(s), h = hide(s);
     return `<div class="snip ${isThought(s) ? 'thought' : 'quote'} ${h ? 'spoil' : ''}" id="p-${s.ID}" ${h ? `onclick="this.classList.remove('spoil')"` : ''}>
       ${h ? `<div class="spoil-l">🙈 ${firstPage(s['쪽수']) != null ? `p.${esc(s['쪽수'])} · 아직 안 읽은 부분이에요` : '스포일러가 있을 수 있어요'} · 눌러서 보기</div>` : ''}
-      ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}<div class="txt">${esc(sText(s))}</div>
+      ${lifeBadge(s)}${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}<div class="txt">${esc(sText(s))}</div>
       ${memo ? `<div class="smemo">✎ ${esc(memo)}</div>` : ''}
       ${s['쪽수'] !== '' && s['쪽수'] != null ? `<div class="smeta"><span class="pg">p.${esc(s['쪽수'])}</span></div>` : ''}
       ${reactBarHtml(s.ID, S.tg.partner.id)}</div>`; };
@@ -393,7 +393,7 @@ function bulkSnipShare(on) {
     const x = S.snips.find(y => y.ID === resolveId(id)); if (!x) return;
     if (on && x['유형'] === '메모') { skip++; return; }
     if (isShared(x) === on) return;
-    const data = { ID: x.ID, '책ID': x['책ID'], '유형': x['유형'] || '인용', '내용': x['내용'], '쪽수': x['쪽수'] ?? '', '제목': x['제목'] || '', '키워드': x['키워드'] || '', '공개': on };
+    const data = snipFull(x, { '공개': on });
     const local = Object.assign({}, x, { '공개': on });
     upsertSnipLocal(local); queue({ fn: 'saveSnippet', data, local }); c++;
   });

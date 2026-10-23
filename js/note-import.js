@@ -135,6 +135,7 @@ function niApply() {
     f.items.forEach(it => {
       const data = { ID: 'T' + uid(), '책ID': f.bookId, '유형': it.type, '제목': it.title || '', '내용': it.text, '쪽수': it.page === undefined ? '' : String(it.page),
         '키워드': keepKw[it.text] || '', '출처': '노트파일', '원본파일': f.key };
+      if (typeof bookSnipShared === 'function' && bookSnipShared(b) && it.type !== '메모') data['공개'] = true;   // 책 전체 보여주기면
       const local = Object.assign({ '작성일': S.today, '책제목': (b || {})['제목'] || '' }, data);
       upsertSnipLocal(local); queue({ fn: 'saveSnippet', data, local }); add++;
     });

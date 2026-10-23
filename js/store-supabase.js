@@ -253,7 +253,7 @@ async function sbFinishBook(id) {
   return sbPut('books', id, d);
 }
 async function sbUpdateBookFields(id, patch) {
-  const allowed = ['현재쪽수', '반납일', '별점', '한줄평', '상태', '시작일', '플랫폼', '대분류', '중분류', '개인분류', '공개'];
+  const allowed = ['현재쪽수', '반납일', '별점', '한줄평', '상태', '시작일', '플랫폼', '대분류', '중분류', '개인분류', '공개', '필사공개'];
   const cur = await sbGet('books', id); if (!cur) throw new Error('책을 찾을 수 없어요.');
   const d = Object.assign({}, cur.data);
   Object.keys(patch || {}).forEach(k => { if (allowed.includes(k)) d[k] = patch[k]; });

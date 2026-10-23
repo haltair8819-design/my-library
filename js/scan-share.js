@@ -271,8 +271,13 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.12.5';   // index.html의 ?v= 값과 같이 올려요
+const APP_VERSION = '2.13';   // index.html의 ?v= 값과 같이 올려요
 const PATCH_NOTES = [
+  { v: '2.13', d: '2026.10.23', t: '인생 문장 · 책별 필사 보여주기 · 디자인 미리보기', items: [
+    '인생 문장: 필사를 열어 ★ 1 · 2 · 3단계(마음에 드는 문장 · 인생 문장 · 찐 인생 문장)로 담아요. 여러 개는 꾹 눌러 골라 한 번에',
+    '서재 위 ‘인생 문장 ›’에서 단계별로 모아 봐요',
+    '책 화면 ‘✋ 필사 고른 것만 / 👀 필사 모두 보여줌’으로 책마다 한 번에 보여주기 (하나씩 고르기도 그대로)',
+    '설정 → 디자인에 디자인마다 예시 화면을 붙였어요'] },
   { v: '2.12.5', d: '2026.10.23', t: '포인트 색 · 다시 만나는 문장', items: [
     '설정 → 디자인: 디자인 4가지는 그대로, 포인트 색(버튼 · 강조)을 10가지 중에서 고를 수 있어요. ‘처음 디자인’은 ‘숲’으로 이름을 바꿨어요',
     '서재의 ‘오늘의 문장’은 ‘다시 만나는 문장’으로 — 앱을 켤 때마다 다른 문장이 나와요 (노트는 ‘떠오르는 글감’)',
@@ -490,6 +495,7 @@ function themePickerHtml() {
   return `<div class="panel2" style="margin-top:0"><h4>화면 밝기</h4>${modePickerHtml()}</div>
     <div class="panel2" style="margin-top:12px"><h4>디자인</h4><div class="themes">${THEMES.map(t => `
     <button class="theme-opt ${curTheme() === t.id ? 'on' : ''}" onclick="setTheme('${t.id}');openSettings()">
+      <span class="tprev"><img src="img/theme-${t.id}.jpg?v=1" alt="${t.name} 예시" loading="lazy"></span>
       <span class="tsw">${t.sw.map(c => `<i style="background:${c}"></i>`).join('')}</span>
       <b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div>
     <h4 style="margin-top:14px">포인트 색 <span class="small" style="font-weight:400">버튼 · 강조 색만 바꿔요</span></h4>${accentPickerHtml()}</div>`;
