@@ -306,35 +306,24 @@ async function saveRating(id) {
 }
 
 /* ---------- 설정 ---------- */
-function openSettings() {
-  const st = S.settings;
-  modal(`<h3>설정</h3>
-    <label>${S.today.slice(0, 4)}년 독서 목표 (권)</label><input class="field" id="set-goal" inputmode="numeric" value="${esc(st.goal)}" placeholder="예: 60">
-    <div class="actions"><button class="btn" onclick="closeModal()">취소</button>
-      <button class="btn primary grow" onclick="saveSettingsUI()">저장</button></div>
-    ${themePickerHtml()}
-    ${Store.kind === 'supabase' ? `<div class="panel2" style="margin-top:12px"><h4>계정 · 저장</h4>
+function accountPanelHtml() {
+  return `${Store.kind === 'supabase' ? `<div class="panel2">
       <div class="small" style="line-height:1.6">${esc((sbSession() || { user: {} }).user.email || '')} 계정 · Supabase에 저장 중${S.outbox.length ? `<br>올라가길 기다리는 기록 ${S.outbox.length}개` : ''}</div>
       <div class="actions" style="margin-top:8px"><button class="btn" onclick="if(confirm('로그아웃할까요?'))sbLogout()">로그아웃</button>
-        <button class="btn" onclick="resetLocal()">새로 불러오기</button>${API.url ? `<button class="btn" onclick="if(confirm('구글 시트 저장으로 돌아갈까요? Supabase의 기록은 그대로 남아요.'))useStore('sheets')">시트로 돌아가기</button>` : ''}</div></div>
-    <div class="panel2" style="margin-top:12px"><h4>같이 쓰기</h4>
-      <label class="tg-check" style="margin-top:0"><input type="checkbox" ${togetherOn() ? 'checked' : ''} onchange="tgSaveOpt('together', this.checked)"> ‘함께’ 탭 쓰기 <span class="small">끄면 탭이 숨겨져요 (보여준 기록은 그대로)</span></label>
-      <div class="actions" style="margin-top:8px"><button class="btn" onclick="openShareSettings()">보여줄 것 설정</button><button class="btn" onclick="closeModal();go('together')">함께 탭으로</button></div></div>` : `
-    <div class="panel2" style="margin-top:12px"><h4>서버 연결</h4>
+        <button class="btn" onclick="resetLocal()">새로 불러오기</button>${API.url ? `<button class="btn" onclick="if(confirm('구글 시트 저장으로 돌아갈까요? Supabase의 기록은 그대로 남아요.'))useStore('sheets')">시트로 돌아가기</button>` : ''}</div></div>` : `
+    <div class="panel2"><h4>서버 연결</h4>
       <div class="small" style="line-height:1.6">${Store.ready() ? '연결됨 · 마지막으로 받은 데이터는 이 기기에 저장돼 있어 바로 열려요.' : '아직 연결 안 됨'}${S.outbox.length ? `<br>시트에 올라가길 기다리는 기록 ${S.outbox.length}개` : ''}</div>
       <div class="actions" style="margin-top:8px"><button class="btn" onclick="Store.openSetup()">연결 바꾸기</button>
         <button class="btn" onclick="resetLocal()">새로 불러오기</button></div></div>
     <div class="panel2" style="margin-top:12px"><h4>새 저장소 (함께 쓰기 준비)</h4>
       <div class="small" style="line-height:1.6">구글 로그인 후 지금 기록을 Supabase로 복사해요. 시트는 백업으로 그대로 남아요.${(() => { try { const d = JSON.parse(LS.get('sb_migrated') || 'null'); return d ? `<br>마지막으로 옮김: ${esc(String(d.at).slice(0, 16).replace('T', ' '))}` : ''; } catch (e) { return ''; } })()}</div>
       <div class="actions" style="margin-top:8px"><button class="btn primary grow" onclick="openMigrate()">구글 로그인 · 새 저장소로 옮기기</button></div>
-      <button class="note-link" onclick="if(confirm('다른 기기에서 이미 옮겼다면, 이 기기는 옮기기 없이 Supabase로 바꿔요. 바꾼 뒤 구글 로그인을 해 주세요.'))useStore('supabase')">이미 옮겼어요 · 이 기기도 Supabase로 <span>다른 기기에서 옮긴 뒤</span></button></div>`}
-    <button class="note-link" onclick="openShareCheck()">공유 받기 점검 <span>공유 목록에 안 보일 때</span></button>
-    <button class="note-link" onclick="openPatchNotes()">업데이트 내역 <span>v${APP_VERSION}</span></button>`);
+      <button class="note-link" onclick="if(confirm('다른 기기에서 이미 옮겼다면, 이 기기는 옮기기 없이 Supabase로 바꿔요. 바꾼 뒤 구글 로그인을 해 주세요.'))useStore('supabase')">이미 옮겼어요 · 이 기기도 Supabase로 <span>다른 기기에서 옮긴 뒤</span></button></div>`}`;
 }
 async function saveSettingsUI() {
   const r = await call('saveSettings', { goal: $('set-goal').value.trim(), libraryName: S.settings.libraryName || '', libraryUrl: S.settings.libraryUrl || '' });
   S.settings = r; closeModal(); toast('저장했어요');
-  if (S.view === 'library') renderLibrary(); else if (S.view === 'stats') renderStatsView(); else if (S.view === 'book') renderBook();
+  if (S.view === 'settings') renderSettingsView(); else if (S.view === 'library') renderLibrary(); else if (S.view === 'stats') renderStatsView(); else if (S.view === 'book') renderBook();
 }
 
 /* ---------- 키워드 정리 ---------- */

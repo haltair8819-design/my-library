@@ -727,3 +727,7 @@ html[data-mode="dark"] .react-bar button.on{background:#3A2420;border-color:#6B3
 @keyframes scanline{from{top:18%}to{top:82%}}
 .scan-tip{position:absolute;top:calc(50% + 100px);left:0;right:0;text-align:center;color:#fff;font-size:14px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .scan-x{position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-width:120px}
+.set-sec{font-size:12.5px;font-weight:700;color:var(--faint);margin:22px 2px 6px;letter-spacing:.02em}
+.set-sec+.panel2,.set-sec+.more-list{margin-top:0}
+.set-guide{margin:8px 0 0;padding-left:20px;line-height:1.7}
+.dim{opacity:.5}

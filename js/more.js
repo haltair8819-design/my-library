@@ -11,14 +11,48 @@ function renderMoreView() {
     <div class="more-list">
       <button onclick="go('stats')"><span class="mi">📊</span><b>독서 통계</b><span>완독 · 분류 · 달별 책 목록, 독서 리포트</span></button>
       <button onclick="go('ai')"><span class="mi">✨</span><b>AI 비서</b><span>내 필사 · 글 · 메모를 근거로 답해요</span></button>
-      ${Store.kind === 'supabase' ? `<button onclick="openNotify()"><span class="mi">🔔</span><b>폰 알림</b><span>반납일 · 짝꿍 소식</span></button>
-      <button onclick="openBackups()"><span class="mi">🗄</span><b>자동 백업</b><span>매주 일요일 · 최근 8주 보관</span></button>` : ''}
-      <button onclick="openNoteImport()"><span class="mi">📥</span><b>노트 파일 가져오기</b><span>삼성노트 txt를 필사로</span></button>
-      <button onclick="exportMarkdown()"><span class="mi">⬇️</span><b>전체 내보내기 (백업)</b><span>책 · 필사 · 글 · 메모를 마크다운 파일로</span></button>
-      <button onclick="openLockSettings()"><span class="mi">🔒</span><b>앱 잠금</b><span>${locked ? '켜짐 · 열 때 비밀번호' : '꺼짐 · 열 때 비밀번호를 물어요'}</span></button>
-      <button onclick="openSettings()"><span class="mi">⚙️</span><b>설정</b><span>목표 · 밝기 · 디자인 · 서버 연결</span></button>
-      <button onclick="openPatchNotes()"><span class="mi">🗒</span><b>업데이트 내역</b><span>v${APP_VERSION}</span></button>
+      <button onclick="openSettings()"><span class="mi">⚙️</span><b>설정</b><span>목표 · 화면 · 알림 · 같이 쓰기 · 백업 · 잠금 · 계정</span></button>
     </div>`;
+}
+
+/* ===================================================================
+   설정 (v2.11.1): 흩어져 있던 설정을 한 화면에
+   =================================================================== */
+function openSettings() { if (S.view === 'settings') renderSettingsView(); else go('settings'); }
+function renderSettingsView() {
+  const st = S.settings || {}, locked = !!LS.get('pin_hash'), sb = Store.kind === 'supabase';
+  const row = (icon, title, sub, onclick) => `<button onclick="${onclick}"><span class="mi">${icon}</span><b>${title}</b><span>${sub}</span></button>`;
+  const y = window.scrollY;
+  $('v-settings').innerHTML = `
+    <div class="topbar"><button class="iconbtn" onclick="goBack()">← 뒤로</button></div>
+    <div class="view-head"><h1>설정</h1><p>나의 서재 v${APP_VERSION}</p></div>
+    <div class="set-sec">독서</div>
+    <div class="panel2"><h4>${S.today.slice(0, 4)}년 독서 목표 (권)</h4>
+      <div class="inline"><input class="field" id="set-goal" inputmode="numeric" value="${esc(st.goal)}" placeholder="예: 60" style="max-width:140px"><button class="btn primary" onclick="saveSettingsUI()">저장</button></div></div>
+    <div class="set-sec">화면</div>
+    ${themePickerHtml()}
+    ${sb ? `<div class="set-sec">알림</div><div class="panel2" id="set-notify"><div class="drill"><span class="spin"></span> 확인하는 중…</div></div>` : ''}
+    ${sb ? `<div class="set-sec">같이 쓰기</div>
+    <div class="panel2"><label class="tg-check" style="margin-top:0"><input type="checkbox" ${togetherOn() ? 'checked' : ''} onchange="tgSaveOpt('together', this.checked)"> ‘함께’ 탭 쓰기 <span class="small">끄면 탭이 숨겨져요 (보여준 기록은 그대로)</span></label>
+      <div class="actions" style="margin-top:8px"><button class="btn" onclick="openShareSettings()">보여줄 것 설정</button><button class="btn" onclick="go('together')">함께 탭으로</button></div></div>` : ''}
+    <div class="set-sec">기록 관리</div>
+    <div class="more-list" style="margin-top:0">
+      ${sb ? row('🗄', '자동 백업', '매주 일요일 · 최근 8주 보관 · 내려받기', 'openBackups()') : ''}
+      ${row('⬇️', '전체 내보내기', '책 · 필사 · 글 · 메모를 마크다운 파일로', 'exportMarkdown()')}
+      ${row('📥', '노트 파일 가져오기', '삼성노트 txt를 필사로', 'openNoteImport()')}
+    </div>
+    <div class="set-sec">보안</div>
+    <div class="more-list" style="margin-top:0">${row('🔒', '앱 잠금', locked ? '켜짐 · 열 때 비밀번호' : '꺼짐 · 열 때 비밀번호를 물어요', 'openLockSettings()')}</div>
+    <div class="set-sec">계정 · 저장</div>
+    ${accountPanelHtml()}
+    <div class="set-sec">정보</div>
+    <div class="more-list" style="margin-top:0">
+      ${row('🗒', '업데이트 내역', 'v' + APP_VERSION, 'openPatchNotes()')}
+      ${row('📤', '공유 받기 점검', '공유 목록에 안 보일 때', 'openShareCheck()')}
+    </div>
+    <div style="height:30px"></div>`;
+  window.scrollTo(0, y);
+  if (sb && typeof drawNotify === 'function') drawNotify();
 }
 
 /* ===================================================================
@@ -112,9 +146,9 @@ async function pinSave() {
   const a = $('pin1').value, b = $('pin2').value;
   if (!/^\d{4,8}$/.test(a)) { toast('숫자 4~8자리로 정해 주세요'); return; }
   if (a !== b) { toast('두 번 넣은 비밀번호가 달라요'); return; }
-  LS.set('pin_hash', await pinHash(a)); closeModal(); toast('잠금을 켰어요'); if (S.view === 'more') renderMoreView();
+  LS.set('pin_hash', await pinHash(a)); closeModal(); toast('잠금을 켰어요'); if (S.view === 'more') renderMoreView(); else if (S.view === 'settings') renderSettingsView();
 }
-function pinOff() { LS.del('pin_hash'); closeModal(); toast('잠금을 껐어요'); if (S.view === 'more') renderMoreView(); }
+function pinOff() { LS.del('pin_hash'); closeModal(); toast('잠금을 껐어요'); if (S.view === 'more') renderMoreView(); else if (S.view === 'settings') renderSettingsView(); }
 let lockedAt = 0, hiddenAt = 0;
 function showLock() {
   if (!LS.get('pin_hash') || $('lock').innerHTML) return;

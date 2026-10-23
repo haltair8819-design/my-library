@@ -356,12 +356,12 @@ function show(view) {
   if (view !== 'book' && S.snipSel) S.snipSel = null;
   if (S.view === 'note' && view !== 'note' && typeof collectNote === 'function') { const n = collectNote(); if (n && S.noteDirty) saveNoteNow(true); stopDictate(); }
   S.view = view;
-  ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more', 'snips', 'together', 'pbook', 'plib'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
+  ['library', 'book', 'graph', 'stats', 'ai', 'memo', 'blist', 'notes', 'note', 'more', 'snips', 'together', 'pbook', 'plib', 'settings'].forEach(v => $('v-' + v).classList.toggle('hidden', view !== v));
   $('composer').classList.toggle('hidden', view !== 'ai');
   document.body.classList.toggle('ai-mode', view === 'ai');
   $('fab').classList.toggle('hidden', !FAB_VIEWS.includes(view));
   $('fab').setAttribute('aria-label', FAB_LABEL[view] || '빠르게 남기기');
-  const tab = { book: 'library', snips: 'library', note: 'notes', blist: 'more', stats: 'more', ai: 'more', pbook: 'together', plib: 'together' }[view] || view;
+  const tab = { book: 'library', snips: 'library', note: 'notes', blist: 'more', stats: 'more', ai: 'more', settings: 'more', pbook: 'together', plib: 'together' }[view] || view;
   document.querySelectorAll('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
   if (view === 'library') renderLibrary();
   else if (view === 'book') renderBook();
@@ -372,6 +372,7 @@ function show(view) {
   else if (view === 'together') { renderTogether(); tgRefresh(true); }
   else if (view === 'pbook') renderPartnerBook();
   else if (view === 'plib') renderPartnerLib();
+  else if (view === 'settings') renderSettingsView();
   else if (view === 'note') renderNoteEditor();
   else if (view === 'more') renderMoreView();
   else if (view === 'blist') renderBookList();
@@ -406,6 +407,7 @@ window.addEventListener('popstate', e => {
   if (st.view === 'book' && st.id && book(st.id)) { S.bookId = st.id; show('book'); }
   else if (st.view === 'blist' && S.blist) show('blist');
   else if (st.view === 'snips') show('snips');
+  else if (st.view === 'settings') show('settings');
   else if (st.view === 'pbook' && st.id) { S.pbookId = st.id; show(togetherOn() ? 'pbook' : 'library'); }
   else if (['together', 'plib'].includes(st.view)) show(togetherOn() ? st.view : 'library');
   else if (st.view === 'note' && st.id && noteOf(st.id)) { S.noteId = resolveId(st.id); show('note'); }

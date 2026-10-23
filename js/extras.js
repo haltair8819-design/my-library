@@ -14,42 +14,62 @@ async function pushSave(sub) {
   const j = sub.toJSON();
   await sbq(sbClient().rpc('save_push_sub', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_prefs: pushPrefs() }));
 }
+// 알림 켜기: 단계마다 무엇이 막혔는지 알려 줘요
 async function pushOn() {
-  if (!pushSupported()) { toast('이 기기 · 브라우저는 알림을 지원하지 않아요'); return false; }
-  const perm = await Notification.requestPermission();
-  if (perm !== 'granted') { toast('알림이 막혀 있어요. 폰 설정 → 앱 → 나의 서재 → 알림을 켜 주세요'); return false; }
+  if (!pushSupported()) throw new Error('이 기기 · 브라우저는 알림을 지원하지 않아요. 폰에 설치한 앱에서 켜 주세요');
+  let perm = Notification.permission;
+  if (perm !== 'granted') perm = await Notification.requestPermission();
+  if (perm !== 'granted') { const e = new Error('denied'); e.denied = true; throw e; }
+  let key, reg, sub;
+  try { key = await sbFn('pushKey', []); } catch (e) { throw new Error('서버에서 알림 키를 받지 못했어요: ' + (e.message || e)); }
+  try { reg = await swReady(); } catch (e) { throw new Error(e.message); }
+  const want = b64uToU8(key);
   try {
-    const key = await sbFn('pushKey', []);
-    const reg = await swReady();
-    let sub = await reg.pushManager.getSubscription();
-    const want = b64uToU8(key);
+    sub = await reg.pushManager.getSubscription();
     if (sub && sub.options && sub.options.applicationServerKey) {   // 서버 키가 바뀌었으면 새로
       const cur = new Uint8Array(sub.options.applicationServerKey);
       if (cur.length !== want.length || cur.some((x, i) => x !== want[i])) { await sub.unsubscribe(); sub = null; }
     }
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want });
-    await pushSave(sub);
-    LS.set('push_on', '1'); return true;
-  } catch (e) { toast('⚠ 알림을 켜지 못했어요: ' + (e.message || e)); return false; }
+  } catch (e) { throw new Error('이 기기를 알림 받을 곳으로 등록하지 못했어요: ' + (e.message || e)); }
+  try { await pushSave(sub); } catch (e) { throw new Error('서버에 이 기기를 저장하지 못했어요: ' + (e.message || e)); }
+  LS.set('push_on', '1');
 }
 async function pushOff() {
   const sub = await pushSub();
   if (sub) { try { await sbq(sbClient().from('push_subs').delete().eq('endpoint', sub.endpoint)); } catch (e) {} try { await sub.unsubscribe(); } catch (e) {} }
   LS.del('push_on');
 }
-async function openNotify() {
-  if (Store.kind !== 'supabase') { toast('알림은 Supabase로 저장할 때 쓸 수 있어요'); return; }
-  const sub = await pushSub(), perm = 'Notification' in window ? Notification.permission : 'default', p = pushPrefs();
-  const on = !!sub && perm === 'granted';
-  modal(`<h3>폰 알림</h3>
-    <div class="small" style="line-height:1.7">${!pushSupported() ? '⚠ 이 기기 · 브라우저는 알림을 지원하지 않아요. 폰에 설치한 앱에서 켜 주세요.'
-      : perm === 'denied' ? '⚠ 알림이 막혀 있어요. 폰 설정 → 애플리케이션 → 나의 서재 → 알림을 허용한 뒤 다시 켜 주세요.'
-      : on ? '✓ 이 기기로 알림을 받고 있어요.' : '이 기기로 받을 알림을 켜요. 기기마다 따로 켜야 해요.'}</div>
-    <label class="tg-check"><input type="checkbox" id="pn-due" ${p.due ? 'checked' : ''} onchange="pushPref('due', this.checked)"> 📚 반납일 알림 <span class="small">전날 저녁 8시 · 당일 아침 8시</span></label>
-    <label class="tg-check"><input type="checkbox" id="pn-tg" ${p.together ? 'checked' : ''} onchange="pushPref('together', this.checked)"> 💬 짝꿍 소식 <span class="small">내 문장에 ♡ · 한마디, 같이 읽을 책</span></label>
-    <div class="actions">${on ? `<button class="btn" onclick="pushOff().then(()=>{toast('이 기기 알림을 껐어요');openNotify()})">알림 끄기</button>
-      <button class="btn primary grow" onclick="pushTestUI(this)">테스트 알림 보내기</button>`
-      : `<button class="btn" onclick="closeModal()">닫기</button><button class="btn primary grow" ${pushSupported() && perm !== 'denied' ? '' : 'disabled'} onclick="pushOn().then(ok=>{if(ok){toast('알림을 켰어요');openNotify()}})">알림 켜기</button>`}</div>`);
+// 설정 화면의 '알림' 칸
+let pushErr = '', pushBusy = false;
+function openNotify() { openSettings(); setTimeout(() => { const el = $('set-notify'); if (el) el.scrollIntoView({ block: 'center' }); }, 150); }
+async function drawNotify() {
+  const el = $('set-notify'); if (!el) return;
+  const sup = pushSupported(), perm = sup ? Notification.permission : 'unsupported', p = pushPrefs();
+  const sub = sup ? await pushSub() : null;
+  const on = !!sub && perm === 'granted' && !!LS.get('push_on');
+  const guide = `<ol class="set-guide"><li>폰 <b>설정 → 애플리케이션 → 나의 서재 → 알림</b>에서 <b>알림 허용</b>을 켜요</li>
+      <li>목록에 ‘나의 서재’ 알림이 없으면 <b>설정 → 애플리케이션 → Chrome → 알림</b>도 켜져 있는지 봐요 (앱이 크롬으로 열려서요)</li>
+      <li>앱으로 돌아와서 위 스위치를 다시 켜요</li></ol>`;
+  el.innerHTML = `
+    <label class="tg-check" style="margin-top:0"><input type="checkbox" id="pn-main" ${on ? 'checked' : ''} ${pushBusy || !sup ? 'disabled' : ''} onchange="pushToggle(this.checked)">
+      <b>이 기기에서 알림 받기</b> <span class="small">${pushBusy ? '켜는 중…' : on ? '켜짐' : '꺼짐'}</span></label>
+    <div class="small" style="line-height:1.7;margin-top:6px">${!sup ? '⚠ 이 브라우저는 알림을 지원하지 않아요. 폰에 설치한 앱에서 켜 주세요.'
+      : perm === 'denied' ? `⚠ 폰에서 이 앱의 알림이 막혀 있어요. 앱 안에서는 폰 설정을 바꿀 수 없어서, 아래처럼 한 번만 허용해 주세요.${guide}`
+      : pushErr ? `⚠ ${esc(pushErr)}` : on ? '알림이 오는 기기예요. 끄면 폰 설정과 상관없이 이 기기로는 알림을 안 보내요.' : '켜면 폰이 알림 허용을 물어봐요. 기기마다 따로 켜요.'}</div>
+    <div class="${on ? '' : 'dim'}">
+      <label class="tg-check"><input type="checkbox" ${p.due ? 'checked' : ''} ${on ? '' : 'disabled'} onchange="pushPref('due', this.checked)"> 📚 반납일 알림 <span class="small">전날 저녁 8시 · 당일 아침 8시</span></label>
+      <label class="tg-check"><input type="checkbox" ${p.together ? 'checked' : ''} ${on ? '' : 'disabled'} onchange="pushPref('together', this.checked)"> 💬 짝꿍 소식 <span class="small">내 문장에 ♡ · 한마디, 같이 읽을 책</span></label>
+      ${on ? `<div class="actions" style="margin-top:10px"><button class="btn grow" onclick="pushTestUI(this)">테스트 알림 보내기</button></div>` : ''}
+    </div>`;
+}
+async function pushToggle(want) {
+  pushErr = ''; pushBusy = true; drawNotify();
+  try {
+    if (want) { await pushOn(); toast('알림을 켰어요 · 테스트 알림을 보내 보세요'); }
+    else { await pushOff(); toast('이 기기 알림을 껐어요'); }
+  } catch (e) { if (!e.denied) pushErr = e.message || String(e); }
+  pushBusy = false; drawNotify();
 }
 async function pushPref(k, v) {
   const p = Object.assign(pushPrefs(), { [k]: v }); LS.set(PUSH_PREFS_KEY, JSON.stringify(p));

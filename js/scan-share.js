@@ -271,8 +271,12 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.11';   // index.html의 ?v= 값과 같이 올려요
+const APP_VERSION = '2.11.1';   // index.html의 ?v= 값과 같이 올려요
 const PATCH_NOTES = [
+  { v: '2.11.1', d: '2026.10.23', t: '설정 한 화면으로 · 알림 스위치', items: [
+    '더보기는 독서 통계 · AI 비서 · 설정만 남기고, 나머지(알림 · 같이 쓰기 · 백업 · 내보내기 · 가져오기 · 잠금 · 계정 · 업데이트 내역)는 설정 한 화면에 모았어요',
+    '알림: ‘이 기기에서 알림 받기’ 스위치 — 끄면 폰 설정과 상관없이 이 기기로 알림을 안 보내요',
+    '알림이 폰에서 막혀 있으면 어디서 허용하는지 안내하고, 켜다가 막힌 단계를 그대로 보여 줘요'] },
   { v: '2.11', d: '2026.10.23', t: '폰 알림 · 자동 백업 · 바코드 · 한마디 · 같이 읽을 책', items: [
     '더보기 → 폰 알림: 반납 전날 저녁 8시 · 당일 아침 8시에 알려 줘요 (기기마다 한 번 켜기)',
     '더보기 → 자동 백업: 매주 일요일 새벽 전체 기록을 서버에 파일로 남겨요 (최근 8주, 내려받기 가능)',
@@ -434,7 +438,7 @@ function setTheme(id) {
   if (S.loaded) show(S.view);
 }
 function themePickerHtml() {
-  return `<div class="panel2" style="margin-top:18px"><h4>화면 밝기</h4>${modePickerHtml()}</div>
+  return `<div class="panel2" style="margin-top:0"><h4>화면 밝기</h4>${modePickerHtml()}</div>
     <div class="panel2" style="margin-top:12px"><h4>디자인</h4><div class="themes">${THEMES.map(t => `
     <button class="theme-opt ${curTheme() === t.id ? 'on' : ''}" onclick="setTheme('${t.id}');openSettings()">
       <span class="tsw">${t.sw.map(c => `<i style="background:${c}"></i>`).join('')}</span>
