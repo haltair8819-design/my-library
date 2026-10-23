@@ -250,8 +250,19 @@ function renderPartnerLib() {
     <div class="list">${list.map(b => { const p = tgProg(b), other = mine ? tgTheirs(b) : tgMine(b);
       return `<div class="book" onclick="${mine ? `go('book','${b.ID}')` : `openPartnerBook('${b.ID}')`}">${spine(b)}<div class="binfo"><div class="btitle">${esc(b['제목'])}</div>
         <div class="bauthor">${esc(b['저자'] || '')}</div>
+        ${tgPeriod(b) ? `<div class="tg-per">${tgPeriod(b)}</div>` : ''}
         <div class="bmeta">${b['별점'] ? `<span class="stars">${starText(b['별점'])}</span>` : ''}${b['상태'] === '읽는중' && p.pct ? `<span class="badge">${p.pct}%</span>` : ''}${mine && !bookShared(b) ? '<span class="badge plat">🔒 나만 보기</span>' : ''}${other ? `<span class="badge plat">${mine ? esc(tgName()) + '도 있음' : '내 서재에도 있음'}</span>` : ''}</div></div></div>`; }).join('') || '<div class="empty">책이 없어요</div>'}</div>`;
   $('pl-f').onclick = e => { const t = e.target.closest('[data-f]'); if (!t) return; S.tgFilter = t.dataset.f; renderPartnerLib(); };
+}
+
+// 읽은 기간: 2026.10.09 ~ 10.13 · 5일
+function tgPeriod(b) {
+  const s = String(b['시작일'] || '').slice(0, 10), f = String(b['완독일'] || '').slice(0, 10), dot = d => d.replace(/-/g, '.');
+  if (b['상태'] === '읽을예정') return '';
+  if (s && f) return `${dot(s)} ~ ${f.slice(0, 4) === s.slice(0, 4) ? dot(f.slice(5)) : dot(f)}${b['완독일수'] ? ` · ${esc(b['완독일수'])}일` : ''}`;
+  if (f) return `${dot(f)} 완독`;
+  if (s) return `${dot(s)} ~`;
+  return '';
 }
 
 /* ----- 프로필 사진 ----- */
@@ -464,7 +475,7 @@ function openShareSettings() {
       <label class="tg-check"><input type="checkbox" id="tg-new" ${tgShareNew() ? 'checked' : ''} onchange="tgSaveOpt('shareNew', this.checked)"> 새로 쓰는 필사 · 내 생각은 처음부터 보여주기</label></div>
     <div class="panel2"><h4>🔒 메모 · 노트 · 할 일 <span class="small" style="font-weight:400">항상 나만</span></h4><div class="small">이건 바꿀 수 없어요.</div></div>
     <label class="tg-check"><input type="checkbox" ${tgSpoilOn() ? 'checked' : ''} onchange="tgSaveOpt('spoiler', this.checked)"> 같이 읽는 책은 내가 읽은 곳 뒤 문장 가리기 (스포일러)</label>
-    ${tgHasPartner() ? `<button class="btn danger" style="width:100%;margin-top:14px" onclick="tgEnd()">${esc(jo(tgName(), '과', '와'))} 같이 쓰기 끝내기</button>` : ''}
+    ${tgHasPartner() ? `<div style="text-align:right;margin-top:16px"><button class="tg-end" onclick="tgEnd()">같이 쓰기 끝내기</button></div>` : ''}
     <div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>`);
 }
 async function tgSaveName() {
