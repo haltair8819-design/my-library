@@ -789,4 +789,25 @@ html[data-mode="dark"] .life-b.l3{background:#A8342A;color:#fff}
 .life-src{font-size:12px;color:var(--faint);margin-top:8px}
 .stats{flex-wrap:wrap;row-gap:8px}
 .theme-opt .tprev{width:100%;aspect-ratio:40/33;border-radius:7px;overflow:hidden;border:1px solid var(--line);margin-bottom:6px;background:#eee}
-.theme-opt .tprev img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+
+/* ===== v2.13.1 ===== */
+.theme-opt .tprev{position:relative;display:block}
+.theme-opt .tprev iframe{position:absolute;left:0;top:0;width:400px;height:330px;border:0;transform-origin:0 0;pointer-events:none;background:transparent}
+.tg-fmenu{border:0;background:none;color:var(--faint);font-size:18px;line-height:1;padding:2px 6px;cursor:pointer;flex:none;align-self:flex-start}
+.sh-bulk{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 4px}
+.sh-bulk .btn{padding:6px 10px;font-size:12.5px}
+.sh-row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
+.sh-row.off{opacity:.72}
+.sh-top{display:flex;gap:10px;align-items:center}
+.sh-top .spine{width:34px;min-height:48px;font-size:9px}
+.sh-tg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sh-sw{border:1px solid var(--line);background:none;border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;color:var(--sub)}
+.sh-sw.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.sh-more{border:0;background:none;color:var(--accent);font-size:12.5px;cursor:pointer;margin-left:auto}
+.sh-snips{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;max-height:340px;overflow:auto}
+.sh-snip{display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;line-height:1.5;cursor:pointer}
+.sh-snip input{width:18px;height:18px;flex:none;margin-top:1px;accent-color:var(--accent)}
+.sh-snip em{color:var(--faint);font-style:normal;font-size:11.5px}
+.sh-snip .life-st{font-style:normal;font-size:11px}
+.sh-save{position:sticky;bottom:calc(70px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:14px 0 10px;box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.sh-save span{flex:1;font-size:13px;color:var(--sub)}

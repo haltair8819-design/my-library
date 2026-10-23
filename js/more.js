@@ -18,7 +18,7 @@ function renderMoreView() {
 /* ===================================================================
    설정 (v2.11.1): 흩어져 있던 설정을 한 화면에
    =================================================================== */
-function openSettings() { if (S.view === 'settings') renderSettingsView(); else go('settings'); }
+function openSettings() { S.dz = null; if (S.view === 'settings') renderSettingsView(); else go('settings'); }
 function renderSettingsView() {
   const st = S.settings || {}, locked = !!LS.get('pin_hash'), sb = Store.kind === 'supabase';
   const row = (icon, title, sub, onclick) => `<button onclick="${onclick}"><span class="mi">${icon}</span><b>${title}</b><span>${sub}</span></button>`;
@@ -52,6 +52,7 @@ function renderSettingsView() {
     </div>
     <div style="height:30px"></div>`;
   window.scrollTo(0, y);
+  if (typeof dzScale === 'function') dzScale();
   if (sb && typeof drawNotify === 'function') drawNotify();
 }
 

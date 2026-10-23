@@ -271,8 +271,12 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.13';   // index.html의 ?v= 값과 같이 올려요
+const APP_VERSION = '2.13.1';   // index.html의 ?v= 값과 같이 올려요
 const PATCH_NOTES = [
+  { v: '2.13.1', d: '2026.10.23', t: '보여줄 것 고르기 · 소식 고치기 · 디자인 미리보기', items: [
+    '보여줄 것 → ‘책 목록에서 고르기’: 책마다 👀 책 · 필사 모두 · 문장 하나씩을 한 화면에서 고르고 저장해요',
+    '최근 소식의 내 소식은 ⋯ 를 눌러 숨기거나 (독서 기록 · 한마디 등은) 지울 수 있어요',
+    '설정 → 디자인: 밝기 · 디자인 · 포인트 색을 바꾸면 예시 화면에 바로 보이고, ‘저장해서 적용하기’를 눌러야 바뀌어요'] },
   { v: '2.13', d: '2026.10.23', t: '인생 문장 · 책별 필사 보여주기 · 디자인 미리보기', items: [
     '인생 문장: 필사를 열어 ★ 1 · 2 · 3단계(마음에 드는 문장 · 인생 문장 · 찐 인생 문장)로 담아요. 여러 개는 꾹 눌러 골라 한 번에',
     '서재 위 ‘인생 문장 ›’에서 단계별로 모아 봐요',
@@ -491,14 +495,51 @@ function setTheme(id) {
   applyMode();
   if (S.loaded) show(S.view);
 }
-function themePickerHtml() {
-  return `<div class="panel2" style="margin-top:0"><h4>화면 밝기</h4>${modePickerHtml()}</div>
-    <div class="panel2" style="margin-top:12px"><h4>디자인</h4><div class="themes">${THEMES.map(t => `
-    <button class="theme-opt ${curTheme() === t.id ? 'on' : ''}" onclick="setTheme('${t.id}');openSettings()">
-      <span class="tprev"><img src="img/theme-${t.id}.jpg?v=1" alt="${t.name} 예시" loading="lazy"></span>
-      <span class="tsw">${t.sw.map(c => `<i style="background:${c}"></i>`).join('')}</span>
-      <b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div>
-    <h4 style="margin-top:14px">포인트 색 <span class="small" style="font-weight:400">버튼 · 강조 색만 바꿔요</span></h4>${accentPickerHtml()}</div>`;
+// 디자인 고르기 (v2.13.1): 고르는 동안은 미리보기만 바뀌고, '저장'을 눌러야 적용돼요
+function accentVars(c, dark) {
+  if (!c) return '';
+  return `--accent:${dark ? `color-mix(in srgb, ${c} 62%, white)` : c};--accent-soft:${dark ? `color-mix(in srgb, ${c} 30%, #15161a)` : `color-mix(in srgb, ${c} 13%, white)`};`;
 }
+function dzCur() { return { theme: curTheme(), accent: curAccent(), mode: curMode() }; }
+function dzGet() { return S.dz || (S.dz = dzCur()); }
+function dzChanged() { const d = dzGet(), c = dzCur(); return d.theme !== c.theme || d.accent !== c.accent || d.mode !== c.mode; }
+function themePreviewDoc(th, accent, mode) {
+  const ver = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '';
+  return `<!doctype html><html lang="ko" data-theme="${th}" data-mode="${mode}" style="${accentVars(accent, mode === 'dark')}"><head><meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Gowun+Batang:wght@400;700&display=swap">
+    <link rel="stylesheet" href="css/app.css?v=${ver}"><style>html,body{overflow:hidden}body{pointer-events:none;padding-top:6px}</style></head>
+    <body><div class="wrap"><section id="v-book" style="--bc:#5B7A6A">
+      <div class="detail-head"><div class="spine" style="background:#5B7A6A">데미안</div><div><div class="dtitle">데미안</div><div class="dauthor">헤르만 헤세</div></div></div>
+      <div class="seg book-tabs"><button class="on">필사<span>1</span></button><button>내 생각 · 메모<span>0</span></button></div>
+      <div class="sec-head tight"><h2>필사</h2><div><button class="btn primary">+ 문장</button></div></div>
+      <div class="snip quote"><div class="stitle">알을 깨는 새</div><div class="txt">새는 알에서 나오려고 투쟁한다. 알은 세계이다.</div><div class="smeta"><span class="pg">p.120</span><span class="kw">#성장</span></div></div>
+    </section></div></body></html>`;
+}
+function themePickerHtml() { return `<div id="set-design">${designPanelHtml()}</div>`; }
+function designPanelHtml() {
+  const d = dzGet(), ch = dzChanged();
+  return `<div class="panel2" style="margin-top:0"><h4>화면 밝기</h4><div class="seg mode-seg" style="margin-top:10px">${MODES.map(([k, t]) => `<button class="${d.mode === k ? 'on' : ''}" onclick="dzSet('mode','${k}')">${t}</button>`).join('')}</div></div>
+    <div class="panel2" style="margin-top:12px"><h4>디자인 <span class="small" style="font-weight:400">예시 화면에 바로 보여요</span></h4><div class="themes">${THEMES.map(t => `
+    <button class="theme-opt ${d.theme === t.id ? 'on' : ''}" onclick="dzSet('theme','${t.id}')">
+      <span class="tprev"><iframe tabindex="-1" aria-hidden="true" loading="lazy" srcdoc="${esc(themePreviewDoc(t.id, d.accent, d.mode))}"></iframe></span>
+      <b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div>
+    <h4 style="margin-top:14px">포인트 색 <span class="small" style="font-weight:400">버튼 · 강조 색만 바꿔요</span></h4>
+    <div class="acc-row">${ACCENTS.map(([c, n]) => `<button class="acc ${d.accent === c ? 'on' : ''}" onclick="dzSet('accent','${c}')" title="${n}" aria-label="${n}">
+      <i style="${c ? `background:${c}` : 'background:linear-gradient(135deg,#ddd 50%,#999 50%)'}"></i><span>${n}</span></button>`).join('')}</div>
+    <div class="actions" style="margin-top:12px"><button class="btn" ${ch ? '' : 'disabled'} onclick="S.dz=null;dzDraw()">되돌리기</button>
+      <button class="btn primary grow" ${ch ? '' : 'disabled'} onclick="dzSave()">${ch ? '저장해서 적용하기' : '지금 적용된 디자인이에요'}</button></div></div>`;
+}
+function dzSet(k, v) { dzGet()[k] = v; dzDraw(); }
+function dzDraw() { const el = $('set-design'); if (!el) return; el.innerHTML = designPanelHtml(); dzScale(); }
+function dzScale() { document.querySelectorAll('#set-design .tprev').forEach(p => { const f = p.querySelector('iframe'); if (f) f.style.transform = `scale(${p.clientWidth / 400})`; }); }
+function dzSave() {
+  const d = dzGet();
+  document.documentElement.dataset.theme = d.theme; LS.set('theme', d.theme);
+  LS.set('accent', d.accent); LS.set('mode', d.mode);
+  applyMode();   // 밝기 · 포인트 색까지
+  S.dz = null; if (S.loaded) show(S.view); toast('디자인을 바꿨어요');
+}
+window.addEventListener('resize', () => { if (S.view === 'settings') dzScale(); });
 
 

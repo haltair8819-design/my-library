@@ -54,7 +54,8 @@ function tgLoad() {
       ]);
       const pemail = (prof && prof.email) || (acc.inviter === me ? acc.invitee_email : acc.inviter_email) || '';
       next.partner = { id: pid, pship: acc.id, since: acc.accepted_at, email: pemail,
-        name: (prof && prof.name) || (acc.inviter === pid ? acc.inviter_name : '') || pemail.split('@')[0], avatar: (prof && prof.avatar) || '' };
+        name: (prof && prof.name) || (acc.inviter === pid ? acc.inviter_name : '') || pemail.split('@')[0], avatar: (prof && prof.avatar) || '',
+        feedHidden: ((prof && prof.settings) || {}).feedHidden || [] };
       next.books = b.map(sbOut); next.snips = s.map(sbOut);
       next.logs = l.map(r => ({ id: r.id, bid: r.book_id, date: String(r.day).slice(0, 10), page: r.page, base: r.base_page }));
     }
@@ -169,13 +170,14 @@ const hhmmOf = t => { const d = new Date(t); return `${d.getMonth() + 1}.${d.get
 
 function tgFeed() {
   const T = S.tg, out = [], pn = tgName(), me = (T.me || {}).name || '나';
-  const add = (who, date, html, onclick, p) => { if (date) out.push({ who, date: String(date).slice(0, 10), html, onclick, p }); };
+  const hidMe = new Set((S.settings || {}).feedHidden || []), hidP = new Set((T.partner && T.partner.feedHidden) || []);
+  const add = (who, date, html, onclick, p, key) => { if (!date || (key && (p ? hidP : hidMe).has(key))) return; out.push({ who, date: String(date).slice(0, 10), html, onclick, p, key: p ? '' : key }); };
   const ttl = b => `『${esc(b['제목'])}』`;
   const ttlO = b => { const t = String(b['제목'] || '').replace(/\s*\([^)]*\)\s*$/, ''); return ttl(b) + jo(t, '을', '를').slice(t.length); };
   const books = (list, who, p, open) => list.forEach(b => {
-    if (b['완독일']) add(who, b['완독일'], `${ttlO(b)} 다 읽었어요${b['별점'] ? ' <span class="stars">' + '★'.repeat(Number(b['별점']) || 0) + '</span>' : ''}`, open(b), p);
-    if (b['시작일'] && b['시작일'] !== b['완독일'] && b['상태'] !== '읽을예정') add(who, b['시작일'], `${ttlO(b)} 읽기 시작했어요`, open(b), p);
-    else if (!b['시작일'] && b['상태'] === '읽을예정' && b['등록일']) add(who, b['등록일'], `${ttlO(b)} 읽고 싶은 책에 담았어요`, open(b), p);
+    if (b['완독일']) add(who, b['완독일'], `${ttlO(b)} 다 읽었어요${b['별점'] ? ' <span class="stars">' + '★'.repeat(Number(b['별점']) || 0) + '</span>' : ''}`, open(b), p, 'done:' + b.ID);
+    if (b['시작일'] && b['시작일'] !== b['완독일'] && b['상태'] !== '읽을예정') add(who, b['시작일'], `${ttlO(b)} 읽기 시작했어요`, open(b), p, 'start:' + b.ID);
+    else if (!b['시작일'] && b['상태'] === '읽을예정' && b['등록일']) add(who, b['등록일'], `${ttlO(b)} 읽고 싶은 책에 담았어요`, open(b), p, 'wish:' + b.ID);
   });
   books(T.books, pn, true, b => `openPartnerBook('${b.ID}')`);
   books(S.books.filter(bookShared), me, false, b => `go('book','${b.ID}')`);
@@ -185,16 +187,16 @@ function tgFeed() {
     Object.entries(by).forEach(([bid, ls]) => {
       const b = list.find(x => x.ID === bid); if (!b) return;
       const d = tgDaily(ls);
-      Object.entries(d).forEach(([day, n]) => { if (n > 0) add(who, day, `${ttl(b)} <b>${n}쪽</b> 읽었어요`, open(b), p); });
+      Object.entries(d).forEach(([day, n]) => { if (n > 0) add(who, day, `${ttl(b)} <b>${n}쪽</b> 읽었어요`, open(b), p, 'log:' + bid + ':' + day); });
     });
   };
   logLines(T.logs, T.books, pn, true, b => `openPartnerBook('${b.ID}')`);
   logLines(myLogs(), S.books.filter(bookShared), me, false, b => `go('book','${b.ID}')`);
   // 보여준 필사
   T.snips.forEach(s => { const b = T.books.find(x => x.ID === s['책ID']); if (!b) return;
-    add(pn, s['작성일'], `${ttl(b)}에서 ${isThought(s) ? '생각을' : '문장을'} 남겼어요`, `openPartnerBook('${b.ID}','${s.ID}')`, true); });
+    add(pn, s['작성일'], `${ttl(b)}에서 ${isThought(s) ? '생각을' : '문장을'} 남겼어요`, `openPartnerBook('${b.ID}','${s.ID}')`, true, 'snip:' + s.ID); });
   S.snips.filter(isShared).forEach(s => { const b = book(s['책ID']); if (!b) return;
-    add(me, s['작성일'], `${ttl(b)}에서 ${isThought(s) ? '생각을' : '문장을'} 보여줬어요`, `openSnipInBook('${s.ID}')`, false); });
+    add(me, s['작성일'], `${ttl(b)}에서 ${isThought(s) ? '생각을' : '문장을'} 보여줬어요`, `openSnipInBook('${s.ID}')`, false, 'snip:' + s.ID); });
   // 문장 반응
   (T.reacts || []).forEach(r => {
     const mineSnip = r.owner === T.me.id, fromMe = r.user_id === T.me.id;
@@ -202,11 +204,10 @@ function tgFeed() {
     const sn = mineSnip ? S.snips.find(x => x.ID === r.snippet_id) : T.snips.find(x => x.ID === r.snippet_id); if (!sn) return;
     const who = fromMe ? me : pn, t = esc(sText(sn).slice(0, 24)) + (sText(sn).length > 24 ? '…' : '');
     add(who, locDay(r.created_at), r.kind === 'heart' ? `${mineSnip ? '내' : esc(pn) + '의'} 문장에 ♡ <span class="tg-q">“${t}”</span>`
-      : `“${esc(String(r.body || '').slice(0, 60))}” <span class="tg-q">— ${mineSnip ? '내' : esc(pn) + '의'} 문장 “${t}”</span>`, `openReacts('${r.snippet_id}','${r.owner}')`, !fromMe);
+      : `“${esc(String(r.body || '').slice(0, 60))}” <span class="tg-q">— ${mineSnip ? '내' : esc(pn) + '의'} 문장 “${t}”</span>`, `openReacts('${r.snippet_id}','${r.owner}')`, !fromMe, 'rx:' + r.id);
   });
   (T.tbooks || []).forEach(tb => { const who = tb.added_by === T.me.id ? me : pn;
-    add(who, locDay(tb.created_at), `같이 읽을 책에 『${esc(tb.data['제목'] || '')}』를 담았어요`, `go('together')`, who !== me);
-    if (tb.started_at) add(who, tb.started_at, `『${esc(tb.data['제목'] || '')}』 같이 읽기 시작!`, `go('together')`, false); });
+    add(who, locDay(tb.created_at), `같이 읽을 책에 『${esc(tb.data['제목'] || '')}』를 담았어요`, `go('together')`, who !== me, 'tb:' + tb.id); });
   return out.sort((a, b) => b.date.localeCompare(a.date) || (b.p ? 1 : 0) - (a.p ? 1 : 0));
 }
 // 최근 한 달은 바로, 그 전은 '지난 소식 더보기' → 연도별로 접어서
@@ -214,7 +215,7 @@ S.feedAll = false;
 function tgFeedRows(list) {
   let last = '';
   return list.map(x => { const head = x.date !== last ? `<div class="tg-day">${x.date === S.today ? '오늘' : x.date === addDays(S.today, -1) ? '어제' : x.date.slice(5).replace('-', '.')}</div>` : ''; last = x.date;
-    return `${head}<div class="tg-feed" onclick="${x.onclick}">${avatar(x.who, x.p ? 'p' : '')}<div>${x.html}</div></div>`; }).join('');
+    return `${head}<div class="tg-feed" onclick="${x.onclick}">${avatar(x.who, x.p ? 'p' : '')}<div class="grow">${x.html}</div>${x.key ? `<button class="tg-fmenu" onclick="event.stopPropagation();openFeedMenu('${x.key}')" aria-label="소식 고치기">⋯</button>` : ''}</div>`; }).join('');
 }
 function tgFeedHtml() {
   const f = tgFeed(); if (!f.length) return '<div class="small">아직 소식이 없어요. 책을 읽고 기록하면 여기에 보여요.</div>';
@@ -467,13 +468,15 @@ function openShareSettings() {
   modal(`<h3>보여줄 것 · 같이 쓰기</h3>
     <button class="tg-me-row" onclick="openMyProfile()">${avatar(me.name)}<b>${esc(me.name || '')}</b><span class="small">이름 · 프로필 사진 바꾸기 ›</span></button>
     <div class="panel2" style="margin-top:12px"><h4>👀 책 · 별점 · 한줄평 · 읽은 쪽수 <span class="small" style="font-weight:400">기본 공개</span></h4>
-      <div class="small">${nb}권 중 <b>${shown}권</b>을 보여주는 중이에요. 책 화면 위쪽 ‘👀 보여주는 중’을 누르면 그 책만 숨길 수 있어요.</div>
-      <div class="actions" style="margin-top:8px"><button class="btn" onclick="tgAllBooks(false)">모두 숨기기</button><button class="btn" onclick="tgAllBooks(true)">모두 보여주기</button></div></div>
+      <div class="small">${nb}권 중 <b>${shown}권</b>을 보여주는 중이에요.</div>
+      <div class="actions" style="margin-top:8px"><button class="btn primary grow" onclick="closeModal();openShareList()">책 목록에서 고르기 ›</button></div></div>
     <div class="panel2"><h4>✋ 필사 · 내 생각 <span class="small" style="font-weight:400">고른 것만</span></h4>
-      <div class="small" style="line-height:1.6">지금 <b>${ns}개</b>를 보여주는 중이에요. 책 화면에서 문장을 꾹 눌러 고른 뒤 ‘보여주기’를 눌러요. 필사에 달아 둔 메모도 같이 보여요.</div>
+      <div class="small" style="line-height:1.6">지금 <b>${ns}개</b>를 보여주는 중이에요. ‘책 목록에서 고르기’에서 책마다 필사를 모두 보여주거나 문장을 하나씩 골라요. 필사에 달아 둔 메모도 같이 보여요.</div>
+      <div class="actions" style="margin-top:8px"><button class="btn grow" onclick="closeModal();openShareList()">필사 고르기 ›</button></div>
       <label class="tg-check"><input type="checkbox" id="tg-new" ${tgShareNew() ? 'checked' : ''} onchange="tgSaveOpt('shareNew', this.checked)"> 새로 쓰는 필사 · 내 생각은 처음부터 보여주기</label></div>
     <div class="panel2"><h4>🔒 메모 · 노트 · 할 일 <span class="small" style="font-weight:400">항상 나만</span></h4><div class="small">이건 바꿀 수 없어요.</div></div>
     <label class="tg-check"><input type="checkbox" ${tgSpoilOn() ? 'checked' : ''} onchange="tgSaveOpt('spoiler', this.checked)"> 같이 읽는 책은 내가 읽은 곳 뒤 문장 가리기 (스포일러)</label>
+    ${((S.settings || {}).feedHidden || []).length ? `<button class="note-link" onclick="tgUnhideFeed()">숨긴 소식 ${(S.settings.feedHidden || []).length}개 다시 보이기 <span>최근 소식</span></button>` : ''}
     ${tgHasPartner() ? `<div style="text-align:right;margin-top:16px"><button class="tg-end" onclick="tgEnd()">같이 쓰기 끝내기</button></div>` : ''}
     <div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>`);
 }
@@ -668,3 +671,114 @@ async function tbMyStart(id) {
   } catch (e) { toast('⚠ ' + (e.message || e)); }
 }
 // (v2.12.4) '같이 시작하기'는 뺐어요 — 한 사람이 누르면 상대 서재가 강제로 바뀌어서. 읽기 시작은 각자 서재에서.
+
+
+/* ===================================================================
+   v2.13.1 최근 소식 고치기 (내 소식만): 소식에서 숨기기 · 기록 지우기
+   =================================================================== */
+function openFeedMenu(key) {
+  const [kind, a, b] = key.split(':');
+  const extra = kind === 'log' ? `<button onclick="feedDelLog('${a}','${b}')"><b>🗑 이 날 독서 기록 지우기</b><span>${esc((book(a) || {})['제목'] || '')} · ${b.slice(5).replace('-', '.')} 기록을 지워요 (쪽수 통계에서도 빠져요)</span></button>`
+    : kind === 'rx' ? `<button onclick="closeModal();delReact('${a}')"><b>🗑 반응 · 한마디 지우기</b><span>상대에게도 사라져요</span></button>`
+    : kind === 'tb' ? `<button onclick="closeModal();tbRemove('${a}')"><b>🗑 같이 읽을 책에서 빼기</b><span></span></button>`
+    : kind === 'snip' ? `<button onclick="closeModal();feedUnshareSnip('${a}')"><b>🔒 이 문장 다시 나만 보기</b><span>짝꿍에게 안 보여요</span></button>` : '';
+  modal(`<h3>이 소식 고치기</h3><div class="qmenu">
+      <button onclick="feedHide('${key}')"><b>🙈 소식에서 숨기기</b><span>나와 짝꿍 둘 다 이 소식이 안 보여요 (기록은 그대로)</span></button>${extra}</div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+}
+async function feedHide(key) {
+  const list = uniq([...((S.settings || {}).feedHidden || []), key]).slice(-500);
+  closeModal(); await tgSaveOpt('feedHidden', list); renderTogether();
+}
+async function tgUnhideFeed() { closeModal(); await tgSaveOpt('feedHidden', []); renderTogether(); }
+function feedDelLog(bid, day) {
+  const ids = (S.logs || []).map(parseLog).filter(l => l && l.bid === bid && l.date === day).map(l => l.id);
+  if (!ids.length || !confirm('이 날 독서 기록을 지울까요?')) return;
+  ids.forEach(id => { S.logs = S.logs.filter(m => m.ID !== id); queue({ fn: 'deleteMemo', id, list: 'logs' }); });
+  closeModal(); toast('기록을 지웠어요'); renderTogether();
+}
+function feedUnshareSnip(id) {
+  const x = S.snips.find(s => s.ID === id); if (!x) return;
+  const data = snipFull(x, { '공개': false }), local = Object.assign({}, x, { '공개': false });
+  upsertSnipLocal(local); queue({ fn: 'saveSnippet', data, local }); toast('이 문장은 이제 나만 봐요'); renderTogether();
+}
+
+/* ===================================================================
+   v2.13.1 보여줄 것: 책 목록에서 고르기 (책 · 필사 모두 · 문장 하나씩) — 저장을 눌러야 바뀌어요
+   =================================================================== */
+S.shF = '전체'; S.shOpen = null; S.shQ = '';
+function openShareList() { S.shDraft = { books: {}, snips: {} }; S.shOpen = null; go('share'); }
+const shBook = b => Object.assign({ '공개': bookShared(b), '필사공개': bookSnipShared(b) }, (S.shDraft.books[b.ID] || {}));
+const shSnip = s => (s.ID in S.shDraft.snips) ? S.shDraft.snips[s.ID] : isShared(s);
+function shChanges() {
+  let n = 0;
+  Object.entries(S.shDraft.books).forEach(([id, d]) => { const b = book(id); if (!b) return; if (d['공개'] !== undefined && d['공개'] !== bookShared(b)) n++; if (d['필사공개'] !== undefined && d['필사공개'] !== bookSnipShared(b)) n++; });
+  Object.entries(S.shDraft.snips).forEach(([id, v]) => { const s = S.snips.find(x => x.ID === id); if (s && v !== isShared(s)) n++; });
+  return n;
+}
+function renderShareList() {
+  const el = $('v-share'); if (!el) return;
+  if (!S.shDraft) S.shDraft = { books: {}, snips: {} };
+  el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="shLeave()">← 뒤로</button></div>
+    <div class="view-head"><h1>보여줄 것 고르기</h1><p>책마다 👀 책 · 필사를 켜고 끄고, 문장은 하나씩 골라요. <b>저장</b>을 눌러야 바뀌어요.</p></div>
+    <input class="field" id="sh-q" type="search" placeholder="책 찾기" value="${esc(S.shQ)}" autocomplete="off">
+    <div class="chips" id="sh-f">${FILTERS.map(f => `<button class="chip ${S.shF === f ? 'on' : ''}" data-f="${f}">${FILTER_LABEL[f] || f}</button>`).join('')}</div>
+    <div id="sh-body"></div>`;
+  shDraw();
+  liveInput('sh-q', v => { S.shQ = v; shDraw(); });
+  $('sh-f').onclick = e => { const t = e.target.closest('[data-f]'); if (!t) return; S.shF = t.dataset.f; [...$('sh-f').children].forEach(x => x.classList.toggle('on', x === t)); shDraw(); };
+}
+const shVisible = () => { const q = S.shQ.trim().toLowerCase(); return S.books.filter(b => (S.shF === '전체' || b['상태'] === S.shF) && (!q || String(b['제목'] + ' ' + (b['저자'] || '')).toLowerCase().includes(q))); };
+function shDraw() {
+  const el = $('sh-body'); if (!el) return;
+  const list = shVisible().sort((a, b) => String(b['완독일'] || b['시작일'] || '').localeCompare(String(a['완독일'] || a['시작일'] || '')));
+  const ch = shChanges();
+  el.innerHTML = `<div class="sh-bulk"><span class="small">보이는 ${list.length}권 한 번에</span>
+      <button class="btn" onclick="shBulk('공개', true)">책 모두 👀</button><button class="btn" onclick="shBulk('공개', false)">책 모두 🔒</button>
+      <button class="btn" onclick="shBulk('필사공개', true)">필사 모두 👀</button><button class="btn" onclick="shBulk('필사공개', false)">필사 모두 🔒</button></div>
+    <div id="sh-list">${list.map(b => { const d = shBook(b), sn = snipsOf(b.ID).filter(s => s['유형'] !== '메모'), on = sn.filter(shSnip).length;
+      return `<div class="sh-row ${d['공개'] ? '' : 'off'}">
+        <div class="sh-top">${spine(b)}<div class="grow"><div class="tg-bt">${esc(b['제목'])}</div><div class="small">${sn.length ? `필사 · 생각 ${sn.length}개 중 ${on}개 보여줌` : '필사 없음'}</div></div></div>
+        <div class="sh-tg">
+          <button class="sh-sw ${d['공개'] ? 'on' : ''}" onclick="shSet('${b.ID}','공개',${!d['공개']})">${d['공개'] ? '👀 책 보여줌' : '🔒 책 나만'}</button>
+          ${sn.length ? `<button class="sh-sw ${d['필사공개'] ? 'on' : ''}" onclick="shSet('${b.ID}','필사공개',${!d['필사공개']})">${d['필사공개'] ? '👀 필사 모두' : '✋ 필사 고른 것만'}</button>
+          <button class="sh-more" onclick="S.shOpen=S.shOpen==='${b.ID}'?null:'${b.ID}';shRerender()">${S.shOpen === b.ID ? '접기' : '문장 고르기 ›'}</button>` : ''}
+        </div>
+        ${S.shOpen === b.ID ? `<div class="sh-snips">${sortByPage(sn).map(s => `<label class="sh-snip"><input type="checkbox" ${shSnip(s) ? 'checked' : ''} onchange="shSnipSet('${s.ID}', this.checked)">
+          <span>${lifeOf(s) ? `<i class="life-st">${'★'.repeat(lifeOf(s))}</i> ` : ''}${esc(sText(s).slice(0, 80))}${sText(s).length > 80 ? '…' : ''}${s['쪽수'] ? ` <em>p.${esc(s['쪽수'])}</em>` : ''}</span></label>`).join('')}</div>` : ''}
+      </div>`; }).join('') || '<div class="empty">책이 없어요</div>'}</div>
+    <div class="sh-save"><span>${ch ? `바뀐 것 ${ch}개` : '바뀐 것 없음'}</span><button class="btn" onclick="S.shDraft={books:{},snips:{}};shRerender()" ${ch ? '' : 'disabled'}>되돌리기</button><button class="btn primary" onclick="shSave()" ${ch ? '' : 'disabled'}>저장</button></div>`;
+}
+function shRerender() { const y = window.scrollY; shDraw(); window.scrollTo(0, y); }
+function shSet(id, k, v) {
+  const d = S.shDraft.books[id] = Object.assign({}, S.shDraft.books[id], { [k]: v });
+  if (k === '필사공개') snipsOf(id).filter(s => s['유형'] !== '메모').forEach(s => S.shDraft.snips[s.ID] = v);   // 필사 모두 ↔ 문장 전부
+  shRerender();
+}
+function shSnipSet(id, v) {
+  S.shDraft.snips[id] = v;
+  const s = S.snips.find(x => x.ID === id), b = s && book(s['책ID']);
+  if (b && !v && shBook(b)['필사공개']) S.shDraft.books[b.ID] = Object.assign({}, S.shDraft.books[b.ID], { '필사공개': false });   // 하나라도 숨기면 '고른 것만'
+  shRerender();
+}
+function shBulk(k, v) {
+  shVisible().forEach(b => { if (k === '필사공개' && !snipsOf(b.ID).some(s => s['유형'] !== '메모')) return; S.shDraft.books[b.ID] = Object.assign({}, S.shDraft.books[b.ID], { [k]: v });
+      if (k === '필사공개') snipsOf(b.ID).filter(s => s['유형'] !== '메모').forEach(s => S.shDraft.snips[s.ID] = v); });
+  shRerender();
+}
+function shSave() {
+  let nb = 0, ns = 0;
+  Object.entries(S.shDraft.books).forEach(([id, d]) => {
+    const b = book(id); if (!b) return; const patch = {};
+    if (d['공개'] !== undefined && d['공개'] !== bookShared(b)) patch['공개'] = d['공개'];
+    if (d['필사공개'] !== undefined && d['필사공개'] !== bookSnipShared(b)) patch['필사공개'] = d['필사공개'];
+    if (Object.keys(patch).length) { patchBook(id, patch); nb++; }
+  });
+  Object.entries(S.shDraft.snips).forEach(([id, v]) => {
+    const x = S.snips.find(s => s.ID === id); if (!x || isShared(x) === v || x['유형'] === '메모') return;
+    const data = snipFull(x, { '공개': v }), local = Object.assign({}, x, { '공개': v }); upsertSnipLocal(local); queue({ fn: 'saveSnippet', data, local }); ns++;
+  });
+  S.shDraft = { books: {}, snips: {} }; shRerender();
+  toast(`저장했어요 · 책 ${nb}권 · 문장 ${ns}개`);
+}
+function shLeave() { if (shChanges() && !confirm('저장하지 않은 변경이 있어요. 그냥 나갈까요?')) return; S.shDraft = { books: {}, snips: {} }; goBack(); }
