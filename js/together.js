@@ -74,7 +74,6 @@ function tgLoad() {
 async function tgRefresh(quiet) {
   try { await tgLoad(); } catch (e) { if (!quiet) toast('⚠ ' + (e.message || e)); return; }
   tgNav();
-  await tgAutoJoin();
   if (S.view === 'together') renderTogether();
   else if (S.view === 'pbook') renderPartnerBook();
   else if (S.view === 'plib') renderPartnerLib();
@@ -589,6 +588,12 @@ async function delReact(id) {
 /* ===================================================================
    같이 읽을 책 (v2.11): 둘이 같이 담고, '같이 시작하기'를 누르면 둘 다 읽는 중으로
    =================================================================== */
+// 같이 읽을 책마다 두 사람 상태 (각자 서재 기준)
+function tbWhoHtml(d) {
+  const st = b => !b ? '서재에 없음' : b['상태'] === '읽는중' ? '읽는 중' : b['상태'] === '완독' ? '다 읽음' : b['상태'] === '읽을예정' ? '읽고 싶은 책' : b['상태'];
+  const mb = S.books.find(x => tgSame(x, d)), pb = (S.tg.books || []).find(x => tgSame(x, d));
+  return `<div class="tg-stars"><span>${esc((S.tg.me || {}).name || '나')} · ${st(mb)}</span><span>${esc(tgName())} · ${st(pb)}</span></div>`;
+}
 const TB_FIELDS = ['제목', '저자', '옮긴이', '출판사', '대분류', '중분류', '분량', '표지URL', 'ISBN'];
 function tgTbooksHtml() {
   const list = (S.tg.tbooks || []).filter(t => t.status === '예정');
@@ -596,8 +601,9 @@ function tgTbooksHtml() {
   return `<div class="panel2"><h4>같이 읽을 책 <button class="kw-ai" onclick="openTbAdd()">＋ 담기</button></h4>
     ${list.length ? list.map(t => { const d = t.data || {}; return `<div class="tg-both">${spine(d)}<div class="grow">
       <div class="tg-bt">${esc(d['제목'] || '')}</div><div class="small">${esc(d['저자'] || '')} · ${t.added_by === me ? '내가' : esc(jo(tgName(), '이', '가'))} 담음</div>
-      <div class="inline" style="margin-top:6px"><button class="btn primary" onclick="tbStart('${t.id}')">같이 시작하기</button><button class="btn" onclick="tbRemove('${t.id}')">빼기</button></div></div></div>`; }).join('')
-      : `<div class="small">둘이 다음에 같이 읽고 싶은 책을 담아 두세요. ‘같이 시작하기’를 누르면 두 사람 서재에 모두 읽는 중으로 들어가요.</div>`}</div>`;
+      ${tbWhoHtml(d)}
+      <div class="inline" style="margin-top:6px"><button class="btn" onclick="tbRemove('${t.id}')">빼기</button></div></div></div>`; }).join('')
+      : `<div class="small">둘이 다음에 같이 읽고 싶은 책을 담아 두세요. 내 서재에 없던 책은 내 읽고 싶은 책에도 들어가고, 읽기 시작은 각자 서재에서 해요.</div>`}</div>`;
 }
 let tbCands = [];
 function openTbAdd() {
@@ -650,44 +656,4 @@ async function tbRemove(id) {
   try { await sbq(sbClient().from('together_books').update({ deleted: true }).eq('id', id)); S.tg.tbooks = S.tg.tbooks.filter(x => x.id !== id); LS.set(TG_CACHE, JSON.stringify(S.tg)); renderTogether(); }
   catch (e) { toast('⚠ ' + (e.message || e)); }
 }
-// 내 서재에 '읽는 중'으로: 이미 있으면 상태만 바꾸고, 없으면 새로 넣어요
-async function tbIntoMyLibrary(data) {
-  const mine = S.books.find(b => tgSame(b, data));
-  if (mine) {
-    if (mine['상태'] !== '읽는중') patchBook(mine.ID, Object.assign({ '상태': '읽는중' }, mine['시작일'] && mine['상태'] !== '완독' ? {} : { '시작일': S.today }));
-    return mine;
-  }
-  const d = Object.assign({ ID: '', '상태': '읽는중', '시작일': S.today, '플랫폼': '종이책' }, Object.fromEntries(TB_FIELDS.filter(k => data[k] !== undefined && data[k] !== '').map(k => [k, data[k]])));
-  const saved = await call('saveBook', d); updateBook(saved); return saved;
-}
-async function tbStart(id) {
-  const t = S.tg.tbooks.find(x => x.id === id); if (!t) return;
-  if (!confirm(`『${t.data['제목']}』를 ${jo(tgName(), '과', '와')} 같이 읽기 시작할까요?\n두 사람 서재에 모두 ‘읽는 중’으로 들어가요.`)) return;
-  try {
-    await tbIntoMyLibrary(t.data);
-    const joined = uniq([...(t.joined || []), S.tg.me.id]);
-    await sbq(sbClient().from('together_books').update({ status: '읽는중', started_at: S.today, joined }).eq('id', id));
-    Object.assign(t, { status: '읽는중', started_at: S.today, joined }); LS.set(TG_CACHE, JSON.stringify(S.tg));
-    notifyPartner('together', id);
-    toast('같이 읽기 시작! 내 서재에도 읽는 중으로 넣었어요'); renderTogether();
-  } catch (e) { toast('⚠ ' + (e.message || e)); }
-}
-// 짝꿍이 '같이 시작하기'를 누른 책 → 내 앱을 열 때 내 서재에도 읽는 중으로
-let tbJoining = false;
-async function tgAutoJoin() {
-  if (tbJoining || !S.loaded || !S.tg.partner) return;
-  const me = S.tg.me.id, todo = (S.tg.tbooks || []).filter(t => t.status === '읽는중' && !(t.joined || []).includes(me));
-  if (!todo.length) return;
-  tbJoining = true;
-  try {
-    for (const t of todo) {
-      await tbIntoMyLibrary(t.data);
-      const joined = uniq([...(t.joined || []), me]);
-      await sbq(sbClient().from('together_books').update({ joined }).eq('id', t.id));
-      t.joined = joined;
-      toast(`${jo(tgName(), '과', '와')} 같이 읽기 시작: 『${t.data['제목']}』 · 내 서재에 읽는 중으로 넣었어요`);
-    }
-    LS.set(TG_CACHE, JSON.stringify(S.tg));
-    if (S.view === 'library') renderLibrary();
-  } catch (e) {} finally { tbJoining = false; }
-}
+// (v2.12.4) '같이 시작하기'는 뺐어요 — 한 사람이 누르면 상대 서재가 강제로 바뀌어서. 읽기 시작은 각자 서재에서.

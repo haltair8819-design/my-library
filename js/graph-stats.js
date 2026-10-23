@@ -34,21 +34,25 @@ function keywordStats() {
 /* 기간 고르기 (v2.12.1): 전체 · 연도 · 월 — 그 책을 읽은 때(완독일, 없으면 시작일) 기준 */
 G.period = { y: '', m: '' };
 // 날짜가 없는 책(시작일 · 완독일 둘 다 없음)은 기간을 고르면 빠지고, '전체'에서만 보여요
-const bookDay = b => String((b && (b['완독일'] || b['시작일'])) || '').slice(0, 10);
+// 지금 읽는 중인 책은 연도 · 월이 아니라 '지금 읽는 중' 칸에 따로 모아요
+const bookDay = b => (!b || b['상태'] === '읽는중' || b['상태'] === '읽을예정') ? '' : String(b['완독일'] || b['시작일'] || '').slice(0, 10);
 const snipDay = s => bookDay(book(s['책ID']));
-const gPrefix = () => G.period.y ? (G.period.m ? `${G.period.y}-${G.period.m}` : G.period.y) : '';
-function gSnips() { const p = gPrefix(); return p ? S.snips.filter(s => snipDay(s).startsWith(p)) : S.snips; }
-function gBooks() { const p = gPrefix(); return p ? S.books.filter(b => bookDay(b).startsWith(p)) : S.books; }
+const gReading = () => G.period.y === 'reading';
+const gPrefix = () => G.period.y && !gReading() ? (G.period.m ? `${G.period.y}-${G.period.m}` : G.period.y) : '';
+const isReadingBook = b => !!b && b['상태'] === '읽는중';
+function gSnips() { if (gReading()) return S.snips.filter(s => isReadingBook(book(s['책ID']))); const p = gPrefix(); return p ? S.snips.filter(s => snipDay(s).startsWith(p)) : S.snips; }
+function gBooks() { if (gReading()) return S.books.filter(isReadingBook); const p = gPrefix(); return p ? S.books.filter(b => bookDay(b).startsWith(p)) : S.books; }
+function gPeriodLabel() { return gReading() ? '지금 읽는 중인' : `${G.period.y}년${G.period.m ? ' ' + Number(G.period.m) + '월' : ''}에 읽은`; }
 function gYears() { return uniq(S.snips.map(s => snipDay(s).slice(0, 4)).filter(y => /^\d{4}$/.test(y))).sort().reverse(); }
 function gPeriodHtml() {
-  const ys = gYears(), y = G.period.y;
-  const months = y ? uniq(S.snips.map(snipDay).filter(d => d.startsWith(y)).map(d => d.slice(5, 7)).filter(Boolean)).sort() : [];
+  const ys = gYears(), y = G.period.y, rd = gReading();
+  const months = y && !rd ? uniq(S.snips.map(snipDay).filter(d => d.startsWith(y)).map(d => d.slice(5, 7)).filter(Boolean)).sort() : [];
   return `<div class="g-period"><span>기간</span>
-    <select class="field" onchange="gSetPeriod(this.value, '')"><option value="">전체</option>${ys.map(x => `<option value="${x}" ${x === y ? 'selected' : ''}>${x}년</option>`).join('')}</select>
-    <select class="field" ${y ? '' : 'disabled'} onchange="gSetPeriod('${y}', this.value)"><option value="">${y ? '1년 전체' : '월'}</option>${months.map(m => `<option value="${m}" ${m === G.period.m ? 'selected' : ''}>${Number(m)}월</option>`).join('')}</select>
+    <select class="field" onchange="gSetPeriod(this.value, '')"><option value="">전체</option><option value="reading" ${rd ? 'selected' : ''}>지금 읽는 중</option>${ys.map(x => `<option value="${x}" ${x === y ? 'selected' : ''}>${x}년</option>`).join('')}</select>
+    <select class="field" ${y && !rd ? '' : 'disabled'} onchange="gSetPeriod('${y}', this.value)"><option value="">${y && !rd ? '1년 전체' : '월'}</option>${months.map(m => `<option value="${m}" ${m === G.period.m ? 'selected' : ''}>${Number(m)}월</option>`).join('')}</select>
     <em>${y ? `문장 ${gSnips().length.toLocaleString()}개` : ''}</em></div>`;
 }
-function gSetPeriod(y, m) { G.period = { y, m }; G.focus = null; G.sel = null; G.hl = null; S.gLimit = 30; renderGraphView(); }
+function gSetPeriod(y, m) { G.period = { y, m }; G.focus = null; G.sel = null; G.hl = null; S.gLimit = 5; S.gOpen = {}; renderGraphView(); }
 
 /* 키워드끼리 얼마나 함께 나오나 + 주제 묶음 (데이터가 바뀔 때만 다시 계산) */
 let TOPIC = null, TOPIC_KEY = '';
@@ -122,7 +126,7 @@ function renderGraphView() {
   const tops = [[30, '30개'], [60, '60개'], [0, '전체']];
   const focusNode = G.focus ? graphLabel(G.focus) : '';
   $('v-graph').innerHTML = `
-    <div class="view-head ai-head"><div><h1>그물망</h1><p>${G.period.y ? `<b>${G.period.y}년${G.period.m ? ' ' + Number(G.period.m) + '월' : ''}</b>에 읽은 책만 · ` : ''}${G.focus ? `<b>${esc(focusNode)}</b>과 이어진 것만 보고 있어요.` : G.mode === 'topic' ? '함께 자주 나오는 키워드끼리 이어지고, 비슷한 주제는 같은 색이에요.' : '책과 키워드가 어떻게 이어지는지 보여줘요.'}</p></div>
+    <div class="view-head ai-head"><div><h1>독서 연결망</h1><p>${G.period.y ? `<b>${gPeriodLabel()}</b> 책만 · ` : ''}${G.focus ? `<b>${esc(focusNode)}</b>과 이어진 것만 보고 있어요.` : G.mode === 'topic' ? '함께 자주 나오는 키워드끼리 이어지고, 비슷한 주제는 같은 색이에요.' : '책과 키워드가 어떻게 이어지는지 보여줘요.'}</p></div>
       <button class="btn" onclick="openKwManager()">키워드 정리</button></div>
     <div class="g-search"><input class="field" id="g-q" placeholder="키워드 · 책 찾기" value="${esc(G.q)}" autocomplete="off"><div id="g-sug" class="g-sug"></div></div>
     ${G.focus ? `<div class="chips"><button class="chip on" onclick="gUnfocus()">← 전체 지도로</button></div>` : `
@@ -136,7 +140,7 @@ function renderGraphView() {
     ${G.focus ? '' : gPeriodHtml()}
     ${hasKw ? '' : G.period.y ? `<div class="notice">이 기간에 읽은 책에는 키워드가 달린 문장이 없어요.</div>` : `<div class="notice">아직 키워드가 달린 문장이 없어요. 필사 문장에 키워드를 달면 주제 지도가 채워져요.</div>`}
     <div class="g-wrap">
-      <canvas id="g-canvas" aria-label="키워드 그물망"></canvas>
+      <canvas id="g-canvas" aria-label="독서 연결망"></canvas>
       <div class="g-tools">
         <button onclick="gZoom(1.25)" aria-label="확대">＋</button>
         <button onclick="gZoom(0.8)" aria-label="축소">－</button>
@@ -311,7 +315,7 @@ function renderLegend() {
       <i style="background:${clusterColor(c.i)}"></i>${c.kws.slice(0, 3).map(esc).join(' · ')}</button>`).join('')}
       ${shown.has(99) ? `<span class="g-cl muted"><i style="background:${clusterColor(99)}"></i>혼자 쓰인 키워드</span>` : ''}</div>` : '')
     + (kinds.length ? `<div class="g-kinds">${kinds.join('')}<span class="small">● 키워드 (크기 = 문장 수)</span></div>` : '');
-  box.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const c = Number(b.dataset.c); G.hl = G.hl === c ? null : c; G.sel = null; S.gLimit = 30; renderLegend(); drawGraph(); gInfo(null);
+  box.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const c = Number(b.dataset.c); G.hl = G.hl === c ? null : c; G.sel = null; S.gLimit = 5; S.gOpen = {}; renderLegend(); drawGraph(); gInfo(null);
     if (G.hl != null) setTimeout(() => { const el = $('g-info'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 50); });
 }
 
@@ -381,6 +385,7 @@ function drawGraph() {
 }
 
 function gSelect(n, center) {
+  if (n !== G.sel) { S.gLimit = 5; S.gOpen = {}; }
   G.sel = n && G.sel === n && !center ? null : n;
   if (G.sel) G.hl = null;
   if (G.sel && center) {
@@ -407,7 +412,7 @@ function gInfo(n) {
       box.innerHTML = `<div class="info-card"><div class="ic-head"><h3><i class="dot" style="background:${clusterColor(c.i)}"></i>${c.kws.slice(0, 3).map(esc).join(' · ')}${c.kws.length > 3 ? ' …' : ''}</h3>
           <button class="btn" onclick="G.hl=null;renderLegend();drawGraph();gInfo(null)">묶음 풀기</button></div>
         <div class="sub">키워드 ${c.kws.length}개 · 문장 ${list.length}개 · 책 ${new Set(list.map(s => s['책ID'])).size}권</div>
-        <div class="kw-chips" style="margin:0 0 6px">${c.kws.slice(0, 24).map(k => `<button class="chip" onclick="gFocus('k:${esc(k)}')">#${esc(k)}<b>${T.cnt[k] || 0}</b></button>`).join('')}</div>
+        ${gChips('ck', c.kws.map(k => `<button class="chip" onclick="gFocus('k:${esc(k)}')">#${esc(k)}<b>${T.cnt[k] || 0}</b></button>`), 6)}
         ${gSnipListHtml(list)}</div>`;
       return;
     }
@@ -415,16 +420,16 @@ function gInfo(n) {
   if (!n && G.period.y && !G.focus) {   // 기간을 골랐을 때: 그 기간에 읽은 책의 필사 전부
     const list = gSnips().slice().sort((a, b) => snipDay(b).localeCompare(snipDay(a)) || String(a['책ID']).localeCompare(String(b['책ID'])));
     const bc = {}; list.forEach(s => bc[s['책ID']] = (bc[s['책ID']] || 0) + 1);
-    box.innerHTML = `<div class="info-card"><div class="ic-head"><h3>${G.period.y}년${G.period.m ? ' ' + Number(G.period.m) + '월' : ''}에 읽은 책의 필사</h3></div>
+    box.innerHTML = `<div class="info-card"><div class="ic-head"><h3>${gPeriodLabel()} 책의 필사</h3></div>
       <div class="sub">문장 ${list.length}개 · 책 ${Object.keys(bc).length}권 · 키워드 ${T.ranked.length}개</div>
-      <div class="ic-lb">책</div><div class="kw-chips" style="margin:0 0 6px">${Object.entries(bc).sort((a, b) => b[1] - a[1]).map(([bid, c]) => { const b = book(bid); return b ? `<button class="chip" onclick="go('book','${bid}')">${esc(b['제목'])}<b>${c}</b></button>` : ''; }).join('')}</div>
-      ${T.ranked.length ? `<div class="ic-lb">많이 나온 키워드</div><div class="kw-chips" style="margin:0 0 6px">${T.ranked.slice(0, 16).map(k => `<button class="chip" onclick="gFocus('k:${esc(k)}')">#${esc(k)}<b>${T.cnt[k]}</b></button>`).join('')}</div>` : ''}
+      <div class="ic-lb">책</div>${gChips('pb', Object.entries(bc).sort((a, b) => b[1] - a[1]).map(([bid, c]) => { const b = book(bid); return b ? `<button class="chip" onclick="go('book','${bid}')">${esc(b['제목'])}<b>${c}</b></button>` : ''; }).filter(Boolean), 4)}
+      ${T.ranked.length ? `<div class="ic-lb">많이 나온 키워드</div>${gChips('pk', T.ranked.map(k => `<button class="chip" onclick="gFocus('k:${esc(k)}')">#${esc(k)}<b>${T.cnt[k]}</b></button>`), 6)}` : ''}
       ${gSnipListHtml(list)}</div>`;
     return;
   }
   if (!n) {
     box.innerHTML = `<div class="drill">점을 누르면 이어진 키워드와 책, 문장을 보여줘요. 색 이름표를 누르면 그 주제만 밝게 보여요. 두 손가락으로 확대, 끌어서 이동할 수 있어요.</div>
-      ${G.focus ? '' : `<div class="kw-chips">${T.ranked.slice(0, 20).map(k => `<button class="chip" onclick="gFocus('k:${esc(k)}')">#${esc(k)}<b>${T.cnt[k]}</b></button>`).join('')}</div>`}`;
+      ${G.focus ? '' : gChips('dk', T.ranked.slice(0, 40).map(k => `<button class="chip" onclick="gFocus('k:${esc(k)}')">#${esc(k)}<b>${T.cnt[k]}</b></button>`), 8)}`;
     return;
   }
   if (n.type === 'kw') {
@@ -433,16 +438,13 @@ function gInfo(n) {
     const nb = new Set(list.map(s => s['책ID']));
     const rel = relatedKw(k, 10);
     const books = Object.entries(T.kwBooks[k] || {}).sort((a, b) => b[1] - a[1]).map(([bid, c]) => [book(bid), c]).filter(x => x[0]);
-    const lim = S.gLimit || 30;
     box.innerHTML = `<div class="info-card">
       <div class="ic-head"><h3><i class="dot" style="background:${clusterColor(T.clusterOf[k])}"></i>#${esc(k)}</h3>
         ${G.focus === n.id ? '' : `<button class="btn" onclick="gFocus('k:${esc(k)}')">이 주제만 보기</button>`}</div>
       <div class="sub">문장 ${list.length}개 · 책 ${nb.size}권</div>
-      ${rel.length ? `<div class="ic-lb">함께 자주 나온 키워드</div><div class="kw-chips" style="margin:0 0 6px">${rel.map(r => `<button class="chip" onclick="gFocus('k:${esc(r.k)}')">#${esc(r.k)}<b>${r.c}</b></button>`).join('')}</div>` : ''}
-      <div class="ic-lb">이 키워드가 나온 책</div><div class="kw-chips" style="margin:0 0 6px">${books.slice(0, 12).map(([b, c]) => `<button class="chip" onclick="go('book','${b.ID}')">${esc(b['제목'])}<b>${c}</b></button>`).join('')}</div>
-      <div class="ic-lb">문장 <span class="small">누르면 그 문장으로 가요</span></div>
-      ${list.slice(0, lim).map(s => snipMini(s)).join('')}
-      ${list.length > lim ? `<button class="btn" style="width:100%;margin-top:8px" onclick="S.gLimit=${lim + 30};gInfo(G.sel)">${list.length - lim}개 더 보기</button>` : ''}</div>`;
+      ${rel.length ? `<div class="ic-lb">함께 자주 나온 키워드</div>${gChips('kr', rel.map(r => `<button class="chip" onclick="gFocus('k:${esc(r.k)}')">#${esc(r.k)}<b>${r.c}</b></button>`), 5)}` : ''}
+      <div class="ic-lb">이 키워드가 나온 책</div>${gChips('kb', books.map(([b, c]) => `<button class="chip" onclick="go('book','${b.ID}')">${esc(b['제목'])}<b>${c}</b></button>`), 4)}
+      ${gSnipListHtml(list)}</div>`;
   } else if (n.type === 'book') {
     const b = book(n.ref);
     const kws = Object.entries(T.bookKw[b.ID] || {}).sort((a, c) => c[1] - a[1]);
@@ -457,11 +459,18 @@ function gInfo(n) {
       ${books.map(b => `<button class="mini" onclick="go('book','${b.ID}')"><b>${esc(b['제목'])}</b><span>${esc(b['저자'])}</span></button>`).join('')}</div>`;
   }
 }
+// 칩 묶음: 처음엔 몇 개만, '+ n개 더'로 펼치기
+S.gOpen = {};
+function gChips(key, items, n) {
+  if (!items.length) return '';
+  const open = S.gOpen[key], shown = open ? items : items.slice(0, n);
+  return `<div class="kw-chips" style="margin:0 0 6px">${shown.join('')}${items.length > n ? `<button class="chip more-chip" onclick="S.gOpen['${key}']=${open ? 'false' : 'true'};gInfo(G.sel)">${open ? '접기' : `+ ${items.length - n}개 더`}</button>` : ''}</div>`;
+}
 function gSnipListHtml(list) {
-  const lim = S.gLimit || 30;
+  const lim = S.gLimit || 5;
   return `<div class="ic-lb">문장 <span class="small">누르면 그 문장으로 가요</span></div>
     ${list.slice(0, lim).map(s => snipMini(s)).join('') || '<div class="small">문장이 없어요</div>'}
-    ${list.length > lim ? `<button class="btn" style="width:100%;margin-top:8px" onclick="S.gLimit=${lim + 30};gInfo(G.sel)">${list.length - lim}개 더 보기</button>` : ''}`;
+    ${list.length > lim ? `<button class="btn" style="width:100%;margin-top:8px" onclick="S.gLimit=${lim + 20};gInfo(G.sel)">더보기 (${list.length - lim}개 남음)</button>` : ''}`;
 }
 function snipMini(s) {
   const b = book(s['책ID']) || {};
