@@ -71,8 +71,16 @@ function setMode(m) {
   if (S.loaded) show(S.view);
 }
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (curMode() === 'system') { applyMode(); if (S.loaded) show(S.view); } }); } catch (e) {}
+// 앱을 잠깐 나갔다 오는 사이 폰 밝기가 바뀌었을 때 (앱 안에서는 change가 안 올 때가 있어요)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || curMode() !== 'system') return;
+  const was = document.documentElement.dataset.mode; applyMode();
+  if (S.loaded && document.documentElement.dataset.mode !== was) show(S.view);
+});
 function modePickerHtml() {
-  return `<div class="seg mode-seg" style="margin-top:10px">${MODES.map(([k, t]) => `<button class="${curMode() === k ? 'on' : ''}" onclick="setMode('${k}');openSettings()">${t}</button>`).join('')}</div>`;
+  const sysDark = (() => { try { return matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { return false; } })();
+  return `<div class="seg mode-seg" style="margin-top:10px">${MODES.map(([k, t]) => `<button class="${curMode() === k ? 'on' : ''}" onclick="setMode('${k}');openSettings()">${t}</button>`).join('')}</div>
+    ${curMode() === 'system' ? `<div class="small" style="margin-top:8px;line-height:1.6">지금 앱이 받은 폰 설정: <b>${sysDark ? '어둡게' : '밝게'}</b>${sysDark ? '' : ` · 폰은 다크 모드인데 밝게로 나오면 <b>Chrome → 설정 → 테마</b>가 ‘시스템 기본값’인지 확인해 주세요 (이 앱은 크롬으로 열려서 크롬 테마를 따라가요)`}</div>` : ''}`;
 }
 
 

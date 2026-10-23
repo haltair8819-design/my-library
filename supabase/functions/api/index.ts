@@ -475,7 +475,7 @@ async function vapidKeys(admin: any) {
 }
 type Push = { title: string; body: string; url?: string; tag?: string };
 // 한 사람의 모든 기기에 보내기. pref: 'due' | 'together' (기기 설정에서 끈 건 건너뜀)
-async function pushTo(admin: any, uid: string, msg: Push, pref?: string) {
+async function pushTo(admin: any, uid: string, msg: Push, pref?: string, errors?: string[]) {
   const keys = await vapidKeys(admin);
   const { data: subs } = await admin.from('push_subs').select('endpoint, p256dh, auth, prefs').eq('user_id', uid);
   let sent = 0;
@@ -485,17 +485,21 @@ async function pushTo(admin: any, uid: string, msg: Push, pref?: string) {
       const d = webpush.generateRequestDetails({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(msg),
         { TTL: 12 * 3600, urgency: 'normal', vapidDetails: { subject: 'mailto:haltair8819@gmail.com', publicKey: keys.pub, privateKey: keys.priv } });
       const res = await fetch(d.endpoint, { method: 'POST', headers: d.headers as Record<string, string>, body: d.body });
-      if (res.status === 404 || res.status === 410) await admin.from('push_subs').delete().eq('endpoint', s.endpoint);   // 앱을 지운 기기
+      if (res.status === 404 || res.status === 410) { await admin.from('push_subs').delete().eq('endpoint', s.endpoint); errors?.push(`${new URL(s.endpoint).hostname} ${res.status} (만료돼서 지웠어요)`); }   // 앱을 지운 기기
       else if (res.ok) sent++;
-    } catch (_) { /* 한 기기 실패는 넘어가요 */ }
+      else errors?.push(`${new URL(s.endpoint).hostname} ${res.status} ${clip(await res.text(), 120)}`);
+    } catch (e) { errors?.push(String((e as Error).message || e)); }   // 한 기기 실패는 넘어가요
   }
   return sent;
 }
 async function pushKey(_ctx: Ctx) { return (await vapidKeys(adminClient())).pub; }
 async function pushTest(ctx: Ctx) {
-  const n = await pushTo(adminClient(), ctx.uid, { title: '나의 서재', body: '알림이 잘 와요 📚', url: './', tag: 'test' });
-  if (!n) throw new Error('알림을 보낼 기기가 없어요. 알림 켜기를 먼저 눌러 주세요');
-  return n;
+  const admin = adminClient(), errors: string[] = [];
+  const { count } = await admin.from('push_subs').select('endpoint', { count: 'exact', head: true }).eq('user_id', ctx.uid);
+  if (!count) throw new Error('서버에 알림 받을 기기가 없어요. 스위치를 껐다가 다시 켜 주세요');
+  const sent = await pushTo(admin, ctx.uid, { title: '나의 서재', body: '알림이 잘 와요 📚', url: './', tag: 'test' }, undefined, errors);
+  if (!sent) throw new Error('보내기 실패: ' + (errors.join(' / ') || '알 수 없는 이유'));
+  return { sent, errors };
 }
 // 짝꿍에게 알리기: 내가 남긴 반응 · 같이 읽기를 짝꿍 폰에
 async function notify(ctx: Ctx, kind: string, id: string) {

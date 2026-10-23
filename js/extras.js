@@ -47,7 +47,11 @@ async function drawNotify() {
   const el = $('set-notify'); if (!el) return;
   const sup = pushSupported(), perm = sup ? Notification.permission : 'unsupported', p = pushPrefs();
   const sub = sup ? await pushSub() : null;
-  const on = !!sub && perm === 'granted' && !!LS.get('push_on');
+  // 서버에 이 기기가 저장돼 있는지도 확인 (상태 줄에 보여 줘요)
+  let saved = null;
+  if (sub) { try { saved = !!(await sbq(sbClient().from('push_subs').select('endpoint').eq('endpoint', sub.endpoint).maybeSingle())); } catch (e) { saved = null; } }
+  const on = !!sub && perm !== 'denied' && !!LS.get('push_on');
+  const diag = `권한 ${({ granted: '허용', denied: '차단', default: '아직', unsupported: '지원 안 함' })[perm] || perm} · 기기 등록 ${sub ? '있음' : '없음'} · 서버 ${saved === null ? '–' : saved ? '저장됨' : '없음'}${sub ? ' · ' + esc(new URL(sub.endpoint).hostname) : ''}`;
   const guide = `<ol class="set-guide"><li>폰 <b>설정 → 애플리케이션 → 나의 서재 → 알림</b>에서 <b>알림 허용</b>을 켜요</li>
       <li>목록에 ‘나의 서재’ 알림이 없으면 <b>설정 → 애플리케이션 → Chrome → 알림</b>도 켜져 있는지 봐요 (앱이 크롬으로 열려서요)</li>
       <li>앱으로 돌아와서 위 스위치를 다시 켜요</li></ol>`;
@@ -61,7 +65,8 @@ async function drawNotify() {
       <label class="tg-check"><input type="checkbox" ${p.due ? 'checked' : ''} ${on ? '' : 'disabled'} onchange="pushPref('due', this.checked)"> 📚 반납일 알림 <span class="small">전날 저녁 8시 · 당일 아침 8시</span></label>
       <label class="tg-check"><input type="checkbox" ${p.together ? 'checked' : ''} ${on ? '' : 'disabled'} onchange="pushPref('together', this.checked)"> 💬 짝꿍 소식 <span class="small">내 문장에 ♡ · 한마디, 같이 읽을 책</span></label>
       ${on ? `<div class="actions" style="margin-top:10px"><button class="btn grow" onclick="pushTestUI(this)">테스트 알림 보내기</button></div>` : ''}
-    </div>`;
+    </div>
+    <div class="small" style="margin-top:10px;color:var(--faint)">${diag}</div>`;
 }
 async function pushToggle(want) {
   pushErr = ''; pushBusy = true; drawNotify();
@@ -77,8 +82,8 @@ async function pushPref(k, v) {
 }
 async function pushTestUI(btn) {
   btn.disabled = true; btn.textContent = '보내는 중…';
-  try { await sbFn('pushTest', []); toast('보냈어요. 몇 초 안에 알림이 와요'); }
-  catch (e) { toast('⚠ ' + (e.message || e)); }
+  try { const r = await sbFn('pushTest', []); toast(`보냈어요 (${r && r.sent != null ? r.sent : r}대). 몇 초 안에 알림이 와요`); if (r && r.errors && r.errors.length) { pushErr = '보내기 실패: ' + r.errors.join(' / '); drawNotify(); } }
+  catch (e) { pushErr = e.message || String(e); toast('⚠ ' + pushErr); drawNotify(); }
   finally { btn.disabled = false; btn.textContent = '테스트 알림 보내기'; }
 }
 // 앱을 열 때 알림 기기 정보를 한 번 새로 저장 (주인이 바뀌었거나 키가 바뀐 경우 대비)
