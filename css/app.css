@@ -749,3 +749,14 @@ html[data-mode="dark"] .react-bar button.on{background:#3A2420;border-color:#6B3
 .tg-me-row{display:flex;gap:10px;align-items:center;width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;color:inherit}
 .tg-me-row b{font-size:14.5px}
 .tg-me-row .small{margin-left:auto}
+.tg-tot{margin-top:4px;color:var(--faint)}
+.tg-stars{display:flex;gap:14px;font-size:12px;color:var(--sub);margin-top:6px}
+.tg-stars i{font-style:normal;margin-left:2px}
+.tg-rv{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);cursor:default}
+.tg-rv:first-of-type{border-top:0;padding-top:2px}
+.tg-rv[onclick]{cursor:pointer}
+.tg-rv .grow>div+div{margin-top:4px;line-height:1.55}
+.tg-also-rv{font-size:13px;margin:4px 0 2px;line-height:1.5}
+.g-period{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;color:var(--sub)}
+.g-period .field{width:auto;min-width:96px;padding:6px 10px;margin:0}
+.g-period em{font-style:normal;color:var(--faint);font-size:12px}

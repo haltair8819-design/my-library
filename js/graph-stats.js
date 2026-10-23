@@ -31,13 +31,32 @@ function keywordStats() {
   return Object.values(m).sort((a, b) => b.n - a.n || b.books.size - a.books.size);
 }
 
+/* 기간 고르기 (v2.12.1): 전체 · 연도 · 월 — 그 책을 읽은 때(완독일, 없으면 시작일) 기준 */
+G.period = { y: '', m: '' };
+const bookDay = b => String((b && (b['완독일'] || b['시작일'] || b['등록일'])) || '').slice(0, 10);
+const snipDay = s => bookDay(book(s['책ID'])) || String(s['작성일'] || '').slice(0, 10);
+const gPrefix = () => G.period.y ? (G.period.m ? `${G.period.y}-${G.period.m}` : G.period.y) : '';
+function gSnips() { const p = gPrefix(); return p ? S.snips.filter(s => snipDay(s).startsWith(p)) : S.snips; }
+function gBooks() { const p = gPrefix(); return p ? S.books.filter(b => bookDay(b).startsWith(p)) : S.books; }
+function gYears() { return uniq(S.snips.map(s => snipDay(s).slice(0, 4)).filter(y => /^\d{4}$/.test(y))).sort().reverse(); }
+function gPeriodHtml() {
+  const ys = gYears(), y = G.period.y;
+  const months = y ? uniq(S.snips.map(snipDay).filter(d => d.startsWith(y)).map(d => d.slice(5, 7)).filter(Boolean)).sort() : [];
+  return `<div class="g-period"><span>기간</span>
+    <select class="field" onchange="gSetPeriod(this.value, '')"><option value="">전체</option>${ys.map(x => `<option value="${x}" ${x === y ? 'selected' : ''}>${x}년</option>`).join('')}</select>
+    <select class="field" ${y ? '' : 'disabled'} onchange="gSetPeriod('${y}', this.value)"><option value="">${y ? '1년 전체' : '월'}</option>${months.map(m => `<option value="${m}" ${m === G.period.m ? 'selected' : ''}>${Number(m)}월</option>`).join('')}</select>
+    <em>${y ? `문장 ${gSnips().length.toLocaleString()}개` : ''}</em></div>`;
+}
+function gSetPeriod(y, m) { G.period = { y, m }; G.focus = null; G.sel = null; G.hl = null; S.gLimit = 30; renderGraphView(); }
+
 /* 키워드끼리 얼마나 함께 나오나 + 주제 묶음 (데이터가 바뀔 때만 다시 계산) */
 let TOPIC = null, TOPIC_KEY = '';
 function topicData() {
-  const key = S.snips.length + ':' + S.snips.reduce((t, s) => t + String(s['키워드'] || '').length, 0);
+  const SN = gSnips();
+  const key = gPrefix() + '|' + SN.length + ':' + SN.reduce((t, s) => t + String(s['키워드'] || '').length, 0);
   if (TOPIC && TOPIC_KEY === key) return TOPIC;
   const cnt = {}, co = {}, kwBooks = {}, bookKw = {};
-  S.snips.forEach(s => {
+  SN.forEach(s => {
     const ks = uniq(splitKw(s['키워드'])); const bid = s['책ID'];
     ks.forEach(k => { cnt[k] = (cnt[k] || 0) + 1; (kwBooks[k] = kwBooks[k] || {})[bid] = (kwBooks[k][bid] || 0) + 1; (bookKw[bid] = bookKw[bid] || {})[k] = (bookKw[bid][k] || 0) + 1; });
     for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {
@@ -102,7 +121,7 @@ function renderGraphView() {
   const tops = [[30, '30개'], [60, '60개'], [0, '전체']];
   const focusNode = G.focus ? graphLabel(G.focus) : '';
   $('v-graph').innerHTML = `
-    <div class="view-head ai-head"><div><h1>그물망</h1><p>${G.focus ? `<b>${esc(focusNode)}</b>과 이어진 것만 보고 있어요.` : G.mode === 'topic' ? '함께 자주 나오는 키워드끼리 이어지고, 비슷한 주제는 같은 색이에요.' : '책과 키워드가 어떻게 이어지는지 보여줘요.'}</p></div>
+    <div class="view-head ai-head"><div><h1>그물망</h1><p>${G.period.y ? `<b>${G.period.y}년${G.period.m ? ' ' + Number(G.period.m) + '월' : ''}</b>에 읽은 책만 · ` : ''}${G.focus ? `<b>${esc(focusNode)}</b>과 이어진 것만 보고 있어요.` : G.mode === 'topic' ? '함께 자주 나오는 키워드끼리 이어지고, 비슷한 주제는 같은 색이에요.' : '책과 키워드가 어떻게 이어지는지 보여줘요.'}</p></div>
       <button class="btn" onclick="openKwManager()">키워드 정리</button></div>
     <div class="g-search"><input class="field" id="g-q" placeholder="키워드 · 책 찾기" value="${esc(G.q)}" autocomplete="off"><div id="g-sug" class="g-sug"></div></div>
     ${G.focus ? `<div class="chips"><button class="chip on" onclick="gUnfocus()">← 전체 지도로</button></div>` : `
@@ -113,7 +132,8 @@ function renderGraphView() {
       ${tops.map(([n, t]) => `<button class="chip ${G.top === n ? 'on' : ''}" data-top="${n}">${t}</button>`).join('')}
       ${G.mode === 'book' ? `<span class="g-sep"></span>${[['au', '저자'], ['cat', '개인분류']].map(([k, t]) => `<button class="chip ${G.opt[k] ? 'on' : ''}" data-o="${k}">${t}</button>`).join('')}` : ''}
     </div>`}
-    ${hasKw ? '' : `<div class="notice">아직 키워드가 달린 문장이 없어요. 필사 문장에 키워드를 달면 주제 지도가 채워져요.</div>`}
+    ${G.focus ? '' : gPeriodHtml()}
+    ${hasKw ? '' : G.period.y ? `<div class="notice">이 기간에 읽은 책에는 키워드가 달린 문장이 없어요.</div>` : `<div class="notice">아직 키워드가 달린 문장이 없어요. 필사 문장에 키워드를 달면 주제 지도가 채워져요.</div>`}
     <div class="g-wrap">
       <canvas id="g-canvas" aria-label="키워드 그물망"></canvas>
       <div class="g-tools">
@@ -210,14 +230,14 @@ function buildGraph() {
     });
     if (G.opt.au) {
       const m = {};
-      S.books.forEach(b => splitAuthors(b['저자']).forEach(a => (m[a] = m[a] || []).push(b)));
+      gBooks().forEach(b => splitAuthors(b['저자']).forEach(a => (m[a] = m[a] || []).push(b)));
       Object.entries(m).filter(([, bs]) => bs.length >= 2).forEach(([a, bs]) => bs.forEach(b => {
         add('b:' + b.ID, 'book', b['제목'], b.ID); add('a:' + a, 'au', a, a, bs.length); link('b:' + b.ID, 'a:' + a, 1);
       }));
     }
     if (G.opt.cat) {
       const m = {};
-      S.books.forEach(b => { const c = String(b['개인분류'] || '').trim(); if (c) (m[c] = m[c] || []).push(b); });
+      gBooks().forEach(b => { const c = String(b['개인분류'] || '').trim(); if (c) (m[c] = m[c] || []).push(b); });
       Object.entries(m).filter(([, bs]) => bs.length >= 2).forEach(([c, bs]) => bs.forEach(b => {
         add('b:' + b.ID, 'book', b['제목'], b.ID); add('c:' + c, 'cat', c, c, bs.length); link('b:' + b.ID, 'c:' + c, 1);
       }));
@@ -385,7 +405,7 @@ function gInfo(n) {
   }
   if (n.type === 'kw') {
     const k = n.ref;
-    const list = S.snips.filter(s => splitKw(s['키워드']).includes(k));
+    const list = gSnips().filter(s => splitKw(s['키워드']).includes(k));
     const nb = new Set(list.map(s => s['책ID']));
     const rel = relatedKw(k, 10);
     const books = Object.entries(T.kwBooks[k] || {}).sort((a, b) => b[1] - a[1]).map(([bid, c]) => [book(bid), c]).filter(x => x[0]);

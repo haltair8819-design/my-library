@@ -141,17 +141,24 @@ function renderTogether() {
   const me = T.me || {}, pn = tgName();
   const mineS = tgMonthStats(S.books, myLogs()), theirS = tgMonthStats(T.books, T.logs);
   const statCol = (name, s, cls) => `<div class="tg-col" onclick="openProfile('${cls === 'p' ? 'p' : 'me'}')">${avatar(name, cls)}<b>${esc(name)} <span class="small" style="font-weight:400">서재 ›</span></b>
-    <div class="tg-num"><span><b>${s.pages.toLocaleString()}</b>쪽</span><span><b>${s.days}</b>일 읽음</span><span><b>${s.done}</b>권 완독</span></div></div>`;
-  // 같이 읽는 책: 둘 다 서재에 있고, 한 명이라도 읽는 중
-  const both = T.books.map(pb => ({ pb, mb: tgMine(pb) })).filter(x => x.mb && (x.pb['상태'] === '읽는중' || x.mb['상태'] === '읽는중'));
+    <div class="tg-num"><span><b>${s.pages.toLocaleString()}</b>쪽 읽음</span><span><b>${s.days}</b>일 기록</span><span><b>${s.done}</b>권 완독</span><span class="tg-tot">서재 ${s.total}권</span></div></div>`;
+  mineS.total = S.books.length; theirS.total = T.books.length;
+  // 둘 다 서재에 있는 책: 읽는 중 → 다 읽은 책 → 읽고 싶은 책
+  const rank = x => (x.pb['상태'] === '읽는중' || x.mb['상태'] === '읽는중') ? 0 : (x.pb['상태'] === '완독' && x.mb['상태'] === '완독') ? 1 : 2;
+  const both = T.books.map(pb => ({ pb, mb: tgMine(pb) })).filter(x => x.mb)
+    .sort((a, b) => rank(a) - rank(b) || String(bookDayT(b.pb)).localeCompare(String(bookDayT(a.pb))));
+  const nRead = both.filter(x => rank(x) === 0).length;
   const reading = T.books.filter(b => b['상태'] === '읽는중');
   const bar = (name, b, cls) => { const p = tgProg(b); return `<div class="tg-prog ${cls}"><span>${esc(name)}</span><div class="bar"><i style="width:${p.pct}%"></i></div><em>${b['상태'] === '완독' ? '완독' : p.cur ? 'p.' + p.cur + (p.total ? ` · ${p.pct}%` : '') : b['상태'] === '읽을예정' ? '읽고 싶은' : '–'}</em></div>`; };
   el.innerHTML = `
     <div class="view-head tg-head"><div><h1>함께</h1><p><button class="tg-pbtn" onclick="openProfile('me')">${avatar(me.name)}</button><button class="tg-pbtn" onclick="openProfile('p')">${avatar(pn, 'p')}</button> ${esc(me.name)} · ${esc(pn)}</p></div>
       <button class="iconbtn" onclick="openShareSettings()">보여줄 것</button></div>
     <div class="panel2"><h4>둘의 ${Number(tgMonth().slice(5))}월</h4><div class="tg-cols">${statCol(me.name, mineS, '')}${statCol(pn, theirS, 'p')}</div></div>
-    ${both.length ? `<div class="panel2"><h4>같이 읽는 책</h4>${both.map(({ pb, mb }) => `<div class="tg-both" onclick="openPartnerBook('${pb.ID}')">${spine(mb)}<div class="grow">
-      <div class="tg-bt">${esc(mb['제목'])}</div>${bar(me.name, mb, '')}${bar(pn, pb, 'p')}</div></div>`).join('')}</div>` : ''}
+    ${both.length ? `<div class="panel2"><h4>둘 다 있는 책 <span class="small" style="font-weight:400">${both.length}권${nRead ? ` · 같이 읽는 중 ${nRead}` : ''}</span></h4>
+      ${(S.bothAll ? both : both.slice(0, 4)).map(({ pb, mb }) => `<div class="tg-both" onclick="openPartnerBook('${pb.ID}')">${spine(mb)}<div class="grow">
+      <div class="tg-bt">${esc(mb['제목'])}</div>${bar(me.name, mb, '')}${bar(pn, pb, 'p')}
+      ${mb['별점'] || pb['별점'] ? `<div class="tg-stars"><span>${esc(me.name)} <i class="stars">${mb['별점'] ? '★'.repeat(Number(mb['별점']) || 0) : '–'}</i></span><span>${esc(pn)} <i class="stars">${pb['별점'] ? '★'.repeat(Number(pb['별점']) || 0) : '–'}</i></span></div>` : ''}</div></div>`).join('')}
+      ${both.length > 4 ? `<button class="btn tg-more" onclick="S.bothAll=!S.bothAll;renderTogether()">${S.bothAll ? '접기' : `모두 보기 (${both.length}권)`}</button>` : ''}</div>` : ''}
     ${tgTbooksHtml()}
     <div class="panel2"><h4>${esc(pn)}의 서재 <button class="kw-ai" onclick="openProfile('p')">전체 ${T.books.length}권 보기 →</button></h4>
       ${reading.length ? `<div class="tg-shelf">${reading.map(b => `<button onclick="openPartnerBook('${b.ID}')">${spine(b)}<span>${esc(b['제목'])}</span><em>${tgProg(b).pct ? tgProg(b).pct + '%' : '읽는 중'}</em></button>`).join('')}</div>`
@@ -328,8 +335,8 @@ function renderPartnerBook() {
       ${mine && b['상태'] !== '읽을예정' ? (() => { const q = tgProg(mine); return `<div class="tg-prog"><span>나</span><div class="bar"><i style="width:${q.pct}%"></i></div><em>${mine['상태'] === '완독' ? '완독' : q.cur ? 'p.' + q.cur : mine['상태'] === '읽을예정' ? '읽고 싶은' : '–'}</em></div>`; })() : ''}
       ${b['시작일'] ? `<div class="small" style="margin-top:6px">${esc(period(b))}${b['완독일수'] ? ` · ${esc(b['완독일수'])}일` : ''}</div>` : ''}
       ${days.length ? `<div class="small" style="margin-top:6px">최근: ${days.slice(0, 5).map(([d, n]) => `${d.slice(5).replace('-', '.')} ${n}쪽`).join(' · ')}</div>` : ''}</div>
-    ${b['별점'] || b['한줄평'] ? `<div class="panel2"><h4>별점 · 한줄평</h4>${b['별점'] ? `<span class="stars">${starText(b['별점'])}</span>` : ''}
-      ${b['한줄평'] ? `<div class="${spoilReview ? 'spoil' : ''}" style="margin-top:4px" ${spoilReview ? `onclick="this.classList.remove('spoil')"` : ''}>${spoilReview ? '<div class="spoil-l">🙈 다 읽고 보면 좋아요 · 눌러서 보기</div>' : ''}<div>${esc(b['한줄평'])}</div></div>` : ''}</div>` : ''}
+    ${b['별점'] || b['한줄평'] || (mine && (mine['별점'] || mine['한줄평'])) ? `<div class="panel2"><h4>별점 · 한줄평</h4>
+      ${tgReviewRow(pn, 'p', b, spoilReview)}${mine && (mine['별점'] || mine['한줄평']) ? tgReviewRow('나', '', mine, false, `openRating('${mine.ID}')`) : mine && mine['상태'] === '완독' ? `<div class="tg-rv" onclick="openRating('${mine.ID}')">${avatar((S.tg.me || {}).name)}<div class="small">내 별점 · 한줄평 남기기 ›</div></div>` : ''}</div>` : ''}
     <div class="sec-head tight"><h2>${esc(jo(pn, '이', '가'))} 보여준 문장 <span class="small" style="font-weight:400">${snips.length}개</span></h2></div>
     ${guard && snips.some(hide) ? `<div class="sec-sub">내가 읽은 p.${myCur || 0} 뒤는 가려 뒀어요</div>` : ''}
     <div>${snips.map(sHtml).join('') || `<div class="empty">아직 보여준 문장이 없어요</div>`}</div>`;
@@ -349,8 +356,17 @@ function tgBookHtml(b) {
   const pb = tgTheirs(b); if (!pb) return '';
   const p = tgProg(pb), n = S.tg.snips.filter(s => s['책ID'] === pb.ID).length;
   return `<div class="panel2 tg-also" onclick="openPartnerBook('${pb.ID}')">${avatar(tgName(), 'p')}<div class="grow"><b>${esc(tgName())}</b>${pb['상태'] === '완독' ? '도 다 읽었어요' : pb['상태'] === '읽는중' ? `도 읽는 중${p.cur ? ` · p.${p.cur}${p.total ? ` (${p.pct}%)` : ''}` : ''}` : '도 읽고 싶대요'}
+    ${pb['별점'] || pb['한줄평'] ? (() => { const spoil = pb['한줄평'] && tgSpoilOn() && b['상태'] !== '완독';
+      return `<div class="tg-also-rv">${pb['별점'] ? `<span class="stars">${starText(pb['별점'])}</span>` : ''}${pb['한줄평'] ? (spoil ? ' <span class="small">· 한줄평은 다 읽고 보기 🙈</span>' : `<div>“${esc(pb['한줄평'])}”</div>`) : ''}</div>`; })() : ''}
     ${n ? `<div class="small">보여준 문장 ${n}개 →</div>` : '<div class="small">눌러서 보기 →</div>'}</div></div>`;
 }
+// 별점 · 한줄평 한 줄 (짝꿍 · 나)
+function tgReviewRow(name, cls, b, spoil, onclick) {
+  if (!b['별점'] && !b['한줄평']) return `<div class="tg-rv">${avatar(name, cls)}<div class="small">아직 별점 · 한줄평이 없어요</div></div>`;
+  return `<div class="tg-rv" ${onclick ? `onclick="${onclick}"` : ''}>${avatar(name, cls)}<div class="grow"><div><b>${esc(name)}</b> ${b['별점'] ? `<span class="stars">${starText(b['별점'])}</span>` : ''}</div>
+    ${b['한줄평'] ? `<div class="${spoil ? 'spoil' : ''}" ${spoil ? `onclick="event.stopPropagation();this.classList.remove('spoil')"` : ''}>${spoil ? '<div class="spoil-l">🙈 다 읽고 보면 좋아요 · 눌러서 보기</div>' : ''}<div>${esc(b['한줄평'])}</div></div>` : ''}</div></div>`;
+}
+const bookDayT = b => String(b['완독일'] || b['시작일'] || b['등록일'] || '');
 function tgShareTag(b) {
   if (!togetherOn()) return '';
   return `<span class="tag tap" onclick="tgToggleBook('${b.ID}')" title="짝꿍에게 이 책 보여주기">${bookShared(b) ? '👀 보여주는 중' : '🔒 나만 보기'}</span>`;
