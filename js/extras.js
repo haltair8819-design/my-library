@@ -187,3 +187,15 @@ async function openBarcode(onCode) {
   };
   tick();
 }
+
+/* 읽고 싶은 책에 잘못 들어가 있던 시작일 한 번 정리 (v2.12) */
+(() => {
+  const t = setInterval(() => {
+    if (!S.loaded) return; clearInterval(t);
+    if (LS.get('fix_wish_start_v1')) return;
+    const list = S.books.filter(b => b['상태'] === '읽을예정' && b['시작일']);
+    list.forEach(b => patchBook(b.ID, { '시작일': '' }));
+    LS.set('fix_wish_start_v1', '1');
+    if (list.length && S.view === 'library') renderLibrary();
+  }, 500);
+})();

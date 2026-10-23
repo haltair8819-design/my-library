@@ -731,3 +731,21 @@ html[data-mode="dark"] .react-bar button.on{background:#3A2420;border-color:#6B3
 .set-sec+.panel2,.set-sec+.more-list{margin-top:0}
 .set-guide{margin:8px 0 0;padding-left:20px;line-height:1.7}
 .dim{opacity:.5}
+
+/* ===== v2.12 프로필 ===== */
+.tg-av.ph{padding:0;overflow:hidden;background:var(--line)}
+.tg-av.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.tg-av.big{width:64px;height:64px;font-size:26px}
+.tg-pbtn{border:0;background:none;padding:0;cursor:pointer;display:inline-flex;border-radius:50%}
+.tg-head p .tg-pbtn+.tg-pbtn{margin-left:-6px}
+.tg-head p .tg-av{box-shadow:0 0 0 2px var(--card)}
+.tg-col{cursor:pointer}
+.tg-prof{display:flex;gap:14px;align-items:center;margin:8px 0 6px}
+.tg-prof h1{margin:0;font-size:22px}
+.tg-prof p{margin:4px 0 0}
+.tg-more{width:100%;margin-top:12px}
+.tg-year{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.tg-year summary{font-weight:700;font-size:14px;cursor:pointer;padding:4px 0}
+.tg-me-row{display:flex;gap:10px;align-items:center;width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;color:inherit}
+.tg-me-row b{font-size:14.5px}
+.tg-me-row .small{margin-left:auto}

@@ -34,7 +34,7 @@ function renderSettingsView() {
     ${sb ? `<div class="set-sec">알림</div><div class="panel2" id="set-notify"><div class="drill"><span class="spin"></span> 확인하는 중…</div></div>` : ''}
     ${sb ? `<div class="set-sec">같이 쓰기</div>
     <div class="panel2"><label class="tg-check" style="margin-top:0"><input type="checkbox" ${togetherOn() ? 'checked' : ''} onchange="tgSaveOpt('together', this.checked)"> ‘함께’ 탭 쓰기 <span class="small">끄면 탭이 숨겨져요 (보여준 기록은 그대로)</span></label>
-      <div class="actions" style="margin-top:8px"><button class="btn" onclick="openShareSettings()">보여줄 것 설정</button><button class="btn" onclick="go('together')">함께 탭으로</button></div></div>` : ''}
+      <div class="actions" style="margin-top:8px"><button class="btn" onclick="openMyProfile()">내 프로필</button><button class="btn" onclick="openShareSettings()">보여줄 것 설정</button><button class="btn" onclick="go('together')">함께 탭으로</button></div></div>` : ''}
     <div class="set-sec">기록 관리</div>
     <div class="more-list" style="margin-top:0">
       ${sb ? row('🗄', '자동 백업', '매주 일요일 · 최근 8주 보관 · 내려받기', 'openBackups()') : ''}

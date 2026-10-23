@@ -39,22 +39,22 @@ function tgLoad() {
     const me = sbUid(), email = String(((sbSession() || {}).user || {}).email || '').toLowerCase();
     const [ps, mine] = await Promise.all([
       sbq(sbClient().from('partnerships').select('id, inviter, invitee, invitee_email, inviter_name, inviter_email, status, created_at, accepted_at').neq('status', 'ended')),
-      sbq(sbClient().from('profiles').select('name, email').eq('user_id', me).maybeSingle())
+      sbq(sbClient().from('profiles').select('*').eq('user_id', me).maybeSingle())
     ]);
     const acc = ps.find(p => p.status === 'accepted' && (p.inviter === me || p.invitee === me));
-    const next = { at: Date.now(), me: { id: me, email, name: (mine && mine.name) || email.split('@')[0] },
+    const next = { at: Date.now(), me: { id: me, email, name: (mine && mine.name) || email.split('@')[0], avatar: (mine && mine.avatar) || '' },
       incoming: ps.filter(p => p.status === 'pending' && p.inviter !== me && String(p.invitee_email).toLowerCase() === email),
       sent: ps.filter(p => p.status === 'pending' && p.inviter === me), partner: null, books: [], snips: [], logs: [] };
     if (acc) {
       const pid = acc.inviter === me ? acc.invitee : acc.inviter;
       const [prof, b, s, l] = await Promise.all([
-        sbq(sbClient().from('profiles').select('name, email').eq('user_id', pid).maybeSingle()),
+        sbq(sbClient().from('profiles').select('*').eq('user_id', pid).maybeSingle()),
         tgPull('books', 'id, data, updated_at', pid), tgPull('snippets', 'id, book_id, kind, data, updated_at', pid),
         tgPull('read_logs', 'id, book_id, day, page, base_page', pid)
       ]);
       const pemail = (prof && prof.email) || (acc.inviter === me ? acc.invitee_email : acc.inviter_email) || '';
       next.partner = { id: pid, pship: acc.id, since: acc.accepted_at, email: pemail,
-        name: (prof && prof.name) || (acc.inviter === pid ? acc.inviter_name : '') || pemail.split('@')[0] };
+        name: (prof && prof.name) || (acc.inviter === pid ? acc.inviter_name : '') || pemail.split('@')[0], avatar: (prof && prof.avatar) || '' };
       next.books = b.map(sbOut); next.snips = s.map(sbOut);
       next.logs = l.map(r => ({ id: r.id, bid: r.book_id, date: String(r.day).slice(0, 10), page: r.page, base: r.base_page }));
     }
@@ -64,6 +64,7 @@ function tgLoad() {
       acc ? sbq(sbClient().from('together_books').select('id, pship, data, added_by, status, joined, started_at, created_at').eq('pship', acc.id).eq('deleted', false).order('created_at', { ascending: true })).catch(() => []) : Promise.resolve([])
     ]);
     next.reacts = rx || []; next.tbooks = tb || [];
+    next.av = await tgSignAvatars(next);
     S.tg = next;
     try { LS.set(TG_CACHE, JSON.stringify(next)); } catch (e) {}
     return next;
@@ -125,7 +126,11 @@ function tgNav() {
   }
   const dot = btn.querySelector('.tg-dot'); if (dot) dot.classList.toggle('hidden', !(S.tg.incoming || []).length);
 }
-function avatar(name, cls) { return `<span class="tg-av ${cls || ''}">${esc(String(name || '?').trim().slice(0, 1))}</span>`; }
+function avatar(name, cls) {
+  const T = S.tg || {}, who = cls && cls.split(' ').includes('p') ? (T.partner || {}).id : (T.me || {}).id, url = who && (T.av || {})[who];
+  const ini = esc(String(name || '?').trim().slice(0, 1));
+  return url ? `<span class="tg-av ${cls || ''} ph"><img src="${esc(url)}" alt="" onerror="this.parentNode.classList.remove('ph');this.replaceWith('${ini}')"></span>` : `<span class="tg-av ${cls || ''}">${ini}</span>`;
+}
 
 function renderTogether() {
   const el = $('v-together'); if (!el) return;
@@ -135,20 +140,20 @@ function renderTogether() {
   if (!T.partner) { el.innerHTML = tgInviteHtml(); return; }
   const me = T.me || {}, pn = tgName();
   const mineS = tgMonthStats(S.books, myLogs()), theirS = tgMonthStats(T.books, T.logs);
-  const statCol = (name, s, cls) => `<div class="tg-col">${avatar(name, cls)}<b>${esc(name)}</b>
+  const statCol = (name, s, cls) => `<div class="tg-col" onclick="openProfile('${cls === 'p' ? 'p' : 'me'}')">${avatar(name, cls)}<b>${esc(name)} <span class="small" style="font-weight:400">서재 ›</span></b>
     <div class="tg-num"><span><b>${s.pages.toLocaleString()}</b>쪽</span><span><b>${s.days}</b>일 읽음</span><span><b>${s.done}</b>권 완독</span></div></div>`;
   // 같이 읽는 책: 둘 다 서재에 있고, 한 명이라도 읽는 중
   const both = T.books.map(pb => ({ pb, mb: tgMine(pb) })).filter(x => x.mb && (x.pb['상태'] === '읽는중' || x.mb['상태'] === '읽는중'));
   const reading = T.books.filter(b => b['상태'] === '읽는중');
   const bar = (name, b, cls) => { const p = tgProg(b); return `<div class="tg-prog ${cls}"><span>${esc(name)}</span><div class="bar"><i style="width:${p.pct}%"></i></div><em>${b['상태'] === '완독' ? '완독' : p.cur ? 'p.' + p.cur + (p.total ? ` · ${p.pct}%` : '') : b['상태'] === '읽을예정' ? '읽고 싶은' : '–'}</em></div>`; };
   el.innerHTML = `
-    <div class="view-head tg-head"><div><h1>함께</h1><p>${avatar(me.name)}${avatar(pn, 'p')} ${esc(me.name)} · ${esc(pn)}</p></div>
+    <div class="view-head tg-head"><div><h1>함께</h1><p><button class="tg-pbtn" onclick="openProfile('me')">${avatar(me.name)}</button><button class="tg-pbtn" onclick="openProfile('p')">${avatar(pn, 'p')}</button> ${esc(me.name)} · ${esc(pn)}</p></div>
       <button class="iconbtn" onclick="openShareSettings()">보여줄 것</button></div>
     <div class="panel2"><h4>둘의 ${Number(tgMonth().slice(5))}월</h4><div class="tg-cols">${statCol(me.name, mineS, '')}${statCol(pn, theirS, 'p')}</div></div>
     ${both.length ? `<div class="panel2"><h4>같이 읽는 책</h4>${both.map(({ pb, mb }) => `<div class="tg-both" onclick="openPartnerBook('${pb.ID}')">${spine(mb)}<div class="grow">
       <div class="tg-bt">${esc(mb['제목'])}</div>${bar(me.name, mb, '')}${bar(pn, pb, 'p')}</div></div>`).join('')}</div>` : ''}
     ${tgTbooksHtml()}
-    <div class="panel2"><h4>${esc(pn)}의 서재 <button class="kw-ai" onclick="go('plib')">전체 ${T.books.length}권 보기 →</button></h4>
+    <div class="panel2"><h4>${esc(pn)}의 서재 <button class="kw-ai" onclick="openProfile('p')">전체 ${T.books.length}권 보기 →</button></h4>
       ${reading.length ? `<div class="tg-shelf">${reading.map(b => `<button onclick="openPartnerBook('${b.ID}')">${spine(b)}<span>${esc(b['제목'])}</span><em>${tgProg(b).pct ? tgProg(b).pct + '%' : '읽는 중'}</em></button>`).join('')}</div>`
         : `<div class="small">지금 읽는 중인 책이 없어요.</div>`}</div>
     <div class="panel2"><h4>최근 소식</h4>${tgFeedHtml()}</div>
@@ -163,7 +168,7 @@ function tgFeed() {
   const ttlO = b => { const t = String(b['제목'] || '').replace(/\s*\([^)]*\)\s*$/, ''); return ttl(b) + jo(t, '을', '를').slice(t.length); };
   const books = (list, who, p, open) => list.forEach(b => {
     if (b['완독일']) add(who, b['완독일'], `${ttlO(b)} 다 읽었어요${b['별점'] ? ' <span class="stars">' + '★'.repeat(Number(b['별점']) || 0) + '</span>' : ''}`, open(b), p);
-    if (b['시작일'] && b['시작일'] !== b['완독일']) add(who, b['시작일'], `${ttlO(b)} 읽기 시작했어요`, open(b), p);
+    if (b['시작일'] && b['시작일'] !== b['완독일'] && b['상태'] !== '읽을예정') add(who, b['시작일'], `${ttlO(b)} 읽기 시작했어요`, open(b), p);
     else if (!b['시작일'] && b['상태'] === '읽을예정' && b['등록일']) add(who, b['등록일'], `${ttlO(b)} 읽고 싶은 책에 담았어요`, open(b), p);
   });
   books(T.books, pn, true, b => `openPartnerBook('${b.ID}')`);
@@ -196,30 +201,100 @@ function tgFeed() {
   (T.tbooks || []).forEach(tb => { const who = tb.added_by === T.me.id ? me : pn;
     add(who, locDay(tb.created_at), `같이 읽을 책에 『${esc(tb.data['제목'] || '')}』를 담았어요`, `go('together')`, who !== me);
     if (tb.started_at) add(who, tb.started_at, `『${esc(tb.data['제목'] || '')}』 같이 읽기 시작!`, `go('together')`, false); });
-  return out.sort((a, b) => b.date.localeCompare(a.date) || (b.p ? 1 : 0) - (a.p ? 1 : 0)).slice(0, 30);
+  return out.sort((a, b) => b.date.localeCompare(a.date) || (b.p ? 1 : 0) - (a.p ? 1 : 0));
+}
+// 최근 한 달은 바로, 그 전은 '지난 소식 더보기' → 연도별로 접어서
+S.feedAll = false;
+function tgFeedRows(list) {
+  let last = '';
+  return list.map(x => { const head = x.date !== last ? `<div class="tg-day">${x.date === S.today ? '오늘' : x.date === addDays(S.today, -1) ? '어제' : x.date.slice(5).replace('-', '.')}</div>` : ''; last = x.date;
+    return `${head}<div class="tg-feed" onclick="${x.onclick}">${avatar(x.who, x.p ? 'p' : '')}<div>${x.html}</div></div>`; }).join('');
 }
 function tgFeedHtml() {
   const f = tgFeed(); if (!f.length) return '<div class="small">아직 소식이 없어요. 책을 읽고 기록하면 여기에 보여요.</div>';
-  let last = '';
-  return f.map(x => { const head = x.date !== last ? `<div class="tg-day">${x.date === S.today ? '오늘' : x.date === addDays(S.today, -1) ? '어제' : x.date.slice(5).replace('-', '.')}</div>` : ''; last = x.date;
-    return `${head}<div class="tg-feed" onclick="${x.onclick}">${avatar(x.who, x.p ? 'p' : '')}<div>${x.html}</div></div>`; }).join('');
+  const cut = addDays(S.today, -30), recent = f.filter(x => x.date >= cut), old = f.filter(x => x.date < cut);
+  let h = recent.length ? tgFeedRows(recent) : '<div class="small">최근 한 달 동안의 소식은 없어요.</div>';
+  if (!old.length) return h;
+  if (!S.feedAll) return h + `<button class="btn tg-more" onclick="S.feedAll=true;renderTogether()">지난 소식 더보기 <span class="small">${old.length}개</span></button>`;
+  const years = {}; old.forEach(x => (years[x.date.slice(0, 4)] = years[x.date.slice(0, 4)] || []).push(x));
+  const thisY = S.today.slice(0, 4);
+  h += Object.keys(years).sort().reverse().map(y => `<details class="tg-year" ${y === thisY ? 'open' : ''}><summary>${y}년 <span class="small">${years[y].length}개</span></summary>${tgFeedRows(years[y])}</details>`).join('');
+  return h + `<button class="btn tg-more" onclick="S.feedAll=false;renderTogether()">접기</button>`;
 }
 
 /* ----- 짝꿍 서재 전체 ----- */
+// 각자 프로필: 사진 · 이름 · 서재 목록 (짝꿍 것은 보기만)
+S.plibWho = 'p';
+function openProfile(who) { S.plibWho = who === 'me' ? 'me' : 'p'; if (S.plibWho === 'p' && !tgHasPartner()) return; go('plib'); }
 function renderPartnerLib() {
   const el = $('v-plib'); if (!el) return;
-  if (!tgHasPartner()) { go('together'); return; }
-  const list = S.tg.books.filter(b => S.tgFilter === '전체' || b['상태'] === S.tgFilter)
+  const mine = S.plibWho === 'me';
+  if (!mine && !tgHasPartner()) { go('together'); return; }
+  const name = mine ? (S.tg.me || {}).name || '나' : tgName();
+  const all = mine ? S.books : S.tg.books;
+  const list = all.filter(b => S.tgFilter === '전체' || b['상태'] === S.tgFilter)
     .sort((a, b) => String(b['완독일'] || b['시작일'] || b['등록일'] || '').localeCompare(String(a['완독일'] || a['시작일'] || a['등록일'] || '')));
-  el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 함께</button></div>
-    <div class="view-head"><h1>${esc(tgName())}의 서재</h1><p>보기만 할 수 있어요 · ${S.tg.books.length}권</p></div>
-    <div class="chips" id="pl-f">${FILTERS.map(f => `<button class="chip ${S.tgFilter === f ? 'on' : ''}" data-f="${f}">${FILTER_LABEL[f] || f} ${f === '전체' ? S.tg.books.length : S.tg.books.filter(b => b['상태'] === f).length}</button>`).join('')}</div>
-    <div class="list">${list.map(b => { const p = tgProg(b), mine = tgMine(b);
-      return `<div class="book" onclick="openPartnerBook('${b.ID}')">${spine(b)}<div class="binfo"><div class="btitle">${esc(b['제목'])}</div>
+  const done = all.filter(b => b['상태'] === '완독').length, reading = all.filter(b => b['상태'] === '읽는중').length;
+  const shown = mine ? S.snips.filter(isShared).length : S.tg.snips.length;
+  el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 함께</button>${mine ? `<button class="iconbtn" onclick="openMyProfile()">프로필 고치기</button>` : ''}</div>
+    <div class="tg-prof">${mine ? `<button class="tg-pbtn" onclick="openMyProfile()" aria-label="프로필 사진 바꾸기">${avatar(name, 'big')}</button>` : avatar(name, 'p big')}
+      <div><h1>${esc(name)}</h1><p class="small">${mine ? '내 서재' : '보기만 할 수 있어요'} · 전체 ${all.length}권 · 완독 ${done} · 읽는 중 ${reading} · 보여준 문장 ${shown}</p></div></div>
+    <div class="chips" id="pl-f">${FILTERS.map(f => `<button class="chip ${S.tgFilter === f ? 'on' : ''}" data-f="${f}">${FILTER_LABEL[f] || f} ${f === '전체' ? all.length : all.filter(b => b['상태'] === f).length}</button>`).join('')}</div>
+    <div class="list">${list.map(b => { const p = tgProg(b), other = mine ? tgTheirs(b) : tgMine(b);
+      return `<div class="book" onclick="${mine ? `go('book','${b.ID}')` : `openPartnerBook('${b.ID}')`}">${spine(b)}<div class="binfo"><div class="btitle">${esc(b['제목'])}</div>
         <div class="bauthor">${esc(b['저자'] || '')}</div>
-        <div class="bmeta">${b['별점'] ? `<span class="stars">${starText(b['별점'])}</span>` : ''}${b['상태'] === '읽는중' && p.pct ? `<span class="badge">${p.pct}%</span>` : ''}${mine ? '<span class="badge plat">내 서재에도 있음</span>' : ''}</div></div></div>`; }).join('') || '<div class="empty">책이 없어요</div>'}</div>`;
+        <div class="bmeta">${b['별점'] ? `<span class="stars">${starText(b['별점'])}</span>` : ''}${b['상태'] === '읽는중' && p.pct ? `<span class="badge">${p.pct}%</span>` : ''}${mine && !bookShared(b) ? '<span class="badge plat">🔒 나만 보기</span>' : ''}${other ? `<span class="badge plat">${mine ? esc(tgName()) + '도 있음' : '내 서재에도 있음'}</span>` : ''}</div></div></div>`; }).join('') || '<div class="empty">책이 없어요</div>'}</div>`;
   $('pl-f').onclick = e => { const t = e.target.closest('[data-f]'); if (!t) return; S.tgFilter = t.dataset.f; renderPartnerLib(); };
 }
+
+/* ----- 프로필 사진 ----- */
+const AV_BUCKET = 'avatars';
+async function tgSignAvatars(T) {
+  const want = [[T.me.id, T.me.avatar], T.partner ? [T.partner.id, T.partner.avatar] : null].filter(x => x && x[1]);
+  if (!want.length) return {};
+  try {
+    const r = await sbClient().storage.from(AV_BUCKET).createSignedUrls(want.map(([u]) => `${u}/avatar.jpg`), 7 * 86400);
+    const out = {}; (r.data || []).forEach((x, i) => { if (x && x.signedUrl) out[want[i][0]] = x.signedUrl; });
+    return out;
+  } catch (e) { return (S.tg && S.tg.av) || {}; }
+}
+function openMyProfile() {
+  const me = S.tg.me || {};
+  modal(`<h3>내 프로필 <span style="font-weight:400;color:var(--faint);font-size:13px">${tgHasPartner() ? esc(tgName()) + '에게' : '짝꿍에게'} 이렇게 보여요</span></h3>
+    <div class="tg-prof" style="margin:6px 0 4px">${avatar(me.name, 'big')}
+      <div class="inline"><label class="btn" style="cursor:pointer">사진 고르기<input type="file" accept="image/*" hidden onchange="tgUploadAvatar(this.files[0])"></label>
+        ${me.avatar ? `<button class="btn" onclick="tgRemoveAvatar()">사진 지우기</button>` : ''}</div></div>
+    <div id="av-msg" class="small"></div>
+    <label>이름</label>
+    <div class="inline"><input class="field" id="tg-name" value="${esc(me.name || '')}" maxlength="20" style="flex:1"><button class="btn primary" onclick="tgSaveName()">저장</button></div>
+    <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
+}
+// 가운데를 정사각형으로 잘라 320px JPEG로 줄여서 올려요
+async function tgUploadAvatar(file) {
+  if (!file) return;
+  const msg = $('av-msg'); if (msg) msg.innerHTML = '<span class="spin"></span> 사진 올리는 중…';
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => createImageBitmap(file));
+    const s = Math.min(bmp.width, bmp.height), c = document.createElement('canvas'); c.width = c.height = 320;
+    c.getContext('2d').drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, 320, 320);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+    const uidv = sbUid(), ver = String(Date.now());
+    await sbq(sbClient().storage.from(AV_BUCKET).upload(`${uidv}/avatar.jpg`, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '60' }));
+    await sbq(sbClient().from('profiles').update({ avatar: ver }).eq('user_id', uidv));
+    S.tg.me.avatar = ver; S.tg.av = await tgSignAvatars(S.tg); LS.set(TG_CACHE, JSON.stringify(S.tg));
+    toast('프로필 사진을 바꿨어요'); openMyProfile(); tgRerenderAll();
+  } catch (e) { if ($('av-msg')) $('av-msg').textContent = '⚠ ' + (e.message || e); }
+}
+async function tgRemoveAvatar() {
+  if (!confirm('프로필 사진을 지울까요?')) return;
+  try {
+    await sbq(sbClient().storage.from(AV_BUCKET).remove([`${sbUid()}/avatar.jpg`]));
+    await sbq(sbClient().from('profiles').update({ avatar: null }).eq('user_id', sbUid()));
+    S.tg.me.avatar = ''; delete (S.tg.av || {})[sbUid()]; LS.set(TG_CACHE, JSON.stringify(S.tg));
+    toast('사진을 지웠어요'); openMyProfile(); tgRerenderAll();
+  } catch (e) { toast('⚠ ' + (e.message || e)); }
+}
+function tgRerenderAll() { if (S.view === 'together') renderTogether(); else if (S.view === 'plib') renderPartnerLib(); else if (S.view === 'pbook') renderPartnerBook(); }
 
 /* ----- 짝꿍 책 하나 ----- */
 function openPartnerBook(id, flash) { S.pbookId = id; S.pflash = flash || ''; go('pbook'); }
@@ -364,8 +439,7 @@ function openShareSettings() {
   const T = S.tg, me = T.me || {};
   const nb = S.books.length, shown = S.books.filter(bookShared).length, ns = S.snips.filter(isShared).length;
   modal(`<h3>보여줄 것 · 같이 쓰기</h3>
-    <label>내 이름 <span style="font-weight:400;color:var(--faint)">${tgHasPartner() ? esc(tgName()) + '에게' : '짝꿍에게'} 이렇게 보여요</span></label>
-    <div class="inline"><input class="field" id="tg-name" value="${esc(me.name || '')}" maxlength="20"><button class="btn" onclick="tgSaveName()">저장</button></div>
+    <button class="tg-me-row" onclick="openMyProfile()">${avatar(me.name)}<b>${esc(me.name || '')}</b><span class="small">이름 · 프로필 사진 바꾸기 ›</span></button>
     <div class="panel2" style="margin-top:12px"><h4>👀 책 · 별점 · 한줄평 · 읽은 쪽수 <span class="small" style="font-weight:400">기본 공개</span></h4>
       <div class="small">${nb}권 중 <b>${shown}권</b>을 보여주는 중이에요. 책 화면 위쪽 ‘👀 보여주는 중’을 누르면 그 책만 숨길 수 있어요.</div>
       <div class="actions" style="margin-top:8px"><button class="btn" onclick="tgAllBooks(false)">모두 숨기기</button><button class="btn" onclick="tgAllBooks(true)">모두 보여주기</button></div></div>
@@ -379,7 +453,7 @@ function openShareSettings() {
 }
 async function tgSaveName() {
   const name = $('tg-name').value.trim(); if (!name) { toast('이름을 넣어 주세요'); return; }
-  try { await sbq(sbClient().from('profiles').update({ name }).eq('user_id', sbUid())); S.tg.me.name = name; LS.set(TG_CACHE, JSON.stringify(S.tg)); toast('저장했어요'); if (S.view === 'together') renderTogether(); }
+  try { await sbq(sbClient().from('profiles').update({ name }).eq('user_id', sbUid())); S.tg.me.name = name; LS.set(TG_CACHE, JSON.stringify(S.tg)); toast('저장했어요'); tgRerenderAll(); }
   catch (e) { toast('⚠ ' + (e.message || e)); }
 }
 async function tgSaveOpt(k, v) {

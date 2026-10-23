@@ -604,7 +604,7 @@ function openBookForm(id) {
     if (type === 'hidden') return `<input type="hidden" id="b-${k}" value="${v}">`;
     if (type === 'plat') { const cur = id ? platOf(b) : (b[k] || '종이책'); return `<div><label>${k}</label><input type="hidden" id="b-${k}" value="${esc(cur)}"><div class="seg plat-seg" id="plat-seg">${PLATS.map(p => `<button type="button" data-p="${p}" class="${cur === p ? 'on' : ''}">${p}</button>`).join('')}</div></div>`; }
     if (type === 'stars') input = `<select class="field" id="b-${k}"><option value="">–</option>${[5,4,3,2,1].map(n => `<option value="${n}" ${String(b[k]) === String(n) ? 'selected' : ''}>${'★'.repeat(n)}</option>`).join('')}</select>`;
-    else if (type === 'select') input = `<select class="field" id="b-${k}">${['읽는중','완독','중단','읽을예정'].map(o => `<option ${b[k] === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+    else if (type === 'select') input = `<select class="field" id="b-${k}" onchange="bookStateChanged(this.value)">${['읽는중','완독','중단','읽을예정'].map(o => `<option ${b[k] === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
     else if (type === 'list') input = `<input class="field" id="b-${k}" list="dl-${k}" value="${v}">` + datalist('dl-' + k, S.books.map(x => x[k]));
     else input = `<input class="field" id="b-${k}" type="${type === 'number' ? 'text' : type}" ${type === 'number' ? 'inputmode="numeric"' : ''} value="${v}">`;
     return `<div><label>${k}${req ? ' *' : ''}</label>${input}</div>`;
@@ -764,9 +764,17 @@ async function autoCatAll() {
   }
   toast(`${n}권 분류했어요`); if (S.view === 'stats') renderStatsView(); else if (S.view === 'library') renderList();
 }
+// 상태를 바꾸면 날짜도 맞춰요: 읽고 싶은 책은 시작일 · 완독일 없이, 읽는 중으로 바꾸면 오늘 시작
+function bookStateChanged(v) {
+  const sd = $('b-시작일'), fd = $('b-완독일'); if (!sd) return;
+  if (v === '읽을예정') { sd.value = ''; if (fd) fd.value = ''; }
+  else if (v === '읽는중' && !sd.value) sd.value = S.today;
+  else if (v === '완독' && fd && !fd.value) fd.value = S.today;
+}
 async function submitBook(id) {
   const data = { ID: id || '' };
   BOOK_FIELDS.forEach(([k]) => data[k] = $('b-' + k).value.trim());
+  if (data['상태'] === '읽을예정') { data['시작일'] = ''; data['완독일'] = ''; }   // 읽고 싶은 책은 아직 시작 전
   if (!data['제목']) { toast('제목을 입력해 주세요'); return; }
   if (data['분량'] && isNaN(Number(data['분량']))) { toast('분량은 숫자로 입력해 주세요'); return; }
   if (data['분량']) data['분량'] = Number(data['분량']);
