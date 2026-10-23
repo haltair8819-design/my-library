@@ -291,7 +291,6 @@ function openMyProfile() {
   modal(`<h3>내 프로필 <span style="font-weight:400;color:var(--faint);font-size:13px">${tgHasPartner() ? esc(tgName()) + '에게' : '짝꿍에게'} 이렇게 보여요</span></h3>
     <div class="tg-prof" style="margin:6px 0 4px">${avatar(me.name, 'big')}
       <div class="inline"><label class="btn" style="cursor:pointer">사진 고르기<input type="file" accept="image/*" hidden onchange="tgUploadAvatar(this.files[0])"></label>
-        <label class="btn" style="cursor:pointer">갤러리 · 다른 앱<input type="file" accept="*/*" hidden onchange="tgUploadAvatar(this.files[0])"></label>
         ${me.avatar ? `<button class="btn" onclick="tgRemoveAvatar()">사진 지우기</button>` : ''}</div></div>
     <div id="av-msg" class="small"></div>
     <label>이름</label>
@@ -299,26 +298,75 @@ function openMyProfile() {
     <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
 }
 // 가운데를 정사각형으로 잘라 320px JPEG로 줄여서 올려요
+// 사진을 고르면 먼저 '범위 고르기' 창: 끌어서 옮기고, 막대 · 두 손가락으로 크기 (v2.14.2)
+const AVC = { bmp: null, scale: 1, min: 1, x: 0, y: 0, V: 280 };
 async function tgUploadAvatar(file) {
   if (!file) return;
   if (file.type && !/^image\//.test(file.type)) { toast('사진 파일을 골라 주세요'); return; }
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => createImageBitmap(file)); }
+  catch (e) { toast('⚠ 사진을 열지 못했어요'); return; }
+  AVC.bmp = bmp; AVC.min = AVC.V / Math.min(bmp.width, bmp.height); AVC.scale = AVC.min;
+  AVC.x = (AVC.V - bmp.width * AVC.scale) / 2; AVC.y = (AVC.V - bmp.height * AVC.scale) / 2;
+  modal(`<h3>사진 범위 고르기 <span style="font-weight:400;color:var(--faint);font-size:13px">끌어서 옮기고, 크기를 맞춰요</span></h3>
+    <div class="avc-wrap"><canvas id="avc" width="${AVC.V * 2}" height="${AVC.V * 2}"></canvas><div class="avc-ring"></div></div>
+    <div class="avc-zoom"><span>－</span><input type="range" id="avc-z" min="100" max="400" value="100" oninput="avcZoom(this.value / 100)"><span>＋</span></div>
+    <div id="av-msg" class="small"></div>
+    <div class="actions"><button class="btn" onclick="openMyProfile()">취소</button><button class="btn primary grow" id="avc-go" onclick="avcSave()">이대로 저장</button></div>`);
+  avcBind(); avcDraw();
+}
+function avcClamp() {
+  const w = AVC.bmp.width * AVC.scale, h = AVC.bmp.height * AVC.scale;
+  AVC.x = Math.min(0, Math.max(AVC.V - w, AVC.x)); AVC.y = Math.min(0, Math.max(AVC.V - h, AVC.y));
+}
+function avcDraw() {
+  const c = $('avc'); if (!c || !AVC.bmp) return;
+  const g = c.getContext('2d'); g.setTransform(2, 0, 0, 2, 0, 0); g.clearRect(0, 0, AVC.V, AVC.V);
+  g.drawImage(AVC.bmp, AVC.x, AVC.y, AVC.bmp.width * AVC.scale, AVC.bmp.height * AVC.scale);
+}
+function avcZoom(z, cx, cy) {   // z: 1 = 꽉 차게, 최대 4배. cx · cy를 중심으로
+  cx = cx ?? AVC.V / 2; cy = cy ?? AVC.V / 2;
+  const ns = AVC.min * Math.max(1, Math.min(4, z)), k = ns / AVC.scale;
+  AVC.x = cx - (cx - AVC.x) * k; AVC.y = cy - (cy - AVC.y) * k; AVC.scale = ns;
+  avcClamp(); avcDraw();
+  const r = $('avc-z'); if (r && document.activeElement !== r) r.value = Math.round(AVC.scale / AVC.min * 100);
+}
+function avcBind() {
+  const c = $('avc'); if (!c) return;
+  const pts = new Map(); let last = null, pinch = null;
+  const pos = e => { const r = c.getBoundingClientRect(); return { x: (e.clientX - r.left) * AVC.V / r.width, y: (e.clientY - r.top) * AVC.V / r.height }; };
+  c.onpointerdown = e => { c.setPointerCapture(e.pointerId); pts.set(e.pointerId, pos(e)); last = pos(e);
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: AVC.scale / AVC.min }; } };
+  c.onpointermove = e => {
+    if (!pts.has(e.pointerId)) return; const p = pos(e); pts.set(e.pointerId, p);
+    if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()]; avcZoom(pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2); return; }
+    if (pts.size === 1 && last) { AVC.x += p.x - last.x; AVC.y += p.y - last.y; last = p; avcClamp(); avcDraw(); }
+  };
+  const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; last = pts.size ? [...pts.values()][0] : null; };
+  c.onpointerup = up; c.onpointercancel = up;
+  c.onwheel = e => { e.preventDefault(); const p = pos(e); avcZoom(AVC.scale / AVC.min * (e.deltaY < 0 ? 1.1 : 0.9), p.x, p.y); };
+}
+async function avcSave() {
+  const bmp = AVC.bmp; if (!bmp) return;
+  const go = $('avc-go'); if (go) go.disabled = true;
   const msg = $('av-msg'); if (msg) msg.innerHTML = '<span class="spin"></span> 사진 올리는 중…';
   try {
-    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => createImageBitmap(file));
-    const s = Math.min(bmp.width, bmp.height), c = document.createElement('canvas'); c.width = c.height = 320;
-    c.getContext('2d').drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, 320, 320);
-    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
-    // 크게 볼 때 쓸 원본 (긴 쪽 1440px까지, 1MB 아래로)
-    const k = Math.min(1, 1440 / Math.max(bmp.width, bmp.height)), c2 = document.createElement('canvas');
-    c2.width = Math.round(bmp.width * k); c2.height = Math.round(bmp.height * k); c2.getContext('2d').drawImage(bmp, 0, 0, c2.width, c2.height);
+    // 고른 범위 → 원본 좌표
+    const sx = -AVC.x / AVC.scale, sy = -AVC.y / AVC.scale, sw = AVC.V / AVC.scale;
+    const c = document.createElement('canvas'); c.width = c.height = 320;
+    c.getContext('2d').drawImage(bmp, sx, sy, sw, sw, 0, 0, 320, 320);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.88));
+    // 크게 볼 때: 고른 범위를 크게 (최대 1080px, 1MB 아래로)
+    const side = Math.min(1080, Math.round(sw)), c2 = document.createElement('canvas'); c2.width = c2.height = side;
+    c2.getContext('2d').drawImage(bmp, sx, sy, sw, sw, 0, 0, side, side);
     let full = null; for (const q of [0.9, 0.82, 0.72, 0.6]) { full = await new Promise(r => c2.toBlob(r, 'image/jpeg', q)); if (full && full.size < 950000) break; }
     const uidv = sbUid(), ver = String(Date.now());
     await sbq(sbClient().storage.from(AV_BUCKET).upload(`${uidv}/avatar.jpg`, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '60' }));
     if (full && full.size < 1000000) { try { await sbq(sbClient().storage.from(AV_BUCKET).upload(`${uidv}/avatar-full.jpg`, full, { upsert: true, contentType: 'image/jpeg', cacheControl: '60' })); } catch (e) {} }
     await sbq(sbClient().from('profiles').update({ avatar: ver }).eq('user_id', uidv));
     S.tg.me.avatar = ver; S.tg.av = await tgSignAvatars(S.tg); LS.set(TG_CACHE, JSON.stringify(S.tg));
-    toast('프로필 사진을 바꿨어요'); openMyProfile(); tgRerenderAll();
-  } catch (e) { if ($('av-msg')) $('av-msg').textContent = '⚠ ' + (e.message || e); }
+    AVC.bmp = null; toast('프로필 사진을 바꿨어요'); openMyProfile(); tgRerenderAll();
+  } catch (e) { if ($('av-msg')) $('av-msg').textContent = '⚠ ' + (e.message || e); if (go) go.disabled = false; }
 }
 async function tgRemoveAvatar() {
   if (!confirm('프로필 사진을 지울까요?')) return;
