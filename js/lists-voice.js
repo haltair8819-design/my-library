@@ -80,7 +80,7 @@ document.addEventListener('visibilitychange', () => {
 function modePickerHtml() {
   const sysDark = (() => { try { return matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { return false; } })();
   return `<div class="seg mode-seg" style="margin-top:10px">${MODES.map(([k, t]) => `<button class="${curMode() === k ? 'on' : ''}" onclick="setMode('${k}');openSettings()">${t}</button>`).join('')}</div>
-    ${curMode() === 'system' ? `<div class="small" style="margin-top:8px;line-height:1.6">지금 앱이 받은 폰 설정: <b>${sysDark ? '어둡게' : '밝게'}</b>${sysDark ? '' : ` · 폰은 다크 모드인데 밝게로 나오면 <b>Chrome → 설정 → 테마</b>가 ‘시스템 기본값’인지 확인해 주세요 (이 앱은 크롬으로 열려서 크롬 테마를 따라가요)`}</div>` : ''}`;
+    ${curMode() === 'system' ? `<div class="small" style="margin-top:8px;line-height:1.6">지금 앱이 받은 폰 설정: <b>${sysDark ? '어둡게' : '밝게'}</b> · 앱을 띄운 브라우저: <b>${/SamsungBrowser/i.test(navigator.userAgent) ? '삼성 인터넷' : /Chrome/i.test(navigator.userAgent) ? '크롬' : '기타'}</b>${sysDark ? '' : ` · 폰은 다크 모드인데 밝게로 나오면 <b>Chrome → 설정 → 테마</b>가 ‘시스템 기본값’인지 확인해 주세요 (이 앱은 크롬으로 열려서 크롬 테마를 따라가요)`}</div>` : ''}`;
 }
 
 
