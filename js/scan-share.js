@@ -271,8 +271,12 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.12.4';   // index.html의 ?v= 값과 같이 올려요
+const APP_VERSION = '2.12.5';   // index.html의 ?v= 값과 같이 올려요
 const PATCH_NOTES = [
+  { v: '2.12.5', d: '2026.10.23', t: '포인트 색 · 다시 만나는 문장', items: [
+    '설정 → 디자인: 디자인 4가지는 그대로, 포인트 색(버튼 · 강조)을 10가지 중에서 고를 수 있어요. ‘처음 디자인’은 ‘숲’으로 이름을 바꿨어요',
+    '서재의 ‘오늘의 문장’은 ‘다시 만나는 문장’으로 — 앱을 켤 때마다 다른 문장이 나와요 (노트는 ‘떠오르는 글감’)',
+    '같이 읽을 책에 ‘나 읽기 시작’ 버튼: 내 서재에서만 읽는 중으로 바뀌어요'] },
   { v: '2.12.4', d: '2026.10.23', t: '독서 연결망', items: [
     '‘그물망’ 이름을 ‘독서 연결망’으로 바꿨어요 (아래 탭은 ‘연결망’)',
     '기간에 ‘지금 읽는 중’을 따로 두고, 읽는 중인 책은 연도 · 월에서 빼요',
@@ -459,8 +463,23 @@ const THEMES = [
   { id: 'manuscript', name: '원고지', desc: '필사 노트처럼 줄 친 종이 위에 문장이 놓여요', sw: ['#F2F3EF', '#2D4F86', '#E9C8C0'] },
   { id: 'marker', name: '형광펜', desc: '하얀 바탕에 제목마다 형광펜을 그어요', sw: ['#FFFFFF', '#1B1B19', '#FFE66B'] },
   { id: 'bunko', name: '문고판', desc: '책마다 표지 색이 화면을 채워요', sw: ['#ECEEF1', '#23489A', '#B23A48'] },
-  { id: 'classic', name: '처음 디자인', desc: '지금까지 쓰던 모습', sw: ['#F6F2EA', '#3D5A4C', '#FFFDF8'] }
+  { id: 'classic', name: '숲', desc: '크림색 종이에 짙은 초록', sw: ['#F6F2EA', '#3D5A4C', '#FFFDF8'] }
 ];
+// 포인트 색: 디자인은 그대로 두고 버튼 · 강조 색만 바꿔요 ('' = 디자인 기본색)
+const ACCENTS = [['', '기본'], ['#2D4F86', '남색'], ['#3D5A4C', '초록'], ['#1F7A8C', '청록'], ['#5B4BA0', '보라'], ['#8C3B6E', '자주'], ['#B23A48', '빨강'], ['#C0661A', '주황'], ['#8C5E4A', '갈색'], ['#2A2A28', '먹색']];
+function curAccent() { return LS.get('accent') || ''; }
+function applyAccent() {
+  const d = document.documentElement.style, c = curAccent(), dark = document.documentElement.dataset.mode === 'dark';
+  if (!c) { d.removeProperty('--accent'); d.removeProperty('--accent-soft'); return; }
+  d.setProperty('--accent', dark ? `color-mix(in srgb, ${c} 62%, white)` : c);
+  d.setProperty('--accent-soft', dark ? `color-mix(in srgb, ${c} 30%, #15161a)` : `color-mix(in srgb, ${c} 13%, white)`);
+}
+function setAccent(c) { LS.set('accent', c); applyAccent(); if (S.loaded) show(S.view); }
+function accentPickerHtml() {
+  const cur = curAccent();
+  return `<div class="acc-row">${ACCENTS.map(([c, n]) => `<button class="acc ${cur === c ? 'on' : ''}" onclick="setAccent('${c}')" title="${n}" aria-label="${n}">
+    <i style="${c ? `background:${c}` : 'background:linear-gradient(135deg,#ddd 50%,#999 50%)'}"></i><span>${n}</span></button>`).join('')}</div>`;
+}
 function curTheme() { return document.documentElement.dataset.theme || 'manuscript'; }
 function setTheme(id) {
   document.documentElement.dataset.theme = id; LS.set('theme', id);
@@ -472,7 +491,8 @@ function themePickerHtml() {
     <div class="panel2" style="margin-top:12px"><h4>디자인</h4><div class="themes">${THEMES.map(t => `
     <button class="theme-opt ${curTheme() === t.id ? 'on' : ''}" onclick="setTheme('${t.id}');openSettings()">
       <span class="tsw">${t.sw.map(c => `<i style="background:${c}"></i>`).join('')}</span>
-      <b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div></div>`;
+      <b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div>
+    <h4 style="margin-top:14px">포인트 색 <span class="small" style="font-weight:400">버튼 · 강조 색만 바꿔요</span></h4>${accentPickerHtml()}</div>`;
 }
 
 

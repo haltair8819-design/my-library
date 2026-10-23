@@ -53,11 +53,11 @@ function libraryTopHtml() {
   // 오늘의 문장
   const pool = S.snips.filter(s => !isThought(s) && s['유형'] !== '메모' && sText(s).length >= 30 && String(s['내용']).length <= 600);
   if (pool.length && !S.q.trim()) {
-    let h = 0; for (const c of S.today) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    const s = pool[(h + S.todayShift * 7919) % pool.length];
+    if (S.quoteSeed == null) S.quoteSeed = Math.floor(Math.random() * 1e9);   // 앱을 켤 때마다 새로
+    const s = pool[(S.quoteSeed + S.todayShift * 7919) % pool.length];
     const b = book(s['책ID']) || {};
     html += `<div class="today">
-      <div class="lb"><span>오늘의 문장</span><button onclick="S.todayShift++;renderList()">다른 문장 ↻</button></div>
+      <div class="lb"><span>다시 만나는 문장</span><button onclick="S.todayShift++;renderList()">다른 문장 ↻</button></div>
       <div class="tx" onclick="openSnipInBook('${s.ID}')">${esc(sText(s))}</div>
       <div class="mt">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}${s['제목'] ? ' · ' + esc(s['제목']) : ''}</div>
     </div>`;

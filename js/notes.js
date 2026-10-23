@@ -44,7 +44,7 @@ function renderNoteList() {
     <input class="field" id="n-q" type="search" placeholder="제목 · 내용 · #키워드 찾기" value="${esc(S.noteQ)}" style="margin:10px 0 8px" autocomplete="off">
     <div class="chips" id="n-f">${['전체', ...NOTE_STATES].map(x => `<button class="chip ${S.noteFilter === x ? 'on' : ''}" data-f="${x}">${x}</button>`).join('')}
       ${groups.length ? `<select class="field n-group" id="n-g"><option value="">모든 묶음</option>${groups.map(g => `<option ${S.noteGroup === g ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>` : ''}</div>
-    ${seed ? `<div class="seed ${S.noteQ.trim() || S.noteSel ? 'hidden' : ''}" id="seed-box"><div class="lb"><span>오늘의 글감</span><button onclick="S.seedRand=Math.random();renderNoteList()">다른 글감 ↻</button></div>
+    ${seed ? `<div class="seed ${S.noteQ.trim() || S.noteSel ? 'hidden' : ''}" id="seed-box"><div class="lb"><span>떠오르는 글감</span><button onclick="S.seedRand=Math.random();renderNoteList()">다른 글감 ↻</button></div>
       <div class="tx tap" onclick="openSnipInBook('${seed.ID}')" title="이 필사로 가기">${esc(sText(seed).slice(0, 220))}${sText(seed).length > 220 ? '…' : ''}</div>
       <div class="mt tap" onclick="openSnipInBook('${seed.ID}')">${esc((book(seed['책ID']) || {})['제목'] || '')}${seed['쪽수'] ? ' · p.' + esc(seed['쪽수']) : ''}</div>
       <button class="btn" style="margin-top:10px" onclick="newNote('${seed.ID}')">이 문장으로 글쓰기</button></div>` : ''}

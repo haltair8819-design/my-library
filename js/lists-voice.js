@@ -61,6 +61,7 @@ const MODES = [['light', '밝게'], ['dark', '어둡게']];   // v2.11.4: '휴�
 function curMode() { return LS.get('mode') === 'dark' ? 'dark' : 'light'; }
 function applyMode() {
   document.documentElement.dataset.mode = curMode();
+  if (typeof applyAccent === 'function') applyAccent();
   const paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim();
   document.querySelectorAll('meta[name="theme-color"]').forEach(x => { x.setAttribute('content', paper); x.removeAttribute('media'); });
 }

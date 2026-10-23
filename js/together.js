@@ -602,7 +602,7 @@ function tgTbooksHtml() {
     ${list.length ? list.map(t => { const d = t.data || {}; return `<div class="tg-both">${spine(d)}<div class="grow">
       <div class="tg-bt">${esc(d['제목'] || '')}</div><div class="small">${esc(d['저자'] || '')} · ${t.added_by === me ? '내가' : esc(jo(tgName(), '이', '가'))} 담음</div>
       ${tbWhoHtml(d)}
-      <div class="inline" style="margin-top:6px"><button class="btn" onclick="tbRemove('${t.id}')">빼기</button></div></div></div>`; }).join('')
+      <div class="inline" style="margin-top:6px">${(() => { const mb = S.books.find(x => tgSame(x, d)); return mb && (mb['상태'] === '읽는중' || mb['상태'] === '완독') ? '' : `<button class="btn primary" onclick="tbMyStart('${t.id}')">나 읽기 시작</button>`; })()}<button class="btn" onclick="tbRemove('${t.id}')">빼기</button></div></div></div>`; }).join('')
       : `<div class="small">둘이 다음에 같이 읽고 싶은 책을 담아 두세요. 내 서재에 없던 책은 내 읽고 싶은 책에도 들어가고, 읽기 시작은 각자 서재에서 해요.</div>`}</div>`;
 }
 let tbCands = [];
@@ -655,5 +655,16 @@ async function tbRemove(id) {
   const t = S.tg.tbooks.find(x => x.id === id); if (!t || !confirm(`『${t.data['제목']}』를 같이 읽을 책에서 뺄까요?`)) return;
   try { await sbq(sbClient().from('together_books').update({ deleted: true }).eq('id', id)); S.tg.tbooks = S.tg.tbooks.filter(x => x.id !== id); LS.set(TG_CACHE, JSON.stringify(S.tg)); renderTogether(); }
   catch (e) { toast('⚠ ' + (e.message || e)); }
+}
+// 나만 읽기 시작: 내 서재에서만 '읽는 중'으로 (상대 서재는 그대로)
+async function tbMyStart(id) {
+  const t = (S.tg.tbooks || []).find(x => x.id === id); if (!t) return;
+  try {
+    const mine = S.books.find(b => tgSame(b, t.data));
+    if (mine) patchBook(mine.ID, { '상태': '읽는중', '시작일': S.today });
+    else { const d = Object.assign({ ID: '', '상태': '읽는중', '시작일': S.today, '플랫폼': '종이책' }, Object.fromEntries(TB_FIELDS.filter(k => t.data[k] !== undefined && t.data[k] !== '').map(k => [k, t.data[k]])));
+      updateBook(await call('saveBook', d)); }
+    toast(`『${t.data['제목']}』 읽기 시작! 내 서재에 읽는 중으로 넣었어요`); renderTogether();
+  } catch (e) { toast('⚠ ' + (e.message || e)); }
 }
 // (v2.12.4) '같이 시작하기'는 뺐어요 — 한 사람이 누르면 상대 서재가 강제로 바뀌어서. 읽기 시작은 각자 서재에서.
