@@ -831,3 +831,5 @@ html[data-mode="dark"] .life-b.l3{background:#A8342A;color:#fff}
 .tg-link{color:var(--accent);cursor:pointer;text-decoration:none}
 .av-zoom{text-align:center}
 .av-zoom img{width:100%;max-width:360px;aspect-ratio:1;object-fit:cover;border-radius:16px;display:block;margin:4px auto 8px}
+.av-zoom img.full{aspect-ratio:auto;object-fit:contain;max-height:70vh}
+.bc-box .rx-b{max-width:80%}

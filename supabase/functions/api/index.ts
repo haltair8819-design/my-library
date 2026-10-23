@@ -514,6 +514,18 @@ async function notify(ctx: Ctx, kind: string, id: string) {
     return pushTo(admin, r.owner, { title: r.kind === 'heart' ? `${name}님이 문장에 ♡` : `${name}님의 한마디`,
       body: r.kind === 'heart' ? `“${t}”` : `${clip(r.body, 80)} — “${t}”`, url: './?snip=' + encodeURIComponent(r.snippet_id), tag: 'react-' + r.snippet_id }, 'together');
   }
+  if (kind === 'bookc') {
+    const { data: c } = await ctx.sb.from('book_comments').select('owner, book_id, body, user_id').eq('id', id).maybeSingle();
+    if (!c || c.user_id !== ctx.uid) return 0;
+    let other = c.owner;
+    if (c.owner === ctx.uid) {   // 내 책에 단 답글 → 짝꿍에게
+      const { data: p } = await ctx.sb.from('partnerships').select('inviter, invitee').eq('status', 'accepted').or(`inviter.eq.${ctx.uid},invitee.eq.${ctx.uid}`).maybeSingle();
+      if (!p) return 0; other = p.inviter === ctx.uid ? p.invitee : p.inviter;
+    }
+    const { data: bk } = await ctx.sb.from('books').select('data').eq('user_id', c.owner).eq('id', c.book_id).maybeSingle();
+    const title = (bk && bk.data && bk.data['제목']) || '책';
+    return pushTo(admin, other, { title: `${name}님의 댓글 · 『${clip(title, 20)}』`, body: clip(c.body, 90), url: './?view=together', tag: 'bc-' + c.book_id }, 'together');
+  }
   if (kind === 'together') {
     const { data: tb } = await ctx.sb.from('together_books').select('pship, data, status').eq('id', id).maybeSingle();
     if (!tb) return 0;

@@ -108,6 +108,7 @@ function renderBook() {
     ${b['상태'] === '읽는중' || b['상태'] === '중단' ? `<div class="actions"><button class="btn primary grow" onclick="finish('${b.ID}')">오늘 완독했어요</button></div>` : ''}
     ${tgBookHtml(b)}
     ${bookExtrasHtml(b)}
+    ${togetherOn() && typeof bookCommentsHtml === 'function' && bookShared(b) ? bookCommentsHtml((S.tg.me || {}).id, b.ID) : ''}
     <div class="seg book-tabs" id="book-tabs">
       <button data-t="필사" class="${tab === '필사' ? 'on' : ''}">필사<span>${quotes.length}</span></button>
       <button data-t="생각" class="${tab === '생각' ? 'on' : ''}">내 생각 · 메모<span>${thoughts.length}</span></button></div>
