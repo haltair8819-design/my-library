@@ -853,3 +853,7 @@ html[data-mode="dark"] .life-b.l3{background:#A8342A;color:#fff}
 .rec-new i{font-style:normal;font-size:22px}
 .rec-new b{font-size:15.5px}
 .rec-new span{font-size:12.5px;color:var(--sub);line-height:1.45}
+.tg-who{font-weight:700;color:var(--accent);margin-right:2px}
+.tg-who.p{color:#B4532A}
+html[data-mode="dark"] .tg-who.p{color:#E4A58D}
+.rx-n{display:block;font-size:11.5px;color:var(--sub);margin-bottom:2px}

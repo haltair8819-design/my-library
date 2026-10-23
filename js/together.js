@@ -223,7 +223,7 @@ S.feedAll = false;
 function tgFeedRows(list) {
   let last = '';
   return list.map(x => { const head = x.date !== last ? `<div class="tg-day">${x.date === S.today ? '오늘' : x.date === addDays(S.today, -1) ? '어제' : x.date.slice(5).replace('-', '.')}</div>` : ''; last = x.date;
-    return `${head}<div class="tg-feed" onclick="${x.onclick}">${avatar(x.who, x.p ? 'p' : '')}<div class="grow">${x.html}</div>${x.key ? `<button class="tg-fmenu" onclick="event.stopPropagation();openFeedMenu('${x.key}')" aria-label="소식 고치기">⋯</button>` : ''}</div>`; }).join('');
+    return `${head}<div class="tg-feed" onclick="${x.onclick}">${avatar(x.who, x.p ? 'p' : '')}<div class="grow"><b class="tg-who ${x.p ? 'p' : ''}">${esc(x.who)}</b> ${x.html}</div>${x.key ? `<button class="tg-fmenu" onclick="event.stopPropagation();openFeedMenu('${x.key}')" aria-label="소식 고치기">⋯</button>` : ''}</div>`; }).join('');
 }
 function tgFeedHtml() {
   const f = tgFeed(); if (!f.length) return '<div class="small">아직 소식이 없어요. 책을 읽고 기록하면 여기에 보여요.</div>';
@@ -291,6 +291,7 @@ function openMyProfile() {
   modal(`<h3>내 프로필 <span style="font-weight:400;color:var(--faint);font-size:13px">${tgHasPartner() ? esc(tgName()) + '에게' : '짝꿍에게'} 이렇게 보여요</span></h3>
     <div class="tg-prof" style="margin:6px 0 4px">${avatar(me.name, 'big')}
       <div class="inline"><label class="btn" style="cursor:pointer">사진 고르기<input type="file" accept="image/*" hidden onchange="tgUploadAvatar(this.files[0])"></label>
+        <label class="btn" style="cursor:pointer">갤러리 · 다른 앱<input type="file" accept="*/*" hidden onchange="tgUploadAvatar(this.files[0])"></label>
         ${me.avatar ? `<button class="btn" onclick="tgRemoveAvatar()">사진 지우기</button>` : ''}</div></div>
     <div id="av-msg" class="small"></div>
     <label>이름</label>
@@ -300,6 +301,7 @@ function openMyProfile() {
 // 가운데를 정사각형으로 잘라 320px JPEG로 줄여서 올려요
 async function tgUploadAvatar(file) {
   if (!file) return;
+  if (file.type && !/^image\//.test(file.type)) { toast('사진 파일을 골라 주세요'); return; }
   const msg = $('av-msg'); if (msg) msg.innerHTML = '<span class="spin"></span> 사진 올리는 중…';
   try {
     const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => createImageBitmap(file));
@@ -587,7 +589,7 @@ function drawReacts() {
   const cs = rs.filter(r => r.kind === 'comment');
   el.innerHTML = (hearts.length ? `<div class="small" style="margin:8px 0">♥ ${hearts.map(esc).join(', ')}</div>` : '') +
     (cs.length ? cs.map(r => `<div class="rx ${r.user_id === me ? 'me' : ''}">${avatar(r.user_id === me ? S.tg.me.name : tgName(), r.user_id === me ? '' : 'p')}
-      <div class="rx-b"><div>${esc(r.body)}</div><span>${esc(locTime(r.created_at))}${r.user_id === me ? ` · <a onclick="delReact('${r.id}')">지우기</a>` : ''}</span></div></div>`).join('')
+      <div class="rx-b"><b class="rx-n">${esc(r.user_id === me ? S.tg.me.name : tgName())}</b><div>${esc(r.body)}</div><span>${esc(locTime(r.created_at))}${r.user_id === me ? ` · <a onclick="delReact('${r.id}')">지우기</a>` : ''}</span></div></div>`).join('')
       : '<div class="small" style="margin:10px 0;color:var(--faint)">아직 한마디가 없어요</div>');
 }
 async function sendReact() {
@@ -844,7 +846,7 @@ function bookCommentsHtml(owner, bid) {
   const me = S.tg.me.id, list = bcOf(owner, bid);
   return `<div class="panel2 bc-box" id="bc-${owner === me ? 'me' : 'p'}"><h4>💬 댓글 <span class="small" style="font-weight:400">${owner === me ? esc(tgName()) + '와 이 책 이야기' : '이 책에 대해 한마디'}</span></h4>
     ${list.map(c => `<div class="rx ${c.user_id === me ? 'me' : ''}">${avatar(c.user_id === me ? S.tg.me.name : tgName(), c.user_id === me ? '' : 'p')}
-      <div class="rx-b"><div>${esc(c.body)}</div><span>${esc(locTime(c.created_at))}${c.user_id === me ? ` · <a onclick="bcDel('${c.id}')">지우기</a>` : ''}</span></div></div>`).join('') || '<div class="small" style="color:var(--faint)">아직 댓글이 없어요</div>'}
+      <div class="rx-b"><b class="rx-n">${esc(c.user_id === me ? S.tg.me.name : tgName())}</b><div>${esc(c.body)}</div><span>${esc(locTime(c.created_at))}${c.user_id === me ? ` · <a onclick="bcDel('${c.id}')">지우기</a>` : ''}</span></div></div>`).join('') || '<div class="small" style="color:var(--faint)">아직 댓글이 없어요</div>'}
     <div class="inline" style="margin-top:10px"><textarea class="field" id="bc-in-${bid}" rows="1" maxlength="2000" placeholder="댓글 남기기" style="flex:1;min-height:42px"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();bcSend('${owner}','${bid}')}"></textarea>
       <button class="btn primary" onclick="bcSend('${owner}','${bid}')">보내기</button></div></div>`;
