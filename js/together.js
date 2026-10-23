@@ -625,7 +625,13 @@ async function tbAdd(data) {
   try {
     const r = await sbq(sbClient().from('together_books').insert({ pship: S.tg.partner.pship, data }).select('id, pship, data, added_by, status, joined, started_at, created_at').single());
     S.tg.tbooks.push(r); LS.set(TG_CACHE, JSON.stringify(S.tg)); notifyPartner('together', r.id);
-    closeModal(); toast(`『${data['제목']}』를 같이 읽을 책에 담았어요`); renderTogether();
+    // 내 서재에 없던 책이면 '읽고 싶은 책'으로도 넣어요
+    let added = false;
+    if (!S.books.some(x => tgSame(x, data))) {
+      try { const d = Object.assign({ ID: '', '상태': '읽을예정' }, Object.fromEntries(TB_FIELDS.filter(k => data[k] !== undefined && data[k] !== '').map(k => [k, data[k]])));
+        updateBook(await call('saveBook', d)); added = true; } catch (e) {}
+    }
+    closeModal(); toast(`『${data['제목']}』를 같이 읽을 책에 담았어요${added ? ' · 내 읽고 싶은 책에도 넣었어요' : ''}`); renderTogether();
   } catch (e) { toast('⚠ ' + (e.message || e)); }
 }
 async function tbRemove(id) {

@@ -234,10 +234,10 @@ async function sbSync(ver) {
 }
 
 /* ----- 책 ----- */
-async function sbSaveBook(b) {
-  b = sbStrip(b || {});
+async function sbSaveBook(input) {
+  let id = (input || {}).ID;   // 지우기 전에 ID부터 (예전엔 ID가 지워져서 '정보 수정'이 새 책을 만들었어요)
+  const b = sbStrip(input || {});
   if (!String(b['제목'] || '').trim()) throw new Error('책 제목을 입력해 주세요.');
-  let id = (arguments[0] || {}).ID;
   const cur = id ? await sbGet('books', id) : null;
   const d = Object.assign({}, cur ? cur.data : {}, b);
   if (!id) { id = sbNewId('B'); d['등록일'] = sbToday(); if (!d['상태']) d['상태'] = d['완독일'] ? '완독' : '읽는중'; }
