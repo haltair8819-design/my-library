@@ -57,12 +57,10 @@ function setBlMode(m) { LS.set('blist_mode', m); renderBookList(); }
 /* ===================================================================
    라이트 · 다크 모드 (휴대폰 설정 따라가기 / 늘 밝게 / 늘 어둡게)
    =================================================================== */
-const MODES = [['system', '휴대폰 따라'], ['light', '밝게'], ['dark', '어둡게']];
-function curMode() { return LS.get('mode') || 'system'; }
+const MODES = [['light', '밝게'], ['dark', '어둡게']];   // v2.11.4: '휴대폰 따라'는 뺐어요 (APK에서 폰 설정이 안 넘어와서)
+function curMode() { return LS.get('mode') === 'dark' ? 'dark' : 'light'; }
 function applyMode() {
-  const m = curMode();
-  const dark = m === 'dark' || (m === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-  document.documentElement.dataset.mode = dark ? 'dark' : 'light';
+  document.documentElement.dataset.mode = curMode();
   const paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim();
   document.querySelectorAll('meta[name="theme-color"]').forEach(x => { x.setAttribute('content', paper); x.removeAttribute('media'); });
 }
@@ -70,17 +68,8 @@ function setMode(m) {
   LS.set('mode', m); applyMode();
   if (S.loaded) show(S.view);
 }
-try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (curMode() === 'system') { applyMode(); if (S.loaded) show(S.view); } }); } catch (e) {}
-// 앱을 잠깐 나갔다 오는 사이 폰 밝기가 바뀌었을 때 (앱 안에서는 change가 안 올 때가 있어요)
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible' || curMode() !== 'system') return;
-  const was = document.documentElement.dataset.mode; applyMode();
-  if (S.loaded && document.documentElement.dataset.mode !== was) show(S.view);
-});
 function modePickerHtml() {
-  const sysDark = (() => { try { return matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { return false; } })();
-  return `<div class="seg mode-seg" style="margin-top:10px">${MODES.map(([k, t]) => `<button class="${curMode() === k ? 'on' : ''}" onclick="setMode('${k}');openSettings()">${t}</button>`).join('')}</div>
-    ${curMode() === 'system' ? `<div class="small" style="margin-top:8px;line-height:1.6">지금 앱이 받은 폰 설정: <b>${sysDark ? '어둡게' : '밝게'}</b> · 앱을 띄운 브라우저: <b>${/SamsungBrowser/i.test(navigator.userAgent) ? '삼성 인터넷' : /Chrome/i.test(navigator.userAgent) ? '크롬' : '기타'}</b>${sysDark ? '' : ` · 폰은 다크 모드인데 밝게로 나오면 <b>Chrome → 설정 → 테마</b>가 ‘시스템 기본값’인지 확인해 주세요 (이 앱은 크롬으로 열려서 크롬 테마를 따라가요)`}</div>` : ''}`;
+  return `<div class="seg mode-seg" style="margin-top:10px">${MODES.map(([k, t]) => `<button class="${curMode() === k ? 'on' : ''}" onclick="setMode('${k}');openSettings()">${t}</button>`).join('')}</div>`;
 }
 
 
