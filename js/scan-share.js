@@ -162,7 +162,7 @@ function cleanShared(meta) {
 }
 async function takeShared() {
   if (new URLSearchParams(location.search).get('share') !== '1') return;
-  history.replaceState({ view: S.view, id: S.bookId || '' }, '', location.pathname);
+  history.replaceState(Object.assign({}, history.state, { view: S.view, id: S.bookId || '' }), '', location.pathname);
   let meta = null; const files = [];
   try {
     const c = await caches.open('share');
@@ -271,8 +271,11 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.14.2';   // index.html의 ?v= 값과 같이 올려요
+const APP_VERSION = '2.14.3';   // index.html의 ?v= 값과 같이 올려요
 const PATCH_NOTES = [
+  { v: '2.14.3', d: '2026.10.25', t: '뒤로 가기 정리', items: [
+    '뒤로 가기: 아래 탭끼리 옮겨 다닌 건 쌓지 않아요. 다른 탭에서 뒤로 → 서재, 서재에서 뒤로 → 앱 닫힘',
+    '창(입력 · 설정 창)이 열려 있으면 뒤로 가기는 창만 닫아요'] },
   { v: '2.14.2', d: '2026.10.24', t: '프로필 사진 범위 고르기', items: [
     '프로필 사진을 고르면 범위 고르기 창이 떠요: 끌어서 옮기고, 막대나 두 손가락으로 크기를 맞춘 뒤 저장',
     '‘갤러리 · 다른 앱’ 버튼은 뺐어요'] },

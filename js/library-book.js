@@ -392,12 +392,27 @@ function show(view) {
   if (!(view === 'notes' && (S.noteSel || S.recSel)) && !(view === 'book' && S.snipSel) && $('selbar')) $('selbar').remove();
 }
 S.scrollMem = {};
+// 뒤로 가기 (v2.14.3): 아래 탭(서재 · 기록 · 함께 · 연결망 · 더보기)은 쌓지 않아요.
+//  서재가 맨 아래(depth 0) → 다른 탭(depth 1) → 그 위 화면들(depth 2, 3 …). 서재에서 뒤로 가면 앱이 닫혀요.
+const TOP_VIEWS = ['library', 'notes', 'memo', 'together', 'graph', 'more'];
+const hDepth = () => (history.state && history.state.depth) || 0;
 function go(view, id) {
   if (S.view === 'library' || S.view === 'snips') S.scrollMem[S.view] = window.scrollY;
   if (view === 'book') { if (S.bookId !== id) { S.bookTab = '필사'; S.snipSel = null; } S.bookId = id; if (S.view !== 'book') S.prevView = S.view; }
   if (view === 'note') S.noteId = id;
   if (view === 'pbook') id = S.pbookId;
-  try { history.pushState({ view, id: id || '' }, '', view === 'book' ? '?book=' + encodeURIComponent(id) : location.pathname); } catch (e) {}
+  const url = view === 'book' ? '?book=' + encodeURIComponent(id) : location.pathname;
+  const d = hDepth(), modalTop = !!(history.state && history.state.modal);
+  const st = dep => ({ view, id: id || '', depth: dep });
+  try {
+    if (TOP_VIEWS.includes(view)) {
+      const want = view === 'library' ? 0 : 1;
+      if (d === want) history.replaceState(st(want), '', url);
+      else if (d < want) history.pushState(st(want), '', url);
+      else { S.pendingNav = { view, id, depth: want, url }; history.go(want - d); return; }   // 위에 쌓인 화면을 걷어 내고 탭으로
+    } else if (modalTop) history.replaceState(st(d), '', url);   // 열린 창 자리를 그 화면으로
+    else history.pushState(st(d + 1), '', url);
+  } catch (e) {}
   show(view); restoreScroll(view);
 }
 function restoreScroll(view) {
@@ -411,7 +426,19 @@ function bookBack() {
 }
 function goBack() { try { history.back(); } catch (e) { go('library'); } }
 window.addEventListener('popstate', e => {
-  if ($('modal').innerHTML) closeModal();
+  if (S.ignorePop) { S.ignorePop = false; return; }
+  if (S.pendingNav) {   // 탭 이동: 걷어 낸 뒤 그 자리를 탭으로
+    const p = S.pendingNav; S.pendingNav = null;
+    try { history.replaceState({ view: p.view, id: p.id || '', depth: p.depth }, '', p.url); } catch (err) {}
+    show(p.view); restoreScroll(p.view);
+    // 이동하는 사이에 열린 창이 있으면 그 창 자리를 쌓아 줘요
+    try { if ($('modal').innerHTML) history.pushState({ view: p.view, id: p.id || '', depth: p.depth + 1, modal: true }, '', p.url); } catch (err) {}
+    return;
+  }
+  if ($('modal').innerHTML) {   // 창이 열려 있으면 뒤로 가기는 창만 닫기
+    S.popClosing = true; closeModal(); S.popClosing = false;
+    if (!e.state || e.state.view === S.view) return;
+  }
   if (S.view === 'library' || S.view === 'snips') S.scrollMem[S.view] = window.scrollY;
   setTimeout(() => { if (S.view === 'library' || S.view === 'snips') restoreScroll(S.view); }, 0);
   const st = e.state || {};
@@ -430,9 +457,15 @@ window.addEventListener('popstate', e => {
 });
 
 /* ===== 입력 창 ===== */
-function closeModal() { if (S.snipDraftOn) { saveSnipDraft(); S.snipDraftOn = false; } $('modal').innerHTML = ''; S.moveMemoId = null; if (typeof stopDictate === 'function') stopDictate(); }
+function closeModal() {
+  if (S.snipDraftOn) { saveSnipDraft(); S.snipDraftOn = false; } $('modal').innerHTML = ''; S.moveMemoId = null; if (typeof stopDictate === 'function') stopDictate();
+  // 창을 열 때 쌓아 둔 '창' 자리 걷기 (바로 다른 화면으로 가면 go()가 그 자리를 써요)
+  if (!S.popClosing) setTimeout(() => { if (history.state && history.state.modal && !$('modal').innerHTML && !S.pendingNav) { S.ignorePop = true; history.back(); } }, 0);
+}
 function modal(html) {
   $('modal').innerHTML = `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="sheet">${html}</div></div>`;
+  // 뒤로 가기로 창을 닫을 수 있게 한 칸 쌓기
+  try { if (!S.pendingNav && !(history.state && history.state.modal)) history.pushState(Object.assign({}, history.state, { modal: true, depth: hDepth() + 1 }), '', location.href); } catch (e) {}
 }
 // 검색칸: 글자를 칠 때 결과 목록만 바꿔요 (칸을 다시 그리면 한글이 ㄱㅏ처럼 쪼개져서)
 function liveInput(id, fn) {

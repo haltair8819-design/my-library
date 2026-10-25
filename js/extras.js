@@ -98,7 +98,7 @@ function notifyPartner(kind, id) { if (Store.kind === 'supabase' && id) sbFn('no
 function openAppUrl(url) {
   let u; try { u = new URL(url, location.href); } catch (e) { return; }
   const p = u.searchParams;
-  try { history.replaceState({ view: S.view, id: S.bookId || '' }, '', location.pathname); } catch (e) {}
+  try { history.replaceState(Object.assign({}, history.state, { view: S.view, id: S.bookId || '' }), '', location.pathname); } catch (e) {}
   const run = () => {
     if (p.get('snip')) { const id = p.get('snip'); if (S.snips.some(s => s.ID === id)) openSnipInBook(id); else toast('그 문장을 찾지 못했어요'); }
     else if (p.get('book') && book(p.get('book'))) go('book', p.get('book'));

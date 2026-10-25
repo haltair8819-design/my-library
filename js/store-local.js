@@ -128,7 +128,7 @@ async function flush() {
     clearTimeout(flushTimer);
     if (S.syncState === 'waiting') flushTimer = setTimeout(flush, 30000);
     if (changedIds && !$('modal').innerHTML) { if (S.view === 'book') renderBook(); else if (S.view === 'notes') renderMemoView(); else if (S.view === 'notes') renderNoteList(); }
-    if (changedIds && S.noteId && S.idMap[S.noteId]) { S.noteId = S.idMap[S.noteId]; try { history.replaceState({ view: S.view, id: S.noteId }, ''); } catch (e) {} }
+    if (changedIds && S.noteId && S.idMap[S.noteId]) { S.noteId = S.idMap[S.noteId]; try { history.replaceState(Object.assign({}, history.state, { view: S.view, id: S.noteId }), ''); } catch (e) {} }
   }
 }
 function renderSync() {

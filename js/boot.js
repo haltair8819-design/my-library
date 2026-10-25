@@ -11,7 +11,8 @@ async function boot() {
     if (!startBook && st && (['memo', 'graph', 'stats', 'notes', 'more'].includes(st.view) || (['together', 'plib'].includes(st.view) && togetherOn()))) S.view = st.view;
     if (!startBook && st && st.view === 'note' && st.id && noteOf(st.id)) { S.view = 'note'; S.noteId = resolveId(st.id); }
     if (startBook && book(startBook)) { S.bookId = startBook; S.view = 'book'; }
-    history.replaceState({ view: S.view, id: S.bookId || '' }, '');
+    const keep = history.state && !history.state.modal ? history.state.depth || 0 : 0;
+    history.replaceState({ view: S.view, id: S.bookId || '', depth: S.view === 'library' ? 0 : Math.max(keep, TOP_VIEWS.includes(S.view) ? 1 : keep) }, '');
     show(S.view);
   };
   renderSync();
