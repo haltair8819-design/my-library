@@ -477,7 +477,7 @@ function snipMini(s) {
   return `<button class="mini" onclick="openSnipInBook('${s.ID}')">
     <b>${esc(s['제목'] || b['제목'] || '')}</b>
     <span>${esc(sText(s).slice(0, 110))}${sText(s).length > 110 ? '…' : ''}</span>
-    <em>${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}</em></button>`;
+    <em>${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · ' + esc(pgLabel(s['쪽수'])) : ''}</em></button>`;
 }
 
 
@@ -585,7 +585,11 @@ function renderStatsView() {
     return (open ? rows : rows.slice(0, limit)).map((r, i) => `<div class="hbar" data-g="${id}" data-i="${i}" title="${esc(r.k)} · ${r.bs.length}권">
       <span class="name">${esc(r.k)}</span><span class="track"><span class="fill" style="display:block;width:${r.bs.length / max * 100}%"></span></span><span class="n">${r.bs.length}</span></div>`).join('') + more;
   };
-  const G2 = { cat: groupBy('대분류'), my: groupBy('개인분류'), route: groupBy('경로'), au: groupBy('저자', splitAuthors).filter(r => r.bs.length >= 2),
+  const pubName = v => String(v || '').replace(/\(주\)|㈜|주식회사|\(株\)/g, '').replace(/\s+/g, ' ').trim();
+  const pubM = {}; done.forEach(b => { const k = pubName(b['출판사']); if (k) (pubM[k] = pubM[k] || []).push(b); });
+  const pubRows = Object.entries(pubM).map(([k, bs]) => ({ k, bs })).sort((a, b) => b.bs.length - a.bs.length || a.k.localeCompare(b.k));
+  const noPub = done.filter(b => !pubName(b['출판사'])).length;
+  const G2 = { pub: pubRows, cat: groupBy('대분류'), my: groupBy('개인분류'), route: groupBy('경로'), au: groupBy('저자', splitAuthors).filter(r => r.bs.length >= 2),
     plat: Object.entries(done.reduce((m, b) => { (m[platOf(b)] = m[platOf(b)] || []).push(b); return m; }, {})).map(([k, bs]) => ({ k, bs })).sort((a, b) => b.bs.length - a.bs.length) };
   statGroups = { ...G2, month: buckets.map(x => ({ k: x.label, bs: x.books })) };
 
@@ -618,6 +622,7 @@ function renderStatsView() {
       <div class="panel"><h3>개인분류<small>${G2.my.length}개 · 누르면 책 목록</small></h3>${hbars('my', G2.my, 10)}<div class="drill" id="drill-my"></div></div>
       <div class="panel"><h3>종이책 · E북</h3>${hbars('plat', G2.plat, 3)}<div class="drill" id="drill-plat"></div></div>
       <div class="panel"><h3>어디서 읽었나</h3>${hbars('route', G2.route, 8)}<div class="drill" id="drill-route"></div></div>
+      <div class="panel"><h3>출판사<small>${G2.pub.length}곳${noPub ? ` · 출판사 없는 책 ${noPub}권` : ''} · 누르면 책 목록</small></h3>${G2.pub.length ? hbars('pub', G2.pub, 8) : '<div class="drill">아직 없어요</div>'}<div class="drill" id="drill-pub"></div></div>
       <div class="panel"><h3>여러 권 읽은 저자</h3>${G2.au.length ? hbars('au', G2.au, 10) : '<div class="drill">아직 없어요</div>'}<div class="drill" id="drill-au"></div></div>
     </div>
     ${(() => { const rated = done.filter(b => Number(b['별점'])).sort((a, b) => b['별점'] - a['별점'] || String(b['완독일']).localeCompare(String(a['완독일']))).slice(0, 5);
@@ -638,7 +643,7 @@ function renderStatsView() {
 let statGroups = {};
 function openStatGroup(el) {
   const g = el.dataset.g, row = (statGroups[g] || [])[Number(el.dataset.i)]; if (!row) return;
-  const names = { cat: '대분류', my: '개인분류', route: '어디서 읽었나', au: '저자', plat: '종이책 · E북' };
+  const names = { cat: '대분류', my: '개인분류', route: '어디서 읽었나', au: '저자', plat: '종이책 · E북', pub: '출판사' };
   const span = statYear === '전체' ? '전체 기간' : statYear + '년 완독';
   if (g === 'month') openBookList(`${statYear === '전체' ? '' : statYear + '년 '}${row.k} 완독`, row.bs, '최근 완독');
   else openBookList(`${names[g]} · ${row.k}`, row.bs, '최근 완독', span);

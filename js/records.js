@@ -73,7 +73,7 @@ function renderRecords() {
     <div id="voiceq"></div>
     ${seed ? `<div class="seed ${S.recQ.trim() || S.recSel || S.recF !== '전체' ? 'hidden' : ''}" id="seed-box"><div class="lb"><span>떠오르는 글감</span><button onclick="S.seedRand=Math.random();renderRecords()">다른 글감 ↻</button></div>
       <div class="tx tap" onclick="openSnipInBook('${seed.ID}')">${esc(sText(seed).slice(0, 220))}${sText(seed).length > 220 ? '…' : ''}</div>
-      <div class="mt tap" onclick="openSnipInBook('${seed.ID}')">${esc((book(seed['책ID']) || {})['제목'] || '')}${seed['쪽수'] ? ' · p.' + esc(seed['쪽수']) : ''}</div>
+      <div class="mt tap" onclick="openSnipInBook('${seed.ID}')">${esc((book(seed['책ID']) || {})['제목'] || '')}${seed['쪽수'] ? ' · ' + esc(pgLabel(seed['쪽수'])) : ''}</div>
       <button class="btn" style="margin-top:10px" onclick="newNote('${seed.ID}')">이 문장으로 글쓰기</button></div>` : ''}
     <div id="rec-list"></div>`;
   recDraw();

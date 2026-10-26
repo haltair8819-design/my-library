@@ -32,7 +32,7 @@ function chatHtml(m) {
     return i < 0 ? '' : `<span class="cite" onclick="openCite('${id}')">${i + 1}</span>`;
   });
   return `<div class="msg bot">${body}
-    ${order.length ? `<div class="sources">${m.cites.map((c, i) => `<button onclick="openCite('${c.id}')"><b>${i + 1}</b>${esc(c.book)}${c.page !== '' && c.page != null ? ' · p.' + esc(c.page) : ''}${c.title ? ' · ' + esc(c.title) : ''}</button>`).join('')}</div>` : ''}</div>`;
+    ${order.length ? `<div class="sources">${m.cites.map((c, i) => `<button onclick="openCite('${c.id}')"><b>${i + 1}</b>${esc(c.book)}${c.page !== '' && c.page != null ? ' · ' + esc(pgLabel(c.page)) : ''}${c.title ? ' · ' + esc(c.title) : ''}</button>`).join('')}</div>` : ''}</div>`;
 }
 function mdLite(t) {
   const lines = esc(String(t || '')).split('\n');

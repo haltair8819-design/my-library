@@ -109,7 +109,7 @@ function exportMarkdown() {
     const sn = snipsOf(b.ID);
     const meta = [['저자', b['저자']], ['옮긴이', b['옮긴이']], ['출판사', b['출판사']], ['상태', b['상태']], ['시작일', b['시작일']], ['완독일', b['완독일']], ['분량', b['분량'] ? b['분량'] + '쪽' : ''], ['분류', [b['대분류'], b['중분류'], b['개인분류']].filter(Boolean).join(' > ')], ['별점', b['별점'] ? '★'.repeat(Number(b['별점'])) : ''], ['한줄평', b['한줄평']]].filter(x => x[1]);
     const body = `# ${b['제목']}\n\n${meta.map(([k, v]) => `- ${k}: ${v}`).join('\n')}\n\n## 필사 (${sn.length})\n\n` +
-      sn.map(s => `### ${s['제목'] || '(제목 없음)'}${s['쪽수'] !== '' && s['쪽수'] != null ? ` · p.${s['쪽수']}` : ''}\n\n${s['유형'] === '인용' ? sText(s).split('\n').map(l => '> ' + l).join('\n') + (sMemo(s) ? '\n\n메모: ' + sMemo(s) : '') : s['내용']}\n${s['키워드'] ? '\n' + splitKw(s['키워드']).map(k => '#' + k.replace(/\s/g, '_')).join(' ') + '\n' : ''}`).join('\n');
+      sn.map(s => `### ${s['제목'] || '(제목 없음)'}${s['쪽수'] !== '' && s['쪽수'] != null ? ` · ${pgLabel(s['쪽수'])}` : ''}\n\n${s['유형'] === '인용' ? sText(s).split('\n').map(l => '> ' + l).join('\n') + (sMemo(s) ? '\n\n메모: ' + sMemo(s) : '') : s['내용']}\n${s['키워드'] ? '\n' + splitKw(s['키워드']).map(k => '#' + k.replace(/\s/g, '_')).join(' ') + '\n' : ''}`).join('\n');
     files.push({ name: uniqName(`책/${safeName(b['제목'])}.md`), text: body });
   });
   S.notes.forEach(n => files.push({ name: uniqName(`노트/${safeName(n['제목'])}.md`), text: `---\n상태: ${n['상태']}\n묶음: ${n['묶음'] || ''}\n키워드: ${n['키워드'] || ''}\n작성일: ${n['작성일'] || ''}\n수정일: ${n['수정일'] || ''}\n발행링크: ${n['발행링크'] || ''}\n---\n\n# ${n['제목'] || ''}\n\n${n['본문']}\n` }));

@@ -276,7 +276,6 @@ function openQuickMenu() {
       <button onclick="closeModal();newNote()"><b>✍ 새 글</b><span>나만의 노트에 쓰기</span></button>
       <button onclick="openQuickSheet('할일')"><b>☑ 할 일</b><span>"금요일까지 반납"처럼 날짜도</span></button>
       <button onclick="quickSnip(false)"><b>❝ 필사 쓰기</b><span>책을 고르고 문장 적기</span></button>
-      <button onclick="quickSnip(true)"><b>📷 사진으로 필사</b><span>책을 고르고 사진 찍기</span></button>
       <button onclick="closeModal();openBookForm(null)"><b>📚 책 추가</b><span>새 책 등록</span></button>
     </div>
     <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);

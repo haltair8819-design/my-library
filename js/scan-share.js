@@ -195,7 +195,7 @@ function openSharePicker(q) {
 function useShared(id) {
   const sh = S.shared; S.shared = null; if (!sh) return;
   closeModal(); go('book', id);
-  if (sh.files.length) { scanFiles(sh.files); return; }
+  if (sh.files.length && !sh.text) { openSnipForm(null); toast('사진으로 필사하는 기능은 없어졌어요 · 문장을 직접 적어 주세요'); return; }
   openSnipForm(null);
   $('f-txt').value = sh.text; $('f-page').value = sh.page || '';
   if (navigator.onLine) { const b = document.querySelector('[data-ai-title]'); if (b) aiTitle(b, true, sh.raw); }
@@ -271,8 +271,13 @@ async function openShareCheck() {
 }
 
 /* ----- 업데이트 내역 ----- */
-const APP_VERSION = '2.14.4';   // index.html의 ?v= 값과 같이 올려요
+const APP_VERSION = '2.15';   // index.html의 ?v= 값과 같이 올려요
 const PATCH_NOTES = [
+  { v: '2.15', d: '2026.10.26', t: 'E북 % 위치 · 출판사 통계 · 예약 수령일', items: [
+    'E북 필사는 쪽수 칸에 45%처럼 적으면 그대로 45%로 보여요 · 쪽수로 적은 필사와 섞여도 분량으로 계산해서 순서대로 정렬',
+    '독서 통계에 출판사 추가 (누르면 그 출판사 책 목록)',
+    '사진으로 필사(카메라 글자 인식) 기능을 뺐어요 · AI 사용량 줄이기',
+    '도서관 예약한 책의 수령일을 넣을 수 있어요 · 책 화면 · 서재 목록 · 서재 위에 수령 D-n으로 보여요'] },
   { v: '2.14.4', d: '2026.10.26', t: '업데이트 요청 같이 보기', items: [
     '‘업데이트 해줘요!’ 목록을 앱 쓰는 사람 모두가 같이 봐요 (누가 적었는지 이름도 보여요)',
     '내가 적은 것만 고치거나 지울 수 있어요 · 예전에 적어 둔 요청도 자동으로 옮겨요'] },

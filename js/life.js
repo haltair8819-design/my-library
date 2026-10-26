@@ -53,7 +53,7 @@ function renderLifeView() {
   const el = $('v-life'); if (!el) return;
   const all = S.snips.filter(s => lifeOf(s) > 0);
   const list = all.filter(s => !S.lifeF || lifeOf(s) === S.lifeF)
-    .sort((a, b) => lifeOf(b) - lifeOf(a) || String((book(a['책ID']) || {})['제목'] || '').localeCompare(String((book(b['책ID']) || {})['제목'] || '')) || (firstPage(a['쪽수']) || 0) - (firstPage(b['쪽수']) || 0));
+    .sort((a, b) => lifeOf(b) - lifeOf(a) || String((book(a['책ID']) || {})['제목'] || '').localeCompare(String((book(b['책ID']) || {})['제목'] || '')) || (snipPage(a) || 0) - (snipPage(b) || 0));
   const cnt = n => all.filter(s => lifeOf(s) === n).length;
   el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 뒤로</button></div>
     <div class="view-head"><h1>인생 문장</h1><p>${all.length ? `${all.length}개 · 필사를 열어 ★을 눌러 담아요` : '필사를 열어 ‘인생 문장’ ★을 누르면 여기 모여요. 여러 개는 꾹 눌러 골라서 한 번에.'}</p></div>
@@ -61,7 +61,7 @@ function renderLifeView() {
     <div class="life-list">${list.slice(0, S.lifeLimit).map(s => { const b = book(s['책ID']) || {}, n = lifeOf(s);
       return `<div class="life-card l${n}" onclick="openSnipInBook('${s.ID}')"><div class="life-st">${'★'.repeat(n)}<span>${LIFE[n]}</span></div>
         ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}<div class="txt">${esc(sText(s))}</div>
-        <div class="life-src">${esc(b['제목'] || '')}${b['저자'] ? ' · ' + esc(b['저자']) : ''}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}</div></div>`; }).join('') || '<div class="empty">아직 없어요</div>'}</div>
+        <div class="life-src">${esc(b['제목'] || '')}${b['저자'] ? ' · ' + esc(b['저자']) : ''}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · ' + esc(pgLabel(s['쪽수'])) : ''}</div></div>`; }).join('') || '<div class="empty">아직 없어요</div>'}</div>
     ${list.length > S.lifeLimit ? `<button class="btn tg-more" onclick="S.lifeLimit+=40;renderLifeView()">더보기 (${list.length - S.lifeLimit}개 남음)</button>` : ''}`;
   $('life-f').onclick = e => { const t = e.target.closest('[data-f]'); if (!t) return; S.lifeF = Number(t.dataset.f); S.lifeLimit = 40; renderLifeView(); };
 }

@@ -202,7 +202,7 @@ async function askAssistant(ctx: Ctx, question: string, history: Row[]) {
   const bookTitle: Record<string, string> = {}; bs.forEach(b => bookTitle[b.ID] = b['제목']);
   const context = '## 내 서재 (책 ' + bs.length + '권)\n' + catalog(bs, ss) + '\n\n## 독서 통계\n' + statsText(bs, ss) + '\n\n' +
     '## 질문과 관련해 찾은 내 필사 (' + picked.length + '개)\n' +
-    (picked.length ? picked.map(s => '[' + s.ID + '] 책: ' + bookTitle[s['책ID']] + (s['쪽수'] !== '' && s['쪽수'] != null ? ' (p.' + s['쪽수'] + ')' : '') +
+    (picked.length ? picked.map(s => '[' + s.ID + '] 책: ' + bookTitle[s['책ID']] + (s['쪽수'] !== '' && s['쪽수'] != null ? ' (' + (/%\s*$/.test(String(s['쪽수'])) ? '' : 'p.') + s['쪽수'] + ')' : '') +
       (s['제목'] ? ' / 제목: ' + s['제목'] : '') + (s['키워드'] ? ' / 키워드: ' + s['키워드'] : '') + '\n' + clip(s['내용'], 1500)).join('\n\n') : '(관련 필사를 찾지 못함)') +
     (pickedNotes.length ? '\n\n## 질문과 관련해 찾은 내가 쓴 글 (' + pickedNotes.length + '개)\n' + pickedNotes.map(n => '[' + n.ID + '] 글: ' + n['제목'] + (n['키워드'] ? ' / 키워드: ' + n['키워드'] : '') + '\n' + clip(n['내용'], 2500)).join('\n\n') : '') +
     (pickedMemos.length ? '\n\n## 질문과 관련해 찾은 내 메모 · 할 일 (' + pickedMemos.length + '개)\n' + pickedMemos.map(m => '[' + m.ID + '] ' + (m.src['종류'] === '할일' ? '할 일' + (m.src['마감일'] ? '(' + m.src['마감일'] + ')' : '') + (m.src['완료'] === true ? ' 끝냄' : '') : '메모') + ': ' + clip(m['내용'], 400)).join('\n') : '');
@@ -594,6 +594,7 @@ const CRON_FNS: Record<string, (admin: any, ...a: any[]) => Promise<unknown>> = 
 
 const FNS: Record<string, (ctx: Ctx, ...a: any[]) => Promise<unknown>> = {
   ping: async () => ({ ok: true }),
-  askAssistant, suggestKeywords, autoKeywords, scanPage, suggestTitle, noteAssist, transcribeAudio, bookSearch, bookDetail,
+  askAssistant, suggestKeywords, autoKeywords, suggestTitle,   // scanPage(사진 필사)는 v2.15에서 뺐어요 (AI 사용량)
+  noteAssist, transcribeAudio, bookSearch, bookDetail,
   pushKey, pushTest, notify, backupNow
 };

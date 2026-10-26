@@ -30,7 +30,7 @@ function bookCard(b) {
         ${b['상태'] === '읽는중' ? '<span class="badge reading">읽는 중</span>' : ''}
         ${b['상태'] === '읽을예정' ? '<span class="badge">읽고 싶은</span>' : ''}
         ${platOf(b) !== '종이책' ? `<span class="badge plat eb">${platOf(b)}</span>` : '<span class="badge plat">종이책</span>'}
-        ${dueBadge(b)}
+        ${pickBadge(b)}${dueBadge(b)}
         ${b['별점'] ? `<span class="stars">${'★'.repeat(Number(b['별점']) || 0)}</span>` : ''}
         ${nQ ? `<span class="badge tapb" data-tab="필사">필사 ${nQ}</span>` : ''}
         ${nT ? `<span class="badge tapb think" data-tab="생각">내 생각 ${nT}</span>` : ''}
@@ -114,7 +114,7 @@ function renderBook() {
       <button data-t="생각" class="${tab === '생각' ? 'on' : ''}">내 생각 · 메모<span>${thoughts.length}</span></button></div>
     ${tab === '필사' ? `
     <div class="sec-head tight"><h2>필사</h2>
-      <div style="display:flex;gap:6px">${selBtn(quotes)}${S.snipSel || reo ? '' : `<button class="btn" onclick="openScan()">📷 사진</button><button class="btn" onclick="openSnipForm(null,'인용')">+ 문장</button>`}</div></div>
+      <div style="display:flex;gap:6px">${selBtn(quotes)}${S.snipSel || reo ? '' : `<button class="btn" onclick="openSnipForm(null,'인용')">+ 문장</button>`}</div></div>
     ${reoNote}
     ${quotes.length ? `<div id="snip-list">${quotes.map(snipHtml).join('')}</div>`
     : '<div class="empty">아직 필사한 문장이 없어요.<br>‘+ 문장 추가’로 시작해 보세요.</div>'}` : `
@@ -152,9 +152,9 @@ function orderedSnips(bid) {
   const out = ids.map(id => byPage.find(s => s.ID === id)).filter(Boolean);
   // 순서를 정한 뒤에 새로 넣은 문장: 쪽수가 맞는 자리 (자기보다 쪽수가 작거나 같은 마지막 문장 뒤)
   byPage.filter(s => !pos.has(s.ID)).forEach(s => {
-    const p = firstPage(s['쪽수']);
+    const p = snipPage(s);
     if (p == null) { out.push(s); return; }
-    let at = 0; out.forEach((x, i) => { const q = firstPage(x['쪽수']); if (q != null && q <= p) at = i + 1; });
+    let at = 0; out.forEach((x, i) => { const q = snipPage(x); if (q != null && q <= p) at = i + 1; });
     out.splice(at, 0, s);
   });
   return out;
@@ -277,12 +277,21 @@ function bulkSnipDelete() {
 }
 // 쪽수 순서로 정렬: "36, 37"은 36쪽. 쪽수 없는 노트 문장은 바로 앞 문장 자리에 붙어 있고, 쪽수 없는 새 문장은 맨 뒤
 function firstPage(v) { const m = String(v ?? '').match(/\d+(\.\d+)?/); return m ? Number(m[0]) : null; }
-function sortByPage(list) {
+// E북 위치: '45%'처럼 적으면 그대로 45%로 보이고, 정렬할 땐 분량(쪽수)으로 바꿔서 쪽수로 적은 필사와 섞어요 (v2.15)
+const isPctPage = v => /%\s*$/.test(String(v ?? '').trim());
+function snipPage(s, bk) {
+  const v = s && s['쪽수'], n = firstPage(v); if (n == null) return null;
+  if (!isPctPage(v)) return n;
+  const b = bk || book(s['책ID']), t = Number(b && b['분량']) || 0;
+  return t ? Math.round(t * Math.min(100, n) / 100 * 10) / 10 : n;
+}
+function pgLabel(v) { v = String(v ?? '').trim(); return isPctPage(v) ? v.replace(/\s+/g, '') : 'p.' + v; }
+function sortByPage(list, bk) {
   const fromFile = s => s['출처'] === '노트파일' || s['출처'] === 'PDF';
   const base = list.slice().sort((x, y) => (fromFile(x) ? 0 : 1) - (fromFile(y) ? 0 : 1) || String(x.ID).localeCompare(String(y.ID)));
   let carry = 0;
   const keyed = base.map((s, i) => {
-    const p = firstPage(s['쪽수']);
+    const p = snipPage(s, bk);
     let k;
     if (p != null) { k = p; if (fromFile(s)) carry = p; }
     else k = fromFile(s) ? carry : Infinity;
@@ -299,7 +308,7 @@ function snipHtml(s) {
   const memo = sMemo(s);
   const sel = S.snipSel && S.view === 'book';
   const kws = String(s['키워드'] || '').split(',').map(k => k.trim()).filter(Boolean);
-  const meta = [s['쪽수'] !== '' && s['쪽수'] != null ? `<span class="pg">p.${esc(s['쪽수'])}</span>` : '', ...kws.map(k => `<span class="kw">#${esc(k)}</span>`),
+  const meta = [s['쪽수'] !== '' && s['쪽수'] != null ? `<span class="pg">${esc(pgLabel(s['쪽수']))}</span>` : '', ...kws.map(k => `<span class="kw">#${esc(k)}</span>`),
     togetherOn() && isShared(s) && s['유형'] !== '메모' ? '<span class="kw shared" title="짝꿍에게 보여주는 중">👀 보여주는 중</span>' : ''].filter(Boolean);
   return `<div class="snip ${cls} ${sel && S.snipSel.has(s.ID) ? 'sel' : ''}" id="s-${s.ID}" onclick="snipTap('${s.ID}')">
     ${sel ? '<span class="sel-check snip-check">✓</span>' : ''}${sel ? '<span class="drag-h" aria-label="끌어서 옮기기">≡</span>' : ''}${s['유형'] === '메모' ? '<span class="badge plat" style="display:inline-block;margin-bottom:6px">메모</span>' : ''}
@@ -333,7 +342,7 @@ function drawAllSnips() {
     html += `<div class="hit" onclick="openSnipInBook('${s.ID}')">${s['제목'] ? `<div class="ht">${q ? highlight(s['제목'], q) : esc(s['제목'])}</div>` : ''}
       <div class="hx">${q ? highlight(sText(s), q) : esc(sText(s).slice(0, 200)) + (sText(s).length > 200 ? '…' : '')}</div>
       ${memo ? `<div class="smemo">✎ ${esc(memo.slice(0, 120))}</div>` : ''}
-      <div class="hm">${[s['쪽수'] !== '' && s['쪽수'] != null ? 'p.' + esc(s['쪽수']) : '', s['키워드'] ? '#' + esc(splitKw(s['키워드']).join(' #')) : ''].filter(Boolean).join(' · ')}</div></div>`;
+      <div class="hm">${[s['쪽수'] !== '' && s['쪽수'] != null ? esc(pgLabel(s['쪽수'])) : '', s['키워드'] ? '#' + esc(splitKw(s['키워드']).join(' #')) : ''].filter(Boolean).join(' · ')}</div></div>`;
   });
   el.innerHTML = (q ? `<div class="res-head">찾은 ${KIND_LABEL[S.allKind]} ${list.length.toLocaleString()}개</div>` : '') + (html || `<div class="empty">${q ? '찾는 문장이 없어요' : '아직 없어요'}</div>`)
     + (list.length > S.allLimit ? `<button class="btn" style="width:100%;margin-top:10px" onclick="S.allLimit+=100;drawAllSnips()">더 보기 (${(list.length - S.allLimit).toLocaleString()}개 남음)</button>` : '');
@@ -494,8 +503,7 @@ function openSnipForm(id, forceType) {
     <label>제목 <span style="font-weight:400;color:var(--faint)">내가 붙이는 표제</span><button type="button" class="kw-ai" data-ai-title onclick="aiTitle(this)">AI 제목</button></label>
     <input class="field" id="f-ttl" value="${esc(s ? s['제목'] : '')}" placeholder="예: 과학은 믿음을 싫어한다">
     <label>내용</label>
-    <div class="ftools"><label class="ftool">📷 사진에서<input type="file" accept="image/*" hidden onchange="snipPhoto(this)"></label>
-      <button type="button" class="ftool" onclick="toggleDictate(this,'f-txt')">🎤 받아쓰기</button>
+    <div class="ftools"><button type="button" class="ftool" onclick="toggleDictate(this,'f-txt')">🎤 받아쓰기</button>
       <button type="button" class="ftool" onclick="startRecording('snip', recSnipDone)">🎙 읽어서 넣기</button>
       <button type="button" class="ftool" onclick="pasteClip(this)">📋 붙여넣기</button>
       <button type="button" class="ftool" onclick="snipSpell(this)">✓ 맞춤법</button></div>
@@ -504,8 +512,9 @@ function openSnipForm(id, forceType) {
     <div id="memo-wrap" class="${s && sMemo(s) ? '' : 'hidden'}"><label>메모 <span style="font-weight:400;color:var(--faint)">이 문장에 덧붙이는 내 메모</span></label>
       <textarea class="field" id="f-memo" style="min-height:70px" placeholder="떠오른 것, 찾아볼 것, 연결되는 생각">${esc(s ? sMemo(s) : '')}</textarea></div>
     <button type="button" class="kw-ai ${s && sMemo(s) ? 'hidden' : ''}" id="memo-add" style="padding:6px 0 0" onclick="showMemoField()">＋ 메모 달기</button>
-    <label>쪽수 <span style="font-weight:400;color:var(--faint)">여러 쪽이면 36, 37</span></label>
-    <input class="field" id="f-page" inputmode="decimal" style="max-width:160px" value="${esc(s ? s['쪽수'] : '')}">
+    ${(() => { const eb = platOf(book(S.bookId) || {}) === 'E북';
+      return `<label>${eb ? '쪽수 · 위치' : '쪽수'} <span style="font-weight:400;color:var(--faint)">${eb ? 'E북은 45%처럼 % 로 적어도 돼요' : '여러 쪽이면 36, 37'}</span></label>
+    <div class="inline" style="max-width:240px"><input class="field" id="f-page" inputmode="decimal" style="flex:1" placeholder="${eb ? '45% 또는 쪽수' : ''}" value="${esc(s ? s['쪽수'] : '')}">${eb ? `<button type="button" class="btn" onclick="const f=$('f-page');f.value=f.value.replace(/%/g,'').trim()+'%';f.focus()">%</button>` : ''}</div>`; })()}
     ${lifePickHtml(s)}
     <label>키워드 <span style="font-weight:400;color:var(--faint)">쉼표로 구분</span><button type="button" class="kw-ai" onclick="aiKeywords(this)">AI 추천</button></label>
     <input class="field" id="f-kw" value="${esc(s ? s['키워드'] : '')}" placeholder="예: 자유, 사랑">
@@ -641,7 +650,7 @@ const BOOK_FIELDS = [
   ['제목', 'text', true], ['저자', 'text'], ['옮긴이', 'text'], ['출판사', 'text'],
   ['플랫폼', 'plat'], ['경로', 'list'], ['대분류', 'list'], ['중분류', 'list'], ['개인분류', 'list'],
   ['분량', 'number'], ['시작일', 'date'], ['완독일', 'date'], ['상태', 'select'], ['표지URL', 'text'], ['ISBN', 'hidden'],
-  ['반납일', 'date'], ['별점', 'stars'], ['한줄평', 'text']
+  ['수령일', 'date'], ['반납일', 'date'], ['별점', 'stars'], ['한줄평', 'text']
 ];
 function openBookForm(id) {
   S.formBookId = id || '';
@@ -678,7 +687,8 @@ function openBookForm(id) {
     <div class="row">${f['대분류']}${f['중분류']}</div>
     <div class="row">${f['개인분류']}${f['상태']}</div>
     <div class="row">${f['시작일']}${f['완독일']}</div>
-    <div class="row">${f['반납일']}${f['별점']}</div>
+    <div class="row">${f['수령일']}${f['반납일']}</div>
+    <div class="row">${f['별점']}</div>
     ${f['한줄평']}
     ${f['표지URL']}${f['ISBN']}
     <div class="actions">

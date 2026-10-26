@@ -25,6 +25,15 @@ function dueBadge(b) {
   if (d === 0) return `<span class="badge due-late">오늘 반납</span>`;
   return `<span class="badge ${d <= 3 ? 'due-soon' : ''}">반납 D-${d}</span>`;
 }
+// 도서관 예약 수령일 (v2.15)
+function pickBadge(b) {
+  const d = dayDiff(b['수령일']);
+  if (d === null) return '';
+  if (d < 0) return `<span class="badge due-late">수령 ${-d}일 지남</span>`;
+  if (d === 0) return `<span class="badge due-late">오늘 수령</span>`;
+  return `<span class="badge ${d <= 3 ? 'due-soon' : ''}">수령 D-${d}</span>`;
+}
+const pickText = d => d < 0 ? (-d) + '일 지남' : d === 0 ? '오늘 수령' : 'D-' + d;
 function progressOf(b) {
   const total = Number(b['분량']) || 0, cur = Number(b['현재쪽수']) || 0;
   if (!total || !cur) return null;
@@ -50,6 +59,13 @@ function libraryTopHtml() {
     const d = dayDiff(b['반납일']);
     return `<a onclick="go('book','${b.ID}')">${esc(b['제목'])}</a> (${d < 0 ? -d + '일 지남' : d === 0 ? '오늘' : 'D-' + d})`;
   }).join(', ')}</div>`;
+  // 예약한 책 수령
+  const pick = S.books.filter(b => { const d = dayDiff(b['수령일']); return d !== null && d <= 3; })
+    .sort((a, b) => dayDiff(a['수령일']) - dayDiff(b['수령일']));
+  if (pick.length) html += `<div class="due">📬 예약한 책 받으러 가요: ${pick.map(b => {
+    const d = dayDiff(b['수령일']);
+    return `<a onclick="go('book','${b.ID}')">${esc(b['제목'])}</a> (${d < 0 ? -d + '일 지남' : d === 0 ? '오늘' : 'D-' + d})`;
+  }).join(', ')}</div>`;
   // 오늘의 문장
   const pool = S.snips.filter(s => !isThought(s) && s['유형'] !== '메모' && sText(s).length >= 30 && String(s['내용']).length <= 600);
   if (pool.length && !S.q.trim()) {
@@ -59,7 +75,7 @@ function libraryTopHtml() {
     html += `<div class="today">
       <div class="lb"><span>다시 만나는 문장</span><button onclick="S.todayShift++;renderList()">다른 문장 ↻</button></div>
       <div class="tx" onclick="openSnipInBook('${s.ID}')">${esc(sText(s))}</div>
-      <div class="mt">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}${s['제목'] ? ' · ' + esc(s['제목']) : ''}</div>
+      <div class="mt">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · ' + esc(pgLabel(s['쪽수'])) : ''}${s['제목'] ? ' · ' + esc(s['제목']) : ''}</div>
     </div>`;
   }
   return html;
@@ -108,7 +124,7 @@ function hitsHtml(q) {
       return `<div class="hit" onclick="openSnipInBook('${s.ID}')">
         ${s['제목'] ? `<div class="ht">${highlight(s['제목'], q)}</div>` : ''}
         <div class="hx">${highlight(s['내용'], q).replace('[메모]', '✎')}</div>
-        <div class="hm">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}${s['키워드'] ? ' · #' + esc(splitKw(s['키워드']).join(' #')) : ''}</div>
+        <div class="hm">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · ' + esc(pgLabel(s['쪽수'])) : ''}${s['키워드'] ? ' · #' + esc(splitKw(s['키워드']).join(' #')) : ''}</div>
       </div>`;
     }).join('') +
     (hits.length > S.hitLimit ? `<button class="btn" style="width:100%" onclick="S.hitLimit+=30;renderList()">더 보기 (${hits.length - S.hitLimit}개 남음)</button>` : '');
@@ -143,6 +159,14 @@ function bookExtrasHtml(b) {
       ${logs.length ? readLogHtml(b) : ''}</div>`;
   } else if (logs.length) {
     h += `<div class="panel2"><h4>독서 기록 <span class="small" style="font-weight:400">${logs.length}일 읽음</span></h4>${readLogHtml(b)}</div>`;
+  }
+  if (b['수령일'] || (b['상태'] !== '완독' && !b['반납일'] && (b['상태'] === '읽을예정' || /도서관|대출|대여|예약/.test(String(b['경로'] || ''))))) {
+    const d = dayDiff(b['수령일']);
+    h += `<div class="panel2"><h4>도서관 예약 수령</h4><div class="inline">
+      <input class="field" type="date" id="pick-date" value="${esc(b['수령일'] || '')}" onchange="savePick('${b.ID}', this.value)">
+      ${b['수령일'] ? `<span class="small">${pickText(d)}</span>
+        <button class="btn" onclick="pickedUp('${b.ID}')">받았어요</button>` : `<span class="small">예약한 책이면 받으러 갈 날을 넣어 두세요.</span>`}
+    </div></div>`;
   }
   if (b['반납일'] || (b['상태'] === '읽는중' && /도서관|대출|대여/.test(String(b['경로'] || '')))) {
     const d = dayDiff(b['반납일']);
@@ -281,6 +305,17 @@ function openDay(d) {
   document.querySelectorAll('.dbar').forEach(x => x.classList.toggle('on', x.dataset.d === d));
   el.innerHTML = o ? `<b>${d.slice(5).replace('-', '.')} (${WD[dateOf(d).getDay()]}) · ${o.n}쪽</b><br>${Object.entries(o.books).map(([bid, n]) => `<a onclick="go('book','${bid}')">${esc((book(bid) || {})['제목'] || '')}</a> ${n}쪽`).join(' · ')}` : `${d.slice(5).replace('-', '.')} · 기록 없음`;
 }
+function savePick(id, v) {
+  patchBook(id, { '수령일': v });
+  renderBook(); toast(v ? '수령일을 저장했어요' : '수령일을 지웠어요');
+}
+function pickedUp(id) {
+  const b = book(id); if (!b) return;
+  const patch = { '수령일': '' };
+  if (!String(b['경로'] || '').trim()) patch['경로'] = '도서관';
+  if (b['상태'] === '읽을예정' && confirm('받았어요! 오늘부터 읽기 시작할까요?\n(반납일은 책 화면에서 넣을 수 있어요)')) Object.assign(patch, { '상태': '읽는중', '시작일': S.today });
+  patchBook(id, patch); renderBook(); toast('수령 완료! 반납일도 넣어 두세요');
+}
 async function saveDue(id, v) {
   patchBook(id, { '반납일': v });
   renderBook(); toast(v ? '반납일을 저장했어요' : '반납 완료!');
@@ -390,7 +425,7 @@ function openReport(year) {
     ${cats.length ? `<div class="card"><h4>많이 읽은 분야</h4>${cats.map(([k, n]) => `${esc(k)} ${n}권`).join(' · ')}</div>` : ''}
     ${best ? `<div class="card"><h4>가장 좋았던 책</h4>${esc(best['제목'])} <span class="stars">${starText(best['별점'])}</span>${best['한줄평'] ? `<div class="small" style="margin-top:4px">“${esc(best['한줄평'])}”</div>` : ''}</div>` : ''}
     ${fast ? `<div class="card"><h4>단숨에 읽은 책</h4>${esc(fast['제목'])} · ${fast['완독일수']}일</div>` : ''}
-    ${q ? `<div class="card"><h4>올해의 문장</h4><div class="quote">${esc(sText(q))}</div><div class="small" style="margin-top:6px">${esc(qb ? qb['제목'] : '')}${q['쪽수'] !== '' && q['쪽수'] != null ? ' · p.' + esc(q['쪽수']) : ''}</div></div>` : ''}
+    ${q ? `<div class="card"><h4>올해의 문장</h4><div class="quote">${esc(sText(q))}</div><div class="small" style="margin-top:6px">${esc(qb ? qb['제목'] : '')}${q['쪽수'] !== '' && q['쪽수'] != null ? ' · ' + esc(pgLabel(q['쪽수'])) : ''}</div></div>` : ''}
     <div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>
   </div>`);
 }

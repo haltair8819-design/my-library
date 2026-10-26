@@ -46,7 +46,7 @@ function renderNoteList() {
       ${groups.length ? `<select class="field n-group" id="n-g"><option value="">모든 묶음</option>${groups.map(g => `<option ${S.noteGroup === g ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>` : ''}</div>
     ${seed ? `<div class="seed ${S.noteQ.trim() || S.noteSel ? 'hidden' : ''}" id="seed-box"><div class="lb"><span>떠오르는 글감</span><button onclick="S.seedRand=Math.random();renderNoteList()">다른 글감 ↻</button></div>
       <div class="tx tap" onclick="openSnipInBook('${seed.ID}')" title="이 필사로 가기">${esc(sText(seed).slice(0, 220))}${sText(seed).length > 220 ? '…' : ''}</div>
-      <div class="mt tap" onclick="openSnipInBook('${seed.ID}')">${esc((book(seed['책ID']) || {})['제목'] || '')}${seed['쪽수'] ? ' · p.' + esc(seed['쪽수']) : ''}</div>
+      <div class="mt tap" onclick="openSnipInBook('${seed.ID}')">${esc((book(seed['책ID']) || {})['제목'] || '')}${seed['쪽수'] ? ' · ' + esc(pgLabel(seed['쪽수'])) : ''}</div>
       <button class="btn" style="margin-top:10px" onclick="newNote('${seed.ID}')">이 문장으로 글쓰기</button></div>` : ''}
     <div class="note-list" id="note-list"></div>`;
   drawNoteCards();
@@ -274,7 +274,7 @@ function relListHtml(n, q) {
   const sub = $('rel-sub'); if (sub) sub.textContent = qq ? `찾은 문장 ${list.length}${list.length >= 40 ? '+' : ''}` : '쓰는 글과 맞는 내 필사';
   return list.map(s => { const b = book(s['책ID']) || {}; return `<button class="mini" onclick="insertSnip('${s.ID}')">
       <b>${esc(s['제목'] || b['제목'] || '')}</b><span>${esc(sText(s).slice(0, 140))}${sText(s).length > 140 ? '…' : ''}</span>
-      <em>${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''} · 누르면 인용으로 넣어요</em></button>`; }).join('') || `<div class="al-msg">${qq ? '찾는 문장이 없어요' : '아직 이어지는 필사가 없어요. 키워드를 달거나 몇 문장 더 쓰면 찾아줘요.'}</div>`;
+      <em>${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · ' + esc(pgLabel(s['쪽수'])) : ''} · 누르면 인용으로 넣어요</em></button>`; }).join('') || `<div class="al-msg">${qq ? '찾는 문장이 없어요' : '아직 이어지는 필사가 없어요. 키워드를 달거나 몇 문장 더 쓰면 찾아줘요.'}</div>`;
 }
 function openRelated(q) {
   const n = collectNote(); if (!n) return;

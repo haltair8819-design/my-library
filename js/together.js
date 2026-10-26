@@ -389,16 +389,16 @@ function renderPartnerBook() {
   // 스포일러 가리기: 내가 이 책을 아직 다 안 읽었으면, 내가 읽은 곳 뒤의 문장 · 생각 · 한줄평은 가려요
   const guard = tgSpoilOn() && mine && mine['상태'] !== '완독';
   const myCur = guard ? (Number(mine['현재쪽수']) || 0) : Infinity;
-  const hide = s => { if (!guard) return false; const pg = firstPage(s['쪽수']); return pg != null ? pg > myCur : isThought(s); };
-  const snips = sortByPage(S.tg.snips.filter(s => s['책ID'] === b.ID));
+  const hide = s => { if (!guard) return false; const pg = snipPage(s, b); return pg != null ? pg > myCur : isThought(s); };
+  const snips = sortByPage(S.tg.snips.filter(s => s['책ID'] === b.ID), b);
   const logs = S.tg.logs.filter(l => l.bid === b.ID), daily = tgDaily(logs);
   const days = Object.entries(daily).filter(([, n]) => n > 0).sort((x, y) => y[0].localeCompare(x[0]));
   const sHtml = s => { const memo = sMemo(s), h = hide(s);
     return `<div class="snip ${isThought(s) ? 'thought' : 'quote'} ${h ? 'spoil' : ''}" id="p-${s.ID}" ${h ? `onclick="this.classList.remove('spoil')"` : ''}>
-      ${h ? `<div class="spoil-l">🙈 ${firstPage(s['쪽수']) != null ? `p.${esc(s['쪽수'])} · 아직 안 읽은 부분이에요` : '스포일러가 있을 수 있어요'} · 눌러서 보기</div>` : ''}
+      ${h ? `<div class="spoil-l">🙈 ${firstPage(s['쪽수']) != null ? `${esc(pgLabel(s['쪽수']))} · 아직 안 읽은 부분이에요` : '스포일러가 있을 수 있어요'} · 눌러서 보기</div>` : ''}
       ${lifeBadge(s)}${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}<div class="txt">${esc(sText(s))}</div>
       ${memo ? `<div class="smemo">✎ ${esc(memo)}</div>` : ''}
-      ${s['쪽수'] !== '' && s['쪽수'] != null ? `<div class="smeta"><span class="pg">p.${esc(s['쪽수'])}</span></div>` : ''}
+      ${s['쪽수'] !== '' && s['쪽수'] != null ? `<div class="smeta"><span class="pg">${esc(pgLabel(s['쪽수']))}</span></div>` : ''}
       ${reactBarHtml(s.ID, S.tg.partner.id)}</div>`; };
   const spoilReview = guard && b['한줄평'];
   el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 뒤로</button>
@@ -813,7 +813,7 @@ function shDraw() {
           <button class="sh-more" onclick="S.shOpen=S.shOpen==='${b.ID}'?null:'${b.ID}';shRerender()">${S.shOpen === b.ID ? '접기' : '문장 고르기 ›'}</button>` : ''}
         </div>
         ${S.shOpen === b.ID ? `<div class="sh-snips">${sortByPage(sn).map(s => `<label class="sh-snip"><input type="checkbox" ${shSnip(s) ? 'checked' : ''} onchange="shSnipSet('${s.ID}', this.checked)">
-          <span>${lifeOf(s) ? `<i class="life-st">${'★'.repeat(lifeOf(s))}</i> ` : ''}${esc(sText(s).slice(0, 80))}${sText(s).length > 80 ? '…' : ''}${s['쪽수'] ? ` <em>p.${esc(s['쪽수'])}</em>` : ''}</span></label>`).join('')}</div>` : ''}
+          <span>${lifeOf(s) ? `<i class="life-st">${'★'.repeat(lifeOf(s))}</i> ` : ''}${esc(sText(s).slice(0, 80))}${sText(s).length > 80 ? '…' : ''}${s['쪽수'] ? ` <em>${esc(pgLabel(s['쪽수']))}</em>` : ''}</span></label>`).join('')}</div>` : ''}
       </div>`; }).join('') || '<div class="empty">책이 없어요</div>'}</div>
     <div class="sh-save"><span>${ch ? `바뀐 것 ${ch}개` : '바뀐 것 없음'}</span><button class="btn" onclick="S.shDraft={books:{},snips:{}};shRerender()" ${ch ? '' : 'disabled'}>되돌리기</button><button class="btn primary" onclick="shSave()" ${ch ? '' : 'disabled'}>저장</button></div>`;
 }
@@ -864,7 +864,7 @@ function sharedListHtml(me) {
   return `<div class="life-list">${list.slice(0, S.shdLimit).map(s => { const b = bk(s) || {}, n = lifeOf(s);
       return `<div class="life-card ${n ? 'l' + n : ''}" onclick="${me ? `openSnipInBook('${s.ID}')` : `openPartnerBook('${s['책ID']}','${s.ID}')`}">${n ? `<div class="life-st">${'★'.repeat(n)}<span>${LIFE[n]}</span></div>` : ''}
         ${s['제목'] ? `<div class="stitle">${esc(s['제목'])}</div>` : ''}<div class="txt">${esc(sText(s))}</div>${sMemo(s) ? `<div class="smemo">✎ ${esc(sMemo(s))}</div>` : ''}
-        <div class="life-src">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · p.' + esc(s['쪽수']) : ''}${isThought(s) ? ' · 내 생각' : ''}</div>
+        <div class="life-src">${esc(b['제목'] || '')}${s['쪽수'] !== '' && s['쪽수'] != null ? ' · ' + esc(pgLabel(s['쪽수'])) : ''}${isThought(s) ? ' · 내 생각' : ''}</div>
         ${reactBarHtml(s.ID, me ? S.tg.me.id : S.tg.partner.id)}</div>`; }).join('') || `<div class="empty">${me ? '아직 보여준 문장이 없어요. 보여줄 것 → 책 목록에서 고르기에서 골라 보세요.' : '아직 보여준 문장이 없어요'}</div>`}</div>
     ${list.length > S.shdLimit ? `<button class="btn tg-more" onclick="S.shdLimit+=40;tgRerenderAll()">더보기 (${list.length - S.shdLimit}개 남음)</button>` : ''}`;
 }
