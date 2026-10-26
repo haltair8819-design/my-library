@@ -205,19 +205,45 @@ async function openBarcode(onCode) {
    업데이트 해줘요! (v2.13.2): 바꾸고 싶은 걸 모아 두었다가 한 번에 복사 → Claude에 붙여넣기
    업데이트가 되면 '업데이트됐어요'로 날짜 · 버전을 남기고 목록은 비워요
    =================================================================== */
-const REQ_KEY = 'update_reqs_v1';
-function reqData() {
+const REQ_KEY = 'update_reqs_v1', REQ_SH = 'update_reqs_shared_v1';
+/* v2.14.4: 서버(Supabase)를 쓰면 앱 쓰는 사람 모두가 같은 목록을 봐요 (update_reqs 표) */
+const reqShared = () => Store.kind === 'supabase';
+S.reqRows = (() => { try { return JSON.parse(LS.get(REQ_SH) || 'null') || []; } catch (e) { return []; } })();
+function reqLocal() {
   const st = (S.settings || {}).updReq;
   if (st && Array.isArray(st.items)) return st;
   try { return JSON.parse(LS.get(REQ_KEY) || 'null') || { items: [], log: [] }; } catch (e) { return { items: [], log: [] }; }
 }
-async function reqSave(d) {
+const reqMyName = () => (S.tg && S.tg.me && S.tg.me.name) || String((sbSession() || { user: {} }).user.email || '').split('@')[0] || '나';
+function reqFromRows(rows) {
+  const me = reqShared() ? sbUid() : '';
+  const toIt = r => ({ id: r.id, text: r.body, at: r.created_at, who: r.who || '', mine: r.user_id === me, copiedAt: r.copied_at || '', copiedVer: r.copied_ver || '' });
+  const items = rows.filter(r => !r.done_at).sort((a, b) => a.created_at < b.created_at ? -1 : 1).map(toIt);
+  const cp = items.filter(x => x.copiedAt).sort((a, b) => a.copiedAt < b.copiedAt ? 1 : -1)[0];
+  const g = {};
+  rows.filter(r => r.done_at).forEach(r => { const k = r.done_ver + '|' + reqDay(r.done_at);
+    (g[k] = g[k] || { at: r.done_at, ver: r.done_ver, auto: r.auto, items: [] }).items.push(toIt(r));
+    if (r.done_at > g[k].at) g[k].at = r.done_at; });
+  const log = Object.values(g).sort((a, b) => a.at < b.at ? 1 : -1).slice(0, 30);
+  log.forEach(l => l.items.sort((a, b) => a.at < b.at ? -1 : 1));
+  return { items, log, copiedAt: cp ? cp.copiedAt : '', copiedVer: cp ? cp.copiedVer : '' };
+}
+function reqData() { return reqShared() ? reqFromRows(S.reqRows || []) : reqLocal(); }
+async function reqLoad() {
+  if (!reqShared()) return;
+  try {
+    const rows = await sbq(sbClient().from('update_reqs').select('id, user_id, who, body, created_at, copied_at, copied_ver, done_at, done_ver, auto').order('created_at', { ascending: false }).limit(500));
+    S.reqRows = rows || []; LS.set(REQ_SH, JSON.stringify(S.reqRows));
+  } catch (e) {}
+}
+const reqRefresh = () => { if (S.view === 'req') renderReqView(); else if (S.view === 'settings' && typeof renderSettingsView === 'function') renderSettingsView(); };
+async function reqSave(d) {   // 혼자 쓰는 방식(구글 시트)일 때만
   d.log = (d.log || []).slice(0, 30);
   LS.set(REQ_KEY, JSON.stringify(d));
   S.settings = Object.assign({}, S.settings, { updReq: d });
-  if (Store.kind === 'supabase') { try { await Store.run('saveSettings', { updReq: d }); saveCache(); } catch (e) {} }
 }
-function openReq() { go('req'); }
+const reqErr = e => toast('⚠ ' + ((e && e.message) || e));
+function openReq() { go('req'); reqLoad().then(reqRefresh); }
 const reqDay = t => { const d = new Date(t); return isNaN(d) ? '' : `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
 const reqTime = t => { const d = new Date(t); return isNaN(d) ? '' : `${d.getMonth() + 1}.${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 function renderReqView() {
@@ -225,54 +251,93 @@ function renderReqView() {
   const d = reqData(), items = d.items || [], last = (d.log || [])[0];
   const newVer = d.copiedVer && d.copiedVer !== APP_VERSION && items.length;
   el.innerHTML = `<div class="topbar"><button class="iconbtn" onclick="goBack()">← 설정</button></div>
-    <div class="view-head"><h1>업데이트 해줘요!</h1><p>바꾸고 싶은 걸 생각날 때마다 적어 두고, 모아서 한 번에 Claude에게 보내요.</p></div>
+    <div class="view-head"><h1>업데이트 해줘요!</h1><p>바꾸고 싶은 걸 생각날 때마다 적어 두고, 모아서 한 번에 Claude에게 보내요.${reqShared() ? ' <b>앱 쓰는 사람 모두가 같이 보는 목록</b>이에요.' : ''}</p></div>
     <div class="panel2 req-st">${items.length ? `<b>대기 중 ${items.length}개</b>${d.copiedAt ? ` · ${esc(reqTime(d.copiedAt))}에 복사함` : ' · 아직 안 보냄'}` : '<b>대기 중인 요청이 없어요</b>'}
       ${last ? `<div class="small" style="margin-top:4px">마지막 업데이트: ${esc(reqDay(last.at))} · v${esc(last.ver)} · ${last.items.length}개 반영</div>` : ''}
       ${newVer ? `<div class="notice" style="margin-top:8px">새 버전 v${APP_VERSION}이 나왔어요. 잠시 뒤 자동으로 반영됨으로 기록해요.</div>` : d.copiedAt && items.length ? `<div class="small" style="margin-top:4px">복사해서 보냈으면, 새 버전이 나올 때 자동으로 ‘반영됨’으로 기록하고 비워요.</div>` : ''}</div>
     <div class="req-add"><textarea class="field" id="req-in" rows="2" placeholder="예: 메모도 꾹 눌러서 여러 개 고르기" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();reqAdd()}"></textarea>
       <button class="btn primary" onclick="reqAdd()">추가</button></div>
-    <div class="req-list">${items.map((it, i) => `<div class="req-it"><span class="req-n">${i + 1}</span><div class="grow" onclick="reqEdit(${i})">${esc(it.text)}<div class="small">${esc(reqTime(it.at))}</div></div>
-      <button class="req-x" onclick="reqDel(${i})" aria-label="지우기">✕</button></div>`).join('') || '<div class="empty" style="padding:24px 0">위 칸에 적어 보세요</div>'}</div>
+    <div class="req-list">${items.map((it, i) => `<div class="req-it"><span class="req-n">${i + 1}</span><div class="grow" ${reqCanEdit(it) ? `onclick="reqEdit(${i})"` : ''}>${esc(it.text)}<div class="small">${it.who ? `<b>${esc(it.who)}</b> · ` : ''}${esc(reqTime(it.at))}${it.copiedAt ? ' · 보냄' : ''}</div></div>
+      ${reqCanEdit(it) ? `<button class="req-x" onclick="reqDel(${i})" aria-label="지우기">✕</button>` : ''}</div>`).join('') || '<div class="empty" style="padding:24px 0">위 칸에 적어 보세요</div>'}</div>
     ${items.length ? `<div class="actions" style="margin-top:12px"><button class="btn primary grow" onclick="reqCopy()">📋 전체 복사 (Claude에 붙여넣기)</button></div>
       <div class="actions"><button class="btn grow" onclick="reqDone()">✅ 지금 반영됨으로 기록하고 비우기</button></div>` : ''}
     ${(d.log || []).length ? `<div class="sec-head tight"><h2>지난 업데이트</h2></div>${d.log.map(l => `<details class="req-log"><summary>${esc(reqDay(l.at))} · v${esc(l.ver)} · ${l.items.length}개${l.auto ? ' · 자동' : ''}</summary>
-      <ol>${l.items.map(x => `<li>${esc(x.text)}</li>`).join('')}</ol></details>`).join('')}` : ''}`;
+      <ol>${l.items.map(x => `<li>${esc(x.text)}${x.who ? ` <span class="small">— ${esc(x.who)}</span>` : ''}</li>`).join('')}</ol></details>`).join('')}` : ''}`;
 }
+const reqCanEdit = it => !reqShared() || it.mine;
 async function reqAdd() {
   const t = $('req-in'), v = t.value.trim(); if (!v) return;
-  const d = reqData(); d.items = [...(d.items || []), { text: v, at: new Date().toISOString() }];
-  t.value = ''; await reqSave(d); renderReqView(); setTimeout(() => { const x = $('req-in'); if (x) x.focus(); }, 30);
+  if (reqShared()) {
+    try { const r = await sbq(sbClient().from('update_reqs').insert({ who: reqMyName(), body: v }).select('id, user_id, who, body, created_at, copied_at, copied_ver, done_at, done_ver, auto').single());
+      S.reqRows = [r, ...(S.reqRows || [])]; LS.set(REQ_SH, JSON.stringify(S.reqRows)); } catch (e) { reqErr(e); return; }
+  } else { const d = reqData(); d.items = [...(d.items || []), { text: v, at: new Date().toISOString() }]; await reqSave(d); }
+  t.value = ''; renderReqView(); setTimeout(() => { const x = $('req-in'); if (x) x.focus(); }, 30);
 }
 async function reqEdit(i) {
-  const d = reqData(), it = d.items[i]; if (!it) return;
+  const d = reqData(), it = d.items[i]; if (!it || !reqCanEdit(it)) return;
   const v = prompt('고치기', it.text); if (v == null) return;
   if (!v.trim()) { reqDel(i); return; }
-  it.text = v.trim(); await reqSave(d); renderReqView();
+  if (reqShared()) { try { await sbq(sbClient().from('update_reqs').update({ body: v.trim() }).eq('id', it.id)); await reqLoad(); } catch (e) { reqErr(e); } }
+  else { it.text = v.trim(); await reqSave(d); }
+  renderReqView();
 }
-async function reqDel(i) { const d = reqData(); d.items.splice(i, 1); await reqSave(d); renderReqView(); }
+async function reqDel(i) {
+  const d = reqData(), it = d.items[i]; if (!it || !reqCanEdit(it)) return;
+  if (reqShared()) { try { await sbq(sbClient().from('update_reqs').delete().eq('id', it.id)); S.reqRows = S.reqRows.filter(r => r.id !== it.id); LS.set(REQ_SH, JSON.stringify(S.reqRows)); } catch (e) { reqErr(e); } }
+  else { d.items.splice(i, 1); await reqSave(d); }
+  renderReqView();
+}
 function reqText(d) {
-  return `나의 서재 앱 업데이트 요청 (지금 v${APP_VERSION} · ${S.today})\n${d.items.map((x, i) => `${i + 1}. ${x.text}`).join('\n')}\n\n업데이트해줘`;
+  const many = new Set(d.items.map(x => x.who)).size > 1;
+  return `나의 서재 앱 업데이트 요청 (지금 v${APP_VERSION} · ${S.today})\n${d.items.map((x, i) => `${i + 1}. ${x.text}${many && x.who ? ` (${x.who})` : ''}`).join('\n')}\n\n업데이트해줘`;
 }
 async function reqCopy() {
+  if (reqShared()) await reqLoad();
   const d = reqData(), text = reqText(d);
   try { await navigator.clipboard.writeText(text); toast('복사했어요 · Claude 대화창에 붙여넣으세요'); }
   catch (e) { modal(`<h3>복사해서 쓰세요</h3><textarea class="field" style="min-height:200px" onfocus="this.select()">${esc(text)}</textarea><div class="actions"><button class="btn primary grow" onclick="closeModal()">닫기</button></div>`); }
-  d.copiedAt = new Date().toISOString(); d.copiedVer = APP_VERSION; await reqSave(d); renderReqView();
+  if (reqShared()) { try { await sbq(sbClient().rpc('req_mark_copied', { ids: d.items.map(x => x.id), ver: APP_VERSION })); await reqLoad(); } catch (e) {} }
+  else { d.copiedAt = new Date().toISOString(); d.copiedVer = APP_VERSION; await reqSave(d); }
+  renderReqView();
 }
 async function reqDone() {
   const d = reqData(); if (!d.items.length) return;
-  if (!confirm(`${d.items.length}개가 반영됐나요? 오늘 날짜(v${APP_VERSION})로 기록하고 목록을 비울게요.`)) return;
-  d.log = [{ at: new Date().toISOString(), ver: APP_VERSION, items: d.items }, ...(d.log || [])];
-  d.items = []; d.copiedAt = ''; d.copiedVer = '';
-  await reqSave(d); renderReqView(); toast('기록했어요 · 다음 요청을 적어 보세요');
+  if (!confirm(`${d.items.length}개가 반영됐나요? 오늘 날짜(v${APP_VERSION})로 기록하고 목록을 비울게요.${reqShared() ? '\n(모두의 목록에서 함께 비워져요)' : ''}`)) return;
+  if (reqShared()) { try { await sbq(sbClient().rpc('req_mark_done', { ids: d.items.map(x => x.id), ver: APP_VERSION, is_auto: false })); await reqLoad(); } catch (e) { reqErr(e); return; } }
+  else { d.log = [{ at: new Date().toISOString(), ver: APP_VERSION, items: d.items }, ...(d.log || [])]; d.items = []; d.copiedAt = ''; d.copiedVer = ''; await reqSave(d); }
+  renderReqView(); toast('기록했어요 · 다음 요청을 적어 보세요');
 }
 function reqRowSub() { const d = reqData(), n = (d.items || []).length; return n ? `대기 중 ${n}개${d.copiedVer && d.copiedVer !== APP_VERSION ? ' · 새 버전 나옴' : ''}` : '바꾸고 싶은 걸 적어 두고 한 번에 복사'; }
+const reqVerGt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) { const p = x[i] || 0, q = y[i] || 0; if (p !== q) return p > q; } return false; };
 
-// 복사해서 보낸 뒤 새 버전이 나오면 자동으로 '반영됨' 기록 · 목록 비우기 (v2.14)
+// 시작할 때: 모두의 목록 받아 오기 · 예전 내 목록 옮기기 · 보낸 뒤 새 버전이 나왔으면 자동으로 '반영됨'
 (() => {
   const t = setInterval(async () => {
     if (!S.loaded) return; clearInterval(t);
     await new Promise(r => setTimeout(r, 2500));   // 서버 설정을 받아 온 뒤에
+    if (reqShared()) {
+      await reqLoad();
+      const old = reqLocal(), moved = (S.settings || {}).updReqMoved || LS.get('upd_req_moved_v1');
+      if (!moved && ((old.items || []).length || (old.log || []).length)) {
+        const who = reqMyName(), rows = [];
+        (old.items || []).forEach(x => rows.push({ who, body: x.text, created_at: x.at || new Date().toISOString(),
+          copied_at: old.copiedAt || null, copied_ver: old.copiedAt && (!x.at || x.at <= old.copiedAt) ? old.copiedVer || null : null }));
+        (old.log || []).forEach(l => (l.items || []).forEach(x => rows.push({ who, body: x.text, created_at: x.at || l.at, done_at: l.at, done_ver: l.ver, auto: !!l.auto })));
+        try {
+          if (rows.length) await sbq(sbClient().from('update_reqs').insert(rows));
+          LS.set('upd_req_moved_v1', '1'); S.settings = Object.assign({}, S.settings, { updReqMoved: true });
+          try { await Store.run('saveSettings', { updReqMoved: true }); saveCache(); } catch (e) {}
+          await reqLoad();
+        } catch (e) {}
+      }
+      const sent = reqData().items.filter(x => x.copiedVer && reqVerGt(APP_VERSION, x.copiedVer));
+      if (sent.length) {
+        try { await sbq(sbClient().rpc('req_mark_done', { ids: sent.map(x => x.id), ver: APP_VERSION, is_auto: true })); await reqLoad();
+          toast(`업데이트 요청 ${sent.length}개를 v${APP_VERSION} 반영으로 기록했어요`); } catch (e) {}
+      }
+      reqRefresh(); return;
+    }
     const d = reqData();
     if (!(d.items || []).length || !d.copiedVer || d.copiedVer === APP_VERSION) return;
     const sent = d.items.filter(x => !x.at || !d.copiedAt || x.at <= d.copiedAt), later = d.items.filter(x => !(sent.includes(x)));
@@ -281,6 +346,6 @@ function reqRowSub() { const d = reqData(), n = (d.items || []).length; return n
     d.items = later; d.copiedAt = ''; d.copiedVer = '';
     await reqSave(d);
     toast(`업데이트 요청 ${sent.length}개를 v${APP_VERSION} 반영으로 기록했어요`);
-    if (S.view === 'req') renderReqView(); else if (S.view === 'settings') renderSettingsView();
+    reqRefresh();
   }, 600);
 })();
