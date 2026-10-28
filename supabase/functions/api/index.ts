@@ -568,6 +568,20 @@ async function backupUser(admin: any, uid: string) {
 async function backupNow(ctx: Ctx) { return backupUser(adminClient(), ctx.uid); }
 
 const CRON_FNS: Record<string, (admin: any, ...a: any[]) => Promise<unknown>> = {
+  // AI 점검 (사용자 글은 안 보내요): 모델마다 짧게 불러 보고 결과 코드만 돌려줘요
+  aiCheck: async () => {
+    const key = env('GEMINI_API_KEY'), out: Row[] = [];
+    if (!key) return { key: false };
+    for (const model of uniq([env('GEMINI_MODEL'), ...FALLBACK_MODELS].filter(Boolean))) {
+      const t0 = Date.now();
+      const res = await fetch(AI_URL + encodeURIComponent(model) + ':generateContent', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: '다음 문장에 2~8자 표제를 붙여 JSON으로: {"title":""}\n[필사] 예술이란 삶의 자극제다.' }] }], generationConfig: { maxOutputTokens: 1024, responseMimeType: 'application/json' } }) });
+      const txt = await res.text(); let msg = '', ans = '';
+      try { const j = JSON.parse(txt); msg = j.error ? String(j.error.message || '').slice(0, 120) : ''; const c = (j.candidates || [])[0]; ans = c ? ((c.content && (c.content.parts || []).filter((p: Row) => p.text && !p.thought).map((p: Row) => p.text).join('')) || ('finish=' + c.finishReason)) : ''; } catch { msg = txt.slice(0, 120); }
+      out.push({ model, status: res.status, ms: Date.now() - t0, msg, ans: String(ans).slice(0, 120) });
+    }
+    return { key: true, envModel: env('GEMINI_MODEL') || '', out };
+  },
   // 반납 알림: eve = 내일 반납 (전날 저녁), am = 오늘 반납 (아침)
   cronDue: async (admin: any, when: string) => {
     const day = when === 'am' ? kstDay() : kstDay(1);

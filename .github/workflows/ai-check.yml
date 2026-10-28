@@ -1,0 +1,19 @@
+# AI(Gemini) 점검: 모델마다 짧은 시험 문장만 보내 보고 결과 코드를 보여줘요 (내 기록은 안 보내요)
+name: AI 점검
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 점검
+        env:
+          TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          REF: zpbgssxftwckvjnrsdiw
+        run: |
+          CT=$(curl -fsS -X POST "https://api.supabase.com/v1/projects/$REF/database/query" \
+            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d '{"query":"select v from private.kv where k = '"'"'cron_token'"'"'"}' | jq -r '.[0].v')
+          echo "::add-mask::$CT"
+          curl -sS -X POST "https://$REF.supabase.co/functions/v1/api" -H "Content-Type: application/json" -H "x-cron: $CT" \
+            -d '{"fn":"aiCheck","args":[]}' --max-time 150 | jq .
