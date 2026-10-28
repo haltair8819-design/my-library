@@ -1,0 +1,19 @@
+# 필사 개수 확인 (글 내용은 안 보여줘요): 책 ID별 필사 수 · 지운 수
+name: 필사 개수 확인
+on:
+  workflow_dispatch:
+    inputs:
+      books: { description: '책 ID (쉼표)', default: 'B015,B061' }
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          REF: zpbgssxftwckvjnrsdiw
+          BOOKS: ${{ inputs.books }}
+        run: |
+          IDS=$(echo "$BOOKS" | tr -cd 'A-Za-z0-9,' | sed "s/,/','/g")
+          Q="select s.book_id, count(*) filter (where not s.deleted) as live, count(*) filter (where s.deleted) as gone, count(*) filter (where not s.deleted and (s.data->>'인생') is not null) as life from public.snippets s join public.profiles p on p.user_id = s.user_id where lower(p.email) = 'haltair8819@gmail.com' and s.book_id in ('$IDS') group by 1"
+          curl -fsS -X POST "https://api.supabase.com/v1/projects/$REF/database/query" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d "$(jq -n --arg q "$Q" '{query:$q}')" | jq -c '.[]' | while read -r l; do echo "::notice::$l"; done
