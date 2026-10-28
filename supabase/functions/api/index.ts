@@ -89,44 +89,62 @@ const kwClean = (ks: unknown[]) => uniq((ks || []).map(k => String(k).replace(/^
 const AI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/';
 const FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
 let lastOk = '';
-async function llm(system: string, messages: Row[], maxTokens = 1024, asJson = false): Promise<string> {
+// 붐비는(503) 모델은 잠깐 건너뛰어요 (v2.15.2)
+const busyUntil: Record<string, number> = {};
+// 짧은 일(제목 · 키워드)은 빠른 모델부터
+const FAST_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.6-flash'];
+async function llm(system: string, messages: Row[], maxTokens = 1024, asJson = false, fast = false): Promise<string> {
   const key = env('GEMINI_API_KEY');
   if (!key) throw new Error('Gemini API 키가 아직 없어요. Supabase → Edge Functions → Secrets에 GEMINI_API_KEY를 넣어 주세요.');
   const payload: Row = {
     contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: m.parts || [{ text: String(m.content) }] })),
-    generationConfig: { maxOutputTokens: maxTokens }
+    generationConfig: { maxOutputTokens: Math.max(maxTokens, 2048) }   // 생각하는 모델은 생각에도 토큰을 써서 넉넉히
   };
   if (system) payload.systemInstruction = { parts: [{ text: system }] };
   if (asJson) payload.generationConfig.responseMimeType = 'application/json';
-  const models = uniq([env('GEMINI_MODEL'), lastOk, ...FALLBACK_MODELS].filter(Boolean));
+  const all = uniq((fast ? [env('GEMINI_FAST_MODEL'), ...FAST_MODELS, env('GEMINI_MODEL'), lastOk, ...FALLBACK_MODELS]
+    : [env('GEMINI_MODEL'), lastOk, ...FALLBACK_MODELS, ...FAST_MODELS]).filter(Boolean));
+  const now = Date.now(), free = all.filter(m => !(busyUntil[m] > now));
+  const models = free.length ? free : all;
   const tried: string[] = []; let quota = 0;
   for (const model of models) {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const res = await fetch(AI_URL + encodeURIComponent(model) + ':generateContent', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(payload)
-      });
-      const text = await res.text();
+    for (let attempt = 0; attempt < (fast ? 1 : 2); attempt++) {
+      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), fast ? 15000 : 50000);
+      let res: Response, text = '';
+      try {
+        res = await fetch(AI_URL + encodeURIComponent(model) + ':generateContent', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(payload), signal: ctl.signal
+        });
+        text = await res.text();
+      } catch (_e) { clearTimeout(timer); busyUntil[model] = Date.now() + 5 * 60000; tried.push(model + ' 시간 초과'); break; }
+      clearTimeout(timer);
       if (res.status === 200) {
         const data = JSON.parse(text);
         const cand = (data.candidates || [])[0];
-        if (!cand || !cand.content) {
+        const out = cand && cand.content ? (cand.content.parts || []).filter((p: Row) => p.text && !p.thought).map((p: Row) => p.text).join('').trim() : '';
+        if (!out) {
           const why = (data.promptFeedback && data.promptFeedback.blockReason) || (cand && cand.finishReason) || '알 수 없음';
+          if (why === 'MAX_TOKENS') { tried.push(model + ' 답이 잘림'); break; }   // 다른 모델로
           throw new Error('답을 받지 못했어요 (' + why + '). 질문을 조금 바꿔 다시 해보세요.');
         }
-        lastOk = model;
-        return (cand.content.parts || []).filter((p: Row) => p.text && !p.thought).map((p: Row) => p.text).join('').trim();
+        lastOk = model; delete busyUntil[model];
+        return out;
       }
       let msg = ''; try { msg = JSON.parse(text).error.message; } catch { msg = text.slice(0, 200); }
       if (res.status === 400 && /API key/i.test(msg)) throw new Error('Gemini API 키가 맞지 않아요. 키를 다시 확인해 주세요.');
       if (res.status === 403) throw new Error('Gemini API 사용 권한이 없어요 (403): ' + msg);
-      if (res.status >= 500) { await new Promise(r => setTimeout(r, 2000 * (attempt + 1))); tried.push(model + ' ' + res.status); continue; }
+      if (res.status >= 500) {
+        tried.push(model + ' ' + res.status);
+        if (res.status === 503) { busyUntil[model] = Date.now() + 5 * 60000; break; }   // 붐빔: 바로 다음 모델
+        await new Promise(r => setTimeout(r, 1500)); continue;
+      }
       tried.push(model + ' ' + res.status + (msg ? ' ' + msg.slice(0, 80) : ''));
       if (res.status === 429) quota++;
       break;
     }
   }
   if (quota && quota === models.length) throw new Error('무료 사용량 한도에 걸렸어요. 1분쯤 뒤 다시 해보고, 계속되면 오늘 한도를 다 쓴 거예요 (한국 시간 오후 4~5시쯤 초기화).');
-  throw new Error('Gemini 응답을 받지 못했어요. 시도 결과: ' + tried.join(' / '));
+  throw new Error('AI가 지금 답을 못 했어요. 잠시 뒤 다시 해 주세요. (' + tried.join(' / ') + ')');
 }
 
 /* ---------- AI 비서 ---------- */
@@ -235,7 +253,7 @@ async function keywordBatch(items: Row[], vocab: string[]) {
     '키워드는 띄어쓰기 없는 짧은 명사. 출력은 JSON 배열 하나만: [{"id":"S000001","k":["사랑","고독"]}, …]'].join('\n');
   const body = '[기존 키워드] ' + (vocab.length ? vocab.join(', ') : '(아직 없음)') + '\n\n' +
     items.map(t => '[' + t.ID + '] 책: ' + t['책제목'] + (t['제목'] ? ' / 제목: ' + t['제목'] : '') + '\n' + clip(t['내용'], 900)).join('\n\n');
-  const out = await llm(sys, [{ role: 'user', content: body }], 400 + items.length * 60, true);
+  const out = await llm(sys, [{ role: 'user', content: body }], 400 + items.length * 60, true, true);
   const res: Record<string, string[]> = {};
   try {
     const arr = JSON.parse(String(out).slice(String(out).indexOf('['), String(out).lastIndexOf(']') + 1));
@@ -327,7 +345,7 @@ async function suggestTitle(ctx: Ctx, item: Row) {
     '주제어는 뜻이 맞으면 이 목록의 단어를 그대로: ' + (vocab.length ? vocab.join(', ') : '(아직 없음)'),
     raw ? '그리고 [필사]는 휴대폰 화면 줄바꿈 그대로라 줄 끝에서 끊겨 있다. 줄바꿈을 정리한 본문을 text에 넣어줘: 단어 중간에서 끊긴 곳은 붙이고, 띄어 써야 할 곳만 한 칸 띄우고, 빈 줄로 나뉜 문단은 유지. 글자는 하나도 바꾸거나 빼거나 더하지 않는다.' : '',
     raw ? 'JSON만: {"title":"","keywords":[],"text":""}' : 'JSON만: {"title":"","keywords":[]}', '', '[필사]', raw ? clip(raw, 4000) : clip(text, 2500)].join('\n');
-  const j = parseJson(await llm('너는 독서 노트에 표제를 붙이는 도우미다. 출력은 JSON 하나만.', [{ role: 'user', content: prompt }], raw ? 4096 : 1024, true));
+  const j = parseJson(await llm('너는 독서 노트에 표제를 붙이는 도우미다. 출력은 JSON 하나만.', [{ role: 'user', content: prompt }], raw ? 4096 : 1024, true, !raw));
   return { text: raw ? String(j.text || '') : '', title: String(j.title || '').replace(/^[<\s]+|[>\s]+$/g, '').slice(0, 40), keywords: kwClean(j.keywords || []) };
 }
 async function noteAssist(_ctx: Ctx, r: Row) {
@@ -580,7 +598,9 @@ const CRON_FNS: Record<string, (admin: any, ...a: any[]) => Promise<unknown>> = 
       try { const j = JSON.parse(txt); msg = j.error ? String(j.error.message || '').slice(0, 120) : ''; const c = (j.candidates || [])[0]; ans = c ? ((c.content && (c.content.parts || []).filter((p: Row) => p.text && !p.thought).map((p: Row) => p.text).join('')) || ('finish=' + c.finishReason)) : ''; } catch { msg = txt.slice(0, 120); }
       out.push({ model, status: res.status, ms: Date.now() - t0, msg, ans: String(ans).slice(0, 120) });
     }
-    return { key: true, envModel: env('GEMINI_MODEL') || '', out };
+    const t1 = Date.now(); let fastRun = '';
+    try { fastRun = (await llm('출력은 JSON 하나만.', [{ role: 'user', content: '다음 문장에 2~8자 표제와 주제어 1~3개 JSON {"title":"","keywords":[]}\n[필사] 예술이란 삶의 자극제다.' }], 1024, true, true)).slice(0, 120) + ' (' + (Date.now() - t1) + 'ms, ' + lastOk + ')'; } catch (e) { fastRun = 'ERR ' + String((e as Error).message).slice(0, 150); }
+    return { key: true, envModel: env('GEMINI_MODEL') || '', out: [...out, { model: 'llm(fast)', status: 0, ms: 0, msg: '', ans: fastRun }] };
   },
   // 반납 알림: eve = 내일 반납 (전날 저녁), am = 오늘 반납 (아침)
   cronDue: async (admin: any, when: string) => {
