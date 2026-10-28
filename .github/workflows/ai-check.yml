@@ -16,4 +16,6 @@ jobs:
             -d '{"query":"select v from private.kv where k = '"'"'cron_token'"'"'"}' | jq -r '.[0].v')
           echo "::add-mask::$CT"
           curl -sS -X POST "https://$REF.supabase.co/functions/v1/api" -H "Content-Type: application/json" -H "x-cron: $CT" \
-            -d '{"fn":"aiCheck","args":[]}' --max-time 150 | jq .
+            -d '{"fn":"aiCheck","args":[]}' --max-time 150 > r.json; jq . r.json
+          jq -r '.data.out[]? | "\(.model) \(.status) \(.ms)ms \(.msg) \(.ans)"' r.json | while read -r l; do echo "::notice::$l"; done
+          echo "::notice::raw $(jq -c '{ok,error,key:.data.key,env:.data.envModel}' r.json)"
