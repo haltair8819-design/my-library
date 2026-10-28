@@ -153,7 +153,7 @@ function bookExtrasHtml(b) {
     h += `<div class="panel2"><h4>읽는 중</h4>
       ${p ? `<div class="gl small" style="display:flex;justify-content:space-between;margin-bottom:5px"><span>p.${p.cur} / ${p.total}</span><span><b>${p.pct}%</b>${p.eta ? ' · 이 속도면 ' + p.eta.slice(5).replace('-', '.') + ' 완독' : ''}</span></div>
         <div class="bar"><i style="width:${p.pct}%"></i></div>` : `<div class="small">읽은 곳까지 쪽수를 넣으면 진행률 · 예상 완독일 · 매일 읽은 양을 기록해요.</div>`}
-      <div class="inline" style="margin-top:10px"><input class="field" id="cur-page" inputmode="${eb ? 'decimal' : 'numeric'}" placeholder="${eb ? '몇 쪽? (45%도 돼요)' : '지금 몇 쪽?'}" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();readHere('${b.ID}')}">
+      <div class="inline" style="margin-top:10px"><input class="field" id="cur-page" inputmode="decimal" placeholder="${eb ? '몇 쪽? 또는 45%' : '지금 몇 쪽?'}" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();readHere('${b.ID}')}">${pctBtn('cur-page')}
         <button class="btn primary" onclick="readHere('${b.ID}')">여기까지 읽었어요</button></div>
       ${todayN ? `<div class="read-today">오늘 <b>${todayN}쪽</b> 읽었어요${b['현재쪽수'] ? ` · 지금 p.${esc(b['현재쪽수'])}` : ''}</div>` : b['현재쪽수'] ? `<div class="read-today">마지막으로 p.${esc(b['현재쪽수'])}까지 읽었어요</div>` : ''}
       ${logs.length ? readLogHtml(b) : ''}</div>`;
@@ -223,16 +223,25 @@ function saveLog(bid, date, page, base, existing) {
   const local = Object.assign({ '작성일': S.today }, existing || {}, data);
   upsertLocal('logs', local); queue({ fn: 'saveMemo', list: 'logs', data, local });
 }
+// 폰 숫자 자판엔 %가 없어서 버튼으로 붙여요 (v2.15.1)
+function pctBtn(inputId) { return `<button type="button" class="btn pct-btn" title="%로 넣기" onclick="pctToggle('${inputId}')">%</button>`; }
+function pctToggle(inputId) { const f = $(inputId); if (!f) return; const v = f.value.trim(); f.value = /%$/.test(v) ? v.replace(/%/g, '') : v.replace(/%/g, '') + '%'; f.focus(); }
 function readHere(id, val) {
   const b = book(id); if (!b) return;
-  let v = String(val != null ? val : ($('cur-page') ? $('cur-page').value : '')).trim().replace(/쪽|p\.?$/gi, '').trim();
+  let v = String(val != null ? val : ($('cur-page') ? $('cur-page').value : '')).trim().replace(/\s*(퍼센트|프로)$/, '%').replace(/쪽|p\.?$/gi, '').trim();
   if (!v) { toast('몇 쪽까지 읽었는지 넣어 주세요'); return; }
   let page;
   if (/%$/.test(v)) {
     const pct = Number(v.replace('%', '')), total = Number(b['분량']) || 0;
     if (isNaN(pct) || pct < 0 || pct > 100) { toast('0~100% 사이로 넣어 주세요'); return; }
-    if (!total) { toast('%로 넣으려면 책 정보에 분량(쪽수)이 있어야 해요'); return; }
-    page = Math.round(total * pct / 100);
+    let tot = total;
+    if (!tot) {
+      const a = prompt('%로 기록하려면 책 전체 쪽수(분량)가 필요해요.\n이 책은 모두 몇 쪽인가요? (E북은 종이책 쪽수를 넣어도 돼요)', '');
+      tot = Math.round(Number(String(a || '').replace(/[^\d.]/g, ''))) || 0;
+      if (!tot) { toast('분량을 넣어야 %로 기록할 수 있어요'); return; }
+      patchBook(id, { '분량': tot });
+    }
+    page = Math.round(tot * pct / 100);
   } else { page = Number(v); if (isNaN(page) || page < 0) { toast('숫자로 넣어 주세요'); return; } page = Math.round(page); }
   const total = Number(b['분량']) || 0; if (total && page > total) page = total;
   const logs = logsOf(id), prevCur = Number(b['현재쪽수']) || 0;

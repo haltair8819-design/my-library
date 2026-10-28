@@ -307,7 +307,7 @@ function openQuickRead() {
     ${list.map(b => { const p = progressOf(b), today = dailyOf(b.ID)[S.today] || 0, eb = platOf(b) === 'E북'; return `<div class="panel2" style="margin-top:10px">
       <div style="display:flex;gap:10px;align-items:center">${spine(b)}<div style="min-width:0;flex:1"><b style="display:block;font-size:14px">${esc(b['제목'])}</b>
         <span class="small">${p ? `p.${p.cur} / ${p.total} · ${p.pct}%` : b['현재쪽수'] ? `p.${esc(b['현재쪽수'])}` : '아직 기록 없음'}${today ? ` · 오늘 +${today}쪽` : ''}</span></div></div>
-      <div class="inline" style="margin-top:8px"><input class="field" id="qr-${b.ID}" inputmode="${eb ? 'decimal' : 'numeric'}" placeholder="${eb ? '몇 쪽? (45%도 돼요)' : '몇 쪽까지?'}" onkeydown="if(event.key==='Enter'){event.preventDefault();quickReadSave('${b.ID}')}">
+      <div class="inline" style="margin-top:8px"><input class="field" id="qr-${b.ID}" inputmode="decimal" placeholder="${eb ? '몇 쪽? 또는 45%' : '몇 쪽까지?'}" onkeydown="if(event.key==='Enter'){event.preventDefault();quickReadSave('${b.ID}')}">${pctBtn('qr-' + b.ID)}
         <button class="btn primary" onclick="quickReadSave('${b.ID}')">기록</button></div></div>`; }).join('')}
     <div class="actions"><button class="btn grow" onclick="closeModal()">닫기</button></div>`);
   setTimeout(() => { const el = $('qr-' + list[0].ID); if (el) el.focus(); }, 80);

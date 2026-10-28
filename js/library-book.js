@@ -514,7 +514,7 @@ function openSnipForm(id, forceType) {
     <button type="button" class="kw-ai ${s && sMemo(s) ? 'hidden' : ''}" id="memo-add" style="padding:6px 0 0" onclick="showMemoField()">＋ 메모 달기</button>
     ${(() => { const eb = platOf(book(S.bookId) || {}) === 'E북';
       return `<label>${eb ? '쪽수 · 위치' : '쪽수'} <span style="font-weight:400;color:var(--faint)">${eb ? 'E북은 45%처럼 % 로 적어도 돼요' : '여러 쪽이면 36, 37'}</span></label>
-    <div class="inline" style="max-width:240px"><input class="field" id="f-page" inputmode="decimal" style="flex:1" placeholder="${eb ? '45% 또는 쪽수' : ''}" value="${esc(s ? s['쪽수'] : '')}">${eb ? `<button type="button" class="btn" onclick="const f=$('f-page');f.value=f.value.replace(/%/g,'').trim()+'%';f.focus()">%</button>` : ''}</div>`; })()}
+    <div class="inline" style="max-width:240px"><input class="field" id="f-page" inputmode="decimal" style="flex:1" placeholder="${eb ? '45% 또는 쪽수' : ''}" value="${esc(s ? s['쪽수'] : '')}">${eb ? `${pctBtn('f-page')}` : ''}</div>`; })()}
     ${lifePickHtml(s)}
     <label>키워드 <span style="font-weight:400;color:var(--faint)">쉼표로 구분</span><button type="button" class="kw-ai" onclick="aiKeywords(this)">AI 추천</button></label>
     <input class="field" id="f-kw" value="${esc(s ? s['키워드'] : '')}" placeholder="예: 자유, 사랑">

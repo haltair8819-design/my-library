@@ -862,3 +862,4 @@ html[data-mode="dark"] .tg-who.p{color:#E4A58D}
 .avc-ring{position:absolute;inset:0;pointer-events:none;border-radius:50%;box-shadow:0 0 0 400px rgba(0,0,0,.45);outline:2px solid rgba(255,255,255,.85);outline-offset:-2px}
 .avc-zoom{display:flex;align-items:center;gap:10px;max-width:280px;margin:10px auto 0;color:var(--sub)}
 .avc-zoom input{flex:1;accent-color:var(--accent)}
+.pct-btn{flex:0 0 auto;min-width:44px;padding-left:10px;padding-right:10px;font-weight:700}
