@@ -156,9 +156,12 @@ function bookExtrasHtml(b) {
       <div class="inline" style="margin-top:10px"><input class="field" id="cur-page" inputmode="decimal" placeholder="${eb ? '몇 쪽? 또는 45%' : '지금 몇 쪽?'}" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();readHere('${b.ID}')}">${pctBtn('cur-page')}
         <button class="btn primary" onclick="readHere('${b.ID}')">여기까지 읽었어요</button></div>
       ${todayN ? `<div class="read-today">오늘 <b>${todayN}쪽</b> 읽었어요${b['현재쪽수'] ? ` · 지금 p.${esc(b['현재쪽수'])}` : ''}</div>` : b['현재쪽수'] ? `<div class="read-today">마지막으로 p.${esc(b['현재쪽수'])}까지 읽었어요</div>` : ''}
-      ${logs.length ? readLogHtml(b) : ''}</div>`;
-  } else if (logs.length) {
-    h += `<div class="panel2"><h4>독서 기록 <span class="small" style="font-weight:400">${logs.length}일 읽음</span></h4>${readLogHtml(b)}</div>`;
+      ${logs.length ? readLogHtml(b) : ''}
+      <button class="more-btn" onclick="openLogAdd('${b.ID}')">＋ 지난 날짜 기록 추가</button></div>`;
+  } else if (logs.length || b['상태'] === '완독' || b['상태'] === '중단') {
+    h += `<div class="panel2"><h4 style="display:flex;justify-content:space-between;align-items:center">독서 기록 <span class="small" style="font-weight:400">${logs.length ? logs.length + '일 읽음' : ''}</span></h4>
+      ${logs.length ? readLogHtml(b) : `<div class="small">읽은 날과 쪽수를 남기면 매일 읽은 양 · 통계에 들어가요.</div>`}
+      <button class="more-btn" onclick="openLogAdd('${b.ID}')">＋ 날짜별 기록 추가</button></div>`;
   }
   if (b['수령일'] || (b['상태'] !== '완독' && !b['반납일'] && (b['상태'] === '읽을예정' || /도서관|대출|대여|예약/.test(String(b['경로'] || ''))))) {
     const d = dayDiff(b['수령일']);
@@ -270,6 +273,53 @@ function openLogEdit(lid) {
       <div><label>여기까지 (쪽)</label><input class="field" id="lg-page" inputmode="numeric" value="${l.page}"></div></div>
     <div class="actions"><button class="btn danger" onclick="removeLog('${m.ID}')">삭제</button><button class="btn" onclick="closeModal()">취소</button>
       <button class="btn primary grow" onclick="saveLogEdit('${m.ID}')">저장</button></div>`);
+}
+// 날짜를 골라 기록 추가: 완독 · 중단한 책, 지난 날짜 (v2.15.3)
+function openLogAdd(bid) {
+  const b = book(bid); if (!b) return;
+  const used = new Set(logsOf(bid).map(l => l.date));
+  const fin = String(b['완독일'] || '').slice(0, 10), st = String(b['시작일'] || '').slice(0, 10);
+  const def = fin && !used.has(fin) ? fin : (b['상태'] === '읽는중' ? addDays(S.today, -1) : (fin || S.today));
+  const eb = platOf(b) === 'E북';
+  modal(`<h3>독서 기록 추가 <span style="font-weight:400;color:var(--faint);font-size:13px">${esc(b['제목'] || '')}</span></h3>
+    <div class="row"><div><label>날짜</label><input class="field" type="date" id="la-date" value="${def}" ${st ? `min="${st}"` : ''} max="${S.today}"></div>
+      <div><label>여기까지 (쪽${eb ? ' 또는 %' : ''})</label><div class="inline"><input class="field" id="la-page" inputmode="decimal" style="flex:1" placeholder="${b['분량'] ? '전체 ' + b['분량'] + '쪽' : ''}"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();saveLogAdd('${bid}')}">${pctBtn('la-page')}</div></div></div>
+    ${b['상태'] === '완독' && b['분량'] ? `<button class="more-btn" onclick="$('la-page').value='${Number(b['분량'])}'">마지막 쪽(${Number(b['분량'])})까지</button>` : ''}
+    <div class="small" style="margin-top:6px">그날 몇 쪽까지 읽었는지 넣으면, 앞 기록과의 차이로 그날 읽은 양을 계산해요. 같은 날 기록이 있으면 바꿔요.</div>
+    <div class="actions"><button class="btn" onclick="closeModal()">취소</button><button class="btn primary grow" onclick="saveLogAdd('${bid}')">저장</button></div>`);
+  setTimeout(() => { const f = $('la-page'); if (f) f.focus(); }, 60);
+}
+function saveLogAdd(bid) {
+  const b = book(bid); if (!b) return;
+  const date = $('la-date').value;
+  let v = String($('la-page').value || '').trim().replace(/\s*(퍼센트|프로)$/, '%').replace(/쪽|p\.?$/gi, '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('날짜를 골라 주세요'); return; }
+  if (date > S.today) { toast('앞으로의 날짜는 기록할 수 없어요'); return; }
+  if (!v) { toast('몇 쪽까지 읽었는지 넣어 주세요'); return; }
+  let page, total = Number(b['분량']) || 0;
+  if (/%$/.test(v)) {
+    const pct = Number(v.replace('%', ''));
+    if (isNaN(pct) || pct < 0 || pct > 100) { toast('0~100% 사이로 넣어 주세요'); return; }
+    if (!total) {
+      const a = prompt('%로 기록하려면 책 전체 쪽수(분량)가 필요해요.\n이 책은 모두 몇 쪽인가요?', '');
+      total = Math.round(Number(String(a || '').replace(/[^\d.]/g, ''))) || 0;
+      if (!total) { toast('분량을 넣어야 %로 기록할 수 있어요'); return; }
+      patchBook(bid, { '분량': total });
+    }
+    page = Math.round(total * pct / 100);
+  } else { page = Number(v); if (isNaN(page) || page < 0) { toast('숫자로 넣어 주세요'); return; } page = Math.round(page); }
+  if (total && page > total) page = total;
+  const logs = logsOf(bid), same = logs.find(l => l.date === date);
+  const earlier = logs.filter(l => l.date < date);
+  // 첫 기록이면 처음부터(0쪽) 읽은 걸로, 아니면 앞 기록에서 이어서
+  const base = same ? same.base : (earlier.length ? null : 0);
+  saveLog(bid, date, page, base, same && same.m);
+  const last = logsOf(bid).slice(-1)[0];
+  if (last && b['상태'] !== '완독') patchBook(bid, { '현재쪽수': last.page });
+  closeModal(); rerenderLogs();
+  const n = dailyOf(bid)[date] || 0;
+  toast(`${date.slice(5).replace('-', '.')} 기록을 남겼어요${n ? ` · 그날 ${n}쪽` : ''}`);
 }
 function saveLogEdit(lid) {
   const m = (S.logs || []).find(x => x.ID === resolveId(lid)); const l = m && parseLog(m); if (!l) return;
