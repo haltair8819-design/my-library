@@ -844,6 +844,7 @@ async function submitBook(id) {
     const saved = await call('saveBook', data);
     const i = S.books.findIndex(x => x.ID === saved.ID);
     if (i >= 0) S.books[i] = saved; else S.books.push(saved);
+    ensureOneDayLog(saved);
     closeModal(); toast('저장했어요');
     if (!String(saved['대분류'] || '').trim()) aiCategory(saved).then(c => { if (!c) return; const patch = {}; ['대분류', '중분류', '개인분류'].forEach(k => { if (c[k] && !String(saved[k] || '').trim()) patch[k] = c[k]; });
       if (Object.keys(patch).length) { patchBook(saved.ID, patch); toast('분류를 자동으로 채웠어요: ' + patch['대분류']); if (S.view === 'book' && S.bookId === saved.ID) renderBook(); } }).catch(() => {});
@@ -864,6 +865,7 @@ async function finish(id, sure) {
   if (total && (Number(b0['현재쪽수']) || 0) < total) readHereQuiet(id, total);   // 마지막 쪽까지 읽은 걸로 기록
   const saved = await call('finishBook', id);
   S.books[S.books.findIndex(x => x.ID === id)] = saved;
+  ensureOneDayLog(saved);
   rerenderBookish(id); toast(`완독! ${saved['완독일수'] ? saved['완독일수'] + '일 걸렸어요' : ''}`);
   setTimeout(() => openRating(id), 400);
 }

@@ -274,6 +274,29 @@ function openLogEdit(lid) {
     <div class="actions"><button class="btn danger" onclick="removeLog('${m.ID}')">삭제</button><button class="btn" onclick="closeModal()">취소</button>
       <button class="btn primary grow" onclick="saveLogEdit('${m.ID}')">저장</button></div>`);
 }
+// 하루 만에 다 읽은 책 (시작일 = 완독일): 독서 기록이 없으면 그날 처음부터 끝까지 읽은 걸로 남겨요 (v2.15.4)
+function ensureOneDayLog(b) {
+  if (!b || b['상태'] !== '완독') return false;
+  const st = String(b['시작일'] || '').slice(0, 10), fin = String(b['완독일'] || '').slice(0, 10), total = Number(b['분량']) || 0;
+  if (!st || st !== fin || !total || !/^\d{4}-\d{2}-\d{2}$/.test(fin)) return false;
+  const logs = logsOf(b.ID);
+  if (logs.length > 1) return false;
+  const one = logs[0];
+  if (one && (one.date !== fin || (dailyOf(b.ID)[fin] || 0) >= total)) return false;   // 이미 제대로 있으면 그대로
+  saveLog(b.ID, fin, total, 0, one && one.m);   // 처음(0쪽)부터 마지막 쪽까지
+  return true;
+}
+(() => {   // 예전에 하루 만에 완독한 책도 한 번 채우기
+  const t = setInterval(() => {
+    if (!S.loaded) return; clearInterval(t);
+    setTimeout(() => {
+      if (LS.get('fix_oneday_log_v1')) return;
+      let n = 0; S.books.forEach(b => { if (ensureOneDayLog(b)) n++; });
+      LS.set('fix_oneday_log_v1', '1');
+      if (n) { toast(`하루 만에 다 읽은 책 ${n}권의 독서 기록을 채웠어요`); if (S.view === 'book') renderBook(); else if (S.view === 'stats') renderStatsView(); }
+    }, 3000);
+  }, 600);
+})();
 // 날짜를 골라 기록 추가: 완독 · 중단한 책, 지난 날짜 (v2.15.3)
 function openLogAdd(bid) {
   const b = book(bid); if (!b) return;
