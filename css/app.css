@@ -863,3 +863,7 @@ html[data-mode="dark"] .tg-who.p{color:#E4A58D}
 .avc-zoom{display:flex;align-items:center;gap:10px;max-width:280px;margin:10px auto 0;color:var(--sub)}
 .avc-zoom input{flex:1;accent-color:var(--accent)}
 .pct-btn{flex:0 0 auto;min-width:44px;padding-left:10px;padding-right:10px;font-weight:700}
+
+.snip-view{margin:2px 0 10px}
+.snip-divider{display:flex;align-items:center;gap:10px;margin:14px 2px 10px;color:var(--faint);font-size:12px}
+.snip-divider::before,.snip-divider::after{content:'';flex:1;height:1px;background:var(--line)}

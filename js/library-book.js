@@ -79,7 +79,12 @@ function renderBook() {
   const reo = !!S.snipSel;
   const tags = [b['대분류'], b['중분류'], b['개인분류'], b['경로']].filter(Boolean);
   const plat = platOf(b);
-  const quotes = snips.filter(s => !isThought(s)), thoughts = snips.filter(isThought);
+  let quotes = snips.filter(s => !isThought(s)); const thoughts = snips.filter(isThought);
+  // 인생 문장 먼저 · 인생 문장만 (보기만 바꾸고, 저장한 순서는 그대로) — v2.15.5
+  const lifeN = quotes.filter(s => lifeOf(s) > 0).length, allQ = quotes.length;
+  const sv = !reo && lifeN ? snipView() : '';
+  if (sv === 'life') quotes = quotes.map((x, i) => [x, i]).sort((a, b) => lifeOf(b[0]) - lifeOf(a[0]) || a[1] - b[1]).map(a => a[0]);
+  else if (sv === 'only') quotes = quotes.filter(s => lifeOf(s) > 0).map((x, i) => [x, i]).sort((a, b) => lifeOf(b[0]) - lifeOf(a[0]) || a[1] - b[1]).map(a => a[0]);
   S.snipShown = (S.bookTab === '생각' ? thoughts : quotes).map(x => x.ID);
   const selBtn = list => reo ? `<button class="btn primary" onclick="toggleSnipSel()">완료</button>` : '';
   const reoNote = reo ? `<div class="draft-note"><span>눌러서 고르기 · ≡ 끌어서 순서 바꾸기</span><button type="button" style="white-space:nowrap" onclick="resetOrder('${b.ID}')">쪽수 순으로 정렬</button></div>`
@@ -116,7 +121,13 @@ function renderBook() {
     <div class="sec-head tight"><h2>필사</h2>
       <div style="display:flex;gap:6px">${selBtn(quotes)}${S.snipSel || reo ? '' : `<button class="btn" onclick="openSnipForm(null,'인용')">+ 문장</button>`}</div></div>
     ${reoNote}
-    ${quotes.length ? `<div id="snip-list">${quotes.map(snipHtml).join('')}</div>`
+    ${lifeN && !reo ? `<div class="chips snip-view" id="snip-view">
+      <button class="chip ${!sv ? 'on' : ''}" data-v="">기본 순서</button>
+      <button class="chip ${sv === 'life' ? 'on' : ''}" data-v="life">★ 인생 문장 먼저</button>
+      <button class="chip ${sv === 'only' ? 'on' : ''}" data-v="only">★만 ${lifeN}</button></div>` : ''}
+    ${quotes.length ? `<div id="snip-list">${sv === 'life' && lifeN < allQ
+      ? quotes.slice(0, lifeN).map(snipHtml).join('') + `<div class="snip-divider"><span>나머지 문장 ${allQ - lifeN}</span></div>` + quotes.slice(lifeN).map(snipHtml).join('')
+      : quotes.map(snipHtml).join('')}</div>`
     : '<div class="empty">아직 필사한 문장이 없어요.<br>‘+ 문장 추가’로 시작해 보세요.</div>'}` : `
     <div class="sec-head tight"><h2>내 생각 · 메모</h2>
       <div style="display:flex;gap:6px">${selBtn(thoughts)}${S.snipSel || reo ? '' : `<button class="btn" onclick="openSnipForm(null,'생각')">+ 내 생각</button><button class="btn" onclick="openSnipForm(null,'메모')">+ 메모</button>`}</div></div>
@@ -126,6 +137,7 @@ function renderBook() {
     ${thoughts.length ? `<div id="snip-list">${thoughts.map(snipHtml).join('')}</div>`
     : '<div class="empty">아직 남긴 생각이나 메모가 없어요.<br>‘+ 내 생각’, ‘+ 메모’로 남겨 보세요.</div>'}`}
   `;
+  const svEl = $('snip-view'); if (svEl) svEl.onclick = e => { const t = e.target.closest('[data-v]'); if (!t) return; LS.set('snip_view', t.dataset.v); renderBook(); };
   $('book-tabs').onclick = e => { const t = e.target.closest('[data-t]'); if (!t) return; S.bookTab = t.dataset.t; if (S.snipSel) S.snipSel = new Set(); renderBook(); };
   renderSnipSelBar();
   if (reo) { $('fab').classList.add('hidden'); document.querySelectorAll('#snip-list .drag-h').forEach(h => h.addEventListener('pointerdown', startSnipDrag)); }
@@ -145,6 +157,7 @@ function snipOrderOf(bid) {
   const ids = pick && pick.ids ? pick.ids.map(resolveId).filter(Boolean) : [];
   return ids.length ? ids : null;
 }
+function snipView() { const v = LS.get('snip_view') || ''; return v === 'life' || v === 'only' ? v : ''; }
 function orderedSnips(bid) {
   const byPage = sortByPage(snipsOf(bid)), ids = snipOrderOf(bid);
   if (!ids) return byPage;
