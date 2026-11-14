@@ -5,7 +5,7 @@ import { parseLog } from '../lib/logs'
 import { sb, sbUid } from '../lib/supabase'
 import { sbq } from '../lib/store/server'
 import { patchBook, updateBook } from '../lib/store/local'
-import { togetherOn, isShared, bookShared, bookSnipShared, lifeOf, LIFE, call, sortByPage, deleteLog } from '../lib/book'
+import { togetherOn, isShared, bookShared, bookSnipShared, lifeOf, LIFE, call, sortByPage, snipView, deleteLog } from '../lib/book'
 import { tgHasPartner, tgName, tgMonth, tgMonthStats, myLogs, shelfCount, tgMine, tgTheirs, tgProg, tgPeriod, tgSame, tgDaily, tgSpoilOn, tgShareNew, tgRefresh, tgSave, tgSaveOpt, tgSignAvatars, jo, locDay, hhmmOf, bookDayT, delReact, bcDel, setSnipShared, sharedSnipsOf, feedHiddenAdd, setInvitePrompt, AV_BUCKET, type TLog } from '../lib/together'
 import { notifyPartner } from '../lib/push'
 import { go, goBack } from '../lib/nav'
@@ -337,7 +337,15 @@ export function PartnerBookView() {
   const guard = tgSpoilOn() && !!mine && mine['상태'] !== '완독'
   const myCur = guard ? (Number(mine!['현재쪽수']) || 0) : Infinity
   const hide = (s: Rec) => { if (!guard) return false; const pg = snipPage(s, b); return pg != null ? pg > myCur : isThought(s) }
-  const snips = sortByPage(S.tg.snips.filter((s: Rec) => s['책ID'] === b.ID), b)
+  let snips: Rec[] = sortByPage(S.tg.snips.filter((s: Rec) => s['책ID'] === b.ID), b)
+  // 인생 문장 먼저 · ★만 (내 서재 책 화면과 같은 칩 · 같은 선택을 기억) — 가려 둔 문장은 ★ 순서에 안 올려요 (스포일러)
+  const lifeP = (s: Rec) => hide(s) ? 0 : lifeOf(s)
+  const lifeN = snips.filter(s => lifeP(s) > 0).length, allN = snips.length
+  const sv = lifeN ? snipView() : ''
+  const byLife = (arr: Rec[]) => arr.map((x, i) => [x, i] as [Rec, number]).sort((a, c) => lifeP(c[0]) - lifeP(a[0]) || a[1] - c[1]).map(a => a[0])
+  if (sv === 'life') snips = byLife(snips)
+  else if (sv === 'only') snips = byLife(snips.filter(s => lifeP(s) > 0))
+  const setSv = (v: string) => { LS.set('snip_view', v); emit() }
   const daily = tgDaily(S.tg.logs.filter((l: TLog) => l.bid === b.ID))
   const days = Object.entries(daily).filter(([, n]) => n > 0).sort((x, y) => y[0].localeCompare(x[0]))
   const spoilReview = guard && !!b['한줄평']
@@ -358,7 +366,13 @@ export function PartnerBookView() {
       {mine && (mine['별점'] || mine['한줄평']) ? <ReviewRow name="나" cls="" b={mine} onClick={() => openRating(mine.ID)} /> : mine && mine['상태'] === '완독' ? <div className="tg-rv" style={{ cursor: 'pointer' }} onClick={() => openRating(mine.ID)}><Avatar name={(S.tg.me || {}).name} /><div className="small">내 별점 · 한줄평 남기기 ›</div></div> : null}</div>}
     <div className="sec-head tight"><h2>{jo(pn, '이', '가')} 보여준 문장 <span className="small" style={{ fontWeight: 400 }}>{snips.length}개</span></h2></div>
     {guard && snips.some(hide) && <div className="sec-sub">내가 읽은 p.{myCur || 0} 뒤는 가려 뒀어요</div>}
-    <div>{snips.length ? snips.map(s => <PSnip key={s.ID} s={s} b={b} hide={hide(s)} />) : <div className="empty">아직 보여준 문장이 없어요</div>}</div>
+    {lifeN > 0 && <div className="chips snip-view">
+      <button className={'chip ' + (!sv ? 'on' : '')} onClick={() => setSv('')}>기본 순서</button>
+      <button className={'chip ' + (sv === 'life' ? 'on' : '')} onClick={() => setSv('life')}>★ 인생 문장 먼저</button>
+      <button className={'chip ' + (sv === 'only' ? 'on' : '')} onClick={() => setSv('only')}>★만 {lifeN}</button></div>}
+    <div>{snips.length ? (sv === 'life' && lifeN < allN
+      ? <>{snips.slice(0, lifeN).map(s => <PSnip key={s.ID} s={s} b={b} hide={hide(s)} />)}<div className="snip-divider"><span>나머지 문장 {allN - lifeN}</span></div>{snips.slice(lifeN).map(s => <PSnip key={s.ID} s={s} b={b} hide={hide(s)} />)}</>
+      : snips.map(s => <PSnip key={s.ID} s={s} b={b} hide={hide(s)} />)) : <div className="empty">아직 보여준 문장이 없어요</div>}</div>
     <BookComments owner={S.tg.partner.id} bid={b.ID} />
   </section>
 }
