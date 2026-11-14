@@ -1,7 +1,7 @@
 /* 책 · 필사 기록 바꾸기 (화면에 바로 반영 → 대기 목록으로 저장) — 예전 library-book.js · features.js · life.js */
 import { S, emit, book, snipsOf, isThought, uid, uniq, resolveId, snipPage, addDays, platOf, LS, splitKw, type Rec } from './core'
 import { logsOf, dailyOf, logText, snipOrderOf, snipOrderRow, localOrders, isOrderRow, ORDER_KEY } from './logs'
-import { queue, upsertLocal, patchBook, updateBook } from './store/local'
+import { queue, upsertLocal, patchBook, updateBook, saveCache } from './store/local'
 import { Store } from './store/server'
 import { toast, errMsg } from './ui'
 
@@ -13,8 +13,9 @@ export const splitAuthors = (v: unknown) => String(v || '').split(/\s*,\s*/).map
 
 // 서버를 부르고, 실패하면 알려 주기
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const WRITE_FNS: Record<string, 1> = { saveBook: 1, finishBook: 1, deleteBook: 1, saveSettings: 1, renameKeyword: 1, autoKeywords: 1 }
 export async function call(fn: string, ...args: any[]): Promise<any> {
-  try { return await Store.run(fn, ...args) } catch (e) { toast('⚠ ' + errMsg(e)); throw e }
+  try { const r = await Store.run(fn, ...args); if (WRITE_FNS[fn]) setTimeout(saveCache, 30); return r } catch (e) { toast('⚠ ' + errMsg(e)); throw e }
 }
 
 /* ----- 인생 문장 (★1~3) ----- */

@@ -120,7 +120,7 @@ function OtherHits({ q0 }: { q0: string }) {
 
 function List() {
   const q = S.q.trim().toLowerCase()
-  if (!S.loaded) return <div id="list" className="list">{S.loadError ? <div className="empty">{S.loadError}<br /><br /><button className="btn" onClick={() => location.reload()}>다시 시도</button></div> : <div className="loading">서재를 불러오는 중…</div>}</div>
+  if (!S.loaded) return <div id="list" className="list">{S.needLogin ? <div className="empty">구글로 로그인하면 서재가 열려요.</div> : S.loadError ? <div className="empty">{S.loadError}<br /><br /><button className="btn" onClick={() => location.reload()}>다시 시도</button></div> : <div className="loading">서재를 불러오는 중…</div>}</div>
   let rows: Rec[] = S.books.filter((b: Rec) => q || (S.filter === '전체' ? b['상태'] !== '읽을예정' : b['상태'] === S.filter))   // 검색할 때는 모든 책에서 · 전체는 읽고 싶은 책 빼고
   if (S.plat && !q) rows = rows.filter(b => platOf(b) === S.plat)
   if (q) rows = q.startsWith('#') ? [] : rows.filter(b => ['제목', '저자', '옮긴이', '출판사', '대분류', '중분류', '개인분류', '한줄평'].some(k => String(b[k] || '').toLowerCase().includes(q)))

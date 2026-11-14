@@ -41,7 +41,7 @@ function route() {
   if (!startBook && st && st.view === 'note' && st.id && noteOf(st.id)) { S.view = 'note'; S.noteId = st.id }
   if (startBook && book(startBook)) { S.bookId = startBook; S.view = 'book' }
   const keep = history.state && !history.state.modal ? history.state.depth || 0 : 0
-  history.replaceState({ view: S.view, id: S.bookId || '', depth: S.view === 'library' ? 0 : Math.max(keep, TOP_VIEWS.includes(S.view as View) ? 1 : keep) }, '', location.pathname + (S.view === 'book' ? '?book=' + encodeURIComponent(S.bookId) : ''))
+  history.replaceState({ view: S.view, id: S.bookId || '', depth: S.view === 'library' ? 0 : Math.max(keep, TOP_VIEWS.includes(S.view as View) ? 1 : keep) }, '')
   show(S.view)
 }
 function checkNewVersion() {
@@ -145,6 +145,6 @@ export function startApp() {
   const err = p.get('error_description') || (location.hash.match(/error_description=([^&]+)/) || [])[1]
   if (err) { history.replaceState(history.state, '', location.pathname); setTimeout(() => toast('⚠ 로그인 실패: ' + decodeURIComponent(err.replace(/\+/g, ' '))), 300) }
   // 로그인하고 막 돌아왔으면 (?code=) 로그인 마무리를 기다렸다가 시작
-  if (p.has('code') && !sbUid()) { S.needLogin = true; emit(); return }
+  if (p.has('code') && !sbUid()) { S.needLogin = true; emit(); setTimeout(() => { if (S.needLogin && !sbUid()) { history.replaceState(history.state, '', location.pathname); openLogin() } }, 8000); return }
   boot()
 }
