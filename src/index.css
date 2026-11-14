@@ -1,0 +1,25 @@
+/* 나의 서재 — 스타일
+ * 디자인(색 · 글꼴 · 카드 · 탭 · 테마)은 예전 앱 css/app.css를 그대로 옮긴 styles/app.css가 정해요.
+ * Tailwind는 preflight(기본 스타일 초기화) 없이 붙여서 예전 디자인이 그대로 보여요.
+ * 색 이름은 아래 @theme에 연결 → bg-paper · bg-card · text-ink · text-sub · text-faint · border-line · bg-accent · bg-accent-soft · text-warn · text-quote
+ * (값은 app.css의 :root · 테마 · 어둡게에서 바뀌어요. 여기서 색 값을 직접 쓰지 않기) */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "./styles/app.css";
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-sub: var(--sub);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-warn: var(--warn);
+  --color-quote: var(--quote);
+  --font-sans: Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-serif: 'Noto Serif KR', serif;
+  --font-batang: 'Gowun Batang', 'Noto Serif KR', serif;
+}
