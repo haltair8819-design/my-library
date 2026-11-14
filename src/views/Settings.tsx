@@ -104,7 +104,7 @@ function NotifyPanel() {
     <div className="small" style={{ lineHeight: 1.7, marginTop: 6 }}>{!sup ? '⚠ 이 브라우저는 알림을 지원하지 않아요. 폰에 설치한 앱에서 켜 주세요.'
       : st.perm === 'denied' ? <>⚠ 폰에서 이 앱의 알림이 막혀 있어요. 앱 안에서는 폰 설정을 바꿀 수 없어서, 아래처럼 한 번만 허용해 주세요.<ol className="set-guide"><li>폰 <b>설정 → 애플리케이션 → 나의 서재 → 알림</b>에서 <b>알림 허용</b>을 켜요</li>
         <li>목록에 ‘나의 서재’ 알림이 없으면 <b>설정 → 애플리케이션 → Chrome → 알림</b>도 켜져 있는지 봐요 (앱이 크롬으로 열려서요)</li><li>앱으로 돌아와서 위 스위치를 다시 켜요</li></ol></>
-      : errT ? `⚠ ${errT}` : on ? '알림이 오는 기기예요. 끄면 폰 설정과 상관없이 이 기기로는 알림을 안 보내요.' : '켜면 폰이 알림 허용을 물어봐요. 기기마다 따로 켜요.'}</div>
+      : errT ? `⚠ ${errT}` : on ? '알림이 오는 기기예요. 알림은 이 기기 한 곳에만 와요 (다른 기기 · 옛 앱은 정리돼요).' : '켜면 폰이 알림 허용을 물어봐요. 알림은 마지막으로 켠 기기 한 곳에만 와요.'}</div>
     <div className={on ? '' : 'dim'}>
       <label className="tg-check"><input type="checkbox" checked={!!p.due} disabled={!on} onChange={e => pref('due', e.target.checked)} /> 📚 반납일 알림 <span className="small">전날 저녁 8시 · 당일 아침 8시</span></label>
       <label className="tg-check"><input type="checkbox" checked={!!p.together} disabled={!on} onChange={e => pref('together', e.target.checked)} /> 💬 짝꿍 소식 <span className="small">내 문장에 ♡ · 한마디, 같이 읽을 책</span></label>

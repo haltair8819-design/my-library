@@ -13,6 +13,12 @@ export async function pushSub(): Promise<PushSubscription | null> { if (!pushSup
 export async function pushSave(sub: PushSubscription) {
   const j = sub.toJSON() as Rec
   await sbq(sb.rpc('save_push_sub', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_prefs: pushPrefs() }))
+  await dropOtherSubs(j.endpoint)
+}
+// 이 기기만 알림 받기: 내 계정에 남은 다른 기기(옛 앱 · 삼성 인터넷 등)는 목록에서 빼요 — 알림이 두 번 오지 않게
+async function dropOtherSubs(endpoint: string) {
+  const uid = sbUid(); if (!uid) return
+  try { await sbq(sb.from('push_subs').delete().eq('user_id', uid).neq('endpoint', endpoint)) } catch { /* 무시 */ }
 }
 export class DeniedError extends Error { denied = true }
 // 알림 켜기: 단계마다 무엇이 막혔는지 알려 줘요
