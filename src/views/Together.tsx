@@ -1,5 +1,5 @@
 /* 함께 탭 — 짝꿍 서재 · 둘의 이번 달 · 둘 다 있는 책 · 같이 읽을 책 · 소식 · 프로필 · 보여줄 것 (예전 together.js) */
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { S, LS, emit, book, snipsOf, isThought, sText, sMemo, pgLabel, hasPage, firstPage, snipPage, starText, period, addDays, FILTERS, FILTER_LABEL, type Rec } from '../lib/core'
 import { parseLog } from '../lib/logs'
 import { sb, sbUid } from '../lib/supabase'
@@ -277,12 +277,22 @@ export function TogetherView() {
 /* ===== 프로필 · 서재 목록 (짝꿍 것은 보기만) ===== */
 function SharedList({ me }: { me: boolean }) {
   const bk = (s: Rec) => me ? book(s['책ID']) : (S.tg.books || []).find((b: Rec) => b.ID === s['책ID'])
-  const list = sharedSnipsOf(me).slice().sort((a, b) => lifeOf(b) - lifeOf(a) || String(b['작성일'] || '').localeCompare(String(a['작성일'] || '')))
-  return <><div className="life-list">{list.length ? list.slice(0, S.shdLimit).map(s => { const b = bk(s) || {}, n = lifeOf(s)
-    return <div className={'life-card ' + (n ? 'l' + n : '')} key={s.ID} onClick={() => me ? openSnipInBook(s.ID) : openPartnerBook(s['책ID'], s.ID)}>{n > 0 && <div className="life-st">{'★'.repeat(n)}<span>{LIFE[n]}</span></div>}
+  // 기본 순서(새로 쓴 것 먼저) · ★ 인생 문장 먼저 · ★만 — 책 화면과 같은 칩 · 같은 선택을 기억
+  const all = sharedSnipsOf(me).slice().sort((a, b) => String(b['작성일'] || '').localeCompare(String(a['작성일'] || '')))
+  const lifeN = all.filter(s => lifeOf(s) > 0).length, sv = lifeN ? snipView() : ''
+  const byLife = (arr: Rec[]) => arr.map((x, i) => [x, i] as [Rec, number]).sort((a, c) => lifeOf(c[0]) - lifeOf(a[0]) || a[1] - c[1]).map(a => a[0])
+  const list = sv === 'life' ? byLife(all) : sv === 'only' ? byLife(all.filter(s => lifeOf(s) > 0)) : all
+  const setSv = (v: string) => { LS.set('snip_view', v); S.shdLimit = 40; emit() }
+  const shown = list.slice(0, S.shdLimit)
+  return <>{lifeN > 0 && <div className="chips snip-view">
+      <button className={'chip ' + (!sv ? 'on' : '')} onClick={() => setSv('')}>기본 순서</button>
+      <button className={'chip ' + (sv === 'life' ? 'on' : '')} onClick={() => setSv('life')}>★ 인생 문장 먼저</button>
+      <button className={'chip ' + (sv === 'only' ? 'on' : '')} onClick={() => setSv('only')}>★만 {lifeN}</button></div>}
+    <div className="life-list">{list.length ? shown.map((s, i) => { const b = bk(s) || {}, n = lifeOf(s)
+    return <Fragment key={s.ID}>{sv === 'life' && i === lifeN && lifeN < all.length && <div className="snip-divider"><span>나머지 문장 {all.length - lifeN}</span></div>}<div className={'life-card ' + (n ? 'l' + n : '')} onClick={() => me ? openSnipInBook(s.ID) : openPartnerBook(s['책ID'], s.ID)}>{n > 0 && <div className="life-st">{'★'.repeat(n)}<span>{LIFE[n]}</span></div>}
       {s['제목'] && <div className="stitle">{s['제목']}</div>}<div className="txt">{sText(s)}</div>{sMemo(s) && <div className="smemo">✎ {sMemo(s)}</div>}
       <div className="life-src">{b['제목'] || ''}{hasPage(s) ? ' · ' + pgLabel(s['쪽수']) : ''}{isThought(s) ? ' · 내 생각' : ''}</div>
-      <ReactBar sid={s.ID} owner={me ? S.tg.me.id : S.tg.partner.id} /></div> }) : <div className="empty">{me ? '아직 보여준 문장이 없어요. 보여줄 것 → 책 목록에서 고르기에서 골라 보세요.' : '아직 보여준 문장이 없어요'}</div>}</div>
+      <ReactBar sid={s.ID} owner={me ? S.tg.me.id : S.tg.partner.id} /></div></Fragment> }) : <div className="empty">{me ? '아직 보여준 문장이 없어요. 보여줄 것 → 책 목록에서 고르기에서 골라 보세요.' : '아직 보여준 문장이 없어요'}</div>}</div>
     {list.length > S.shdLimit && <button className="btn tg-more" onClick={() => { S.shdLimit += 40; emit() }}>더보기 ({list.length - S.shdLimit}개 남음)</button>}</>
 }
 export function PartnerLibView() {
