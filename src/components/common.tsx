@@ -69,6 +69,7 @@ export function PctBtn({ get, set }: { get: () => string; set: (v: string) => vo
 /* ----- 창 · 토스트 ----- */
 export function ModalHost() {
   if (!M.node) return <div id="modal" />
+  if (M.full) return <div id="modal"><div className="backdrop full"><div className="sheet full" key={M.key}>{M.node}</div></div></div>
   return <div id="modal"><div className="backdrop" onClick={e => { if (e.target === e.currentTarget && !M.locked) closeModal() }}><div className="sheet" key={M.key}>{M.node}</div></div></div>
 }
 export function Toast() {

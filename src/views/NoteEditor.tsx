@@ -7,6 +7,7 @@ import { go, goBack, show, leaveHooks } from '../lib/nav'
 import { modal, closeModal, remodal, toast, errMsg } from '../lib/ui'
 import { $, toggleDictate, startRecording, stopDictate, voiceToMemo } from '../lib/voice'
 import { Spine, Sub, Spin } from '../components/common'
+import { edFont, nextEdFont, useKbOffset, IcBack, IcDown } from './SnipForm'
 
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c])
 /* ----- 읽기 화면: 가벼운 마크다운 ----- */
@@ -263,39 +264,72 @@ async function noteKw(btn: HTMLButtonElement) {
 export function NoteView() {
   const n = noteOf(S.noteId)
   const ref = useRef<HTMLTextAreaElement>(null)
-  const grow = () => { const b = ref.current; if (!b) return; b.style.height = 'auto'; b.style.height = Math.max(260, b.scrollHeight + 4) + 'px' }
+  const [propsOpen, setPropsOpen] = useState(false)
+  const [fs, setFs] = useState(edFont())
+  const [pv, setPv] = useState(0)
+  const kb = useKbOffset()
+  const grow = () => { const b = ref.current; if (!b) return; b.style.height = 'auto'; b.style.height = Math.max(320, b.scrollHeight + 4) + 'px' }
   useEffect(() => { grow() })
   useEffect(() => { if (!n) show('notes') }, [n])
   if (!n) return <section id="v-note" />
   const back = notesLinkingHere(n)
   const setRead = (r: boolean) => { if (r) collectNote(); S.noteRead = r; emit(); window.scrollTo(0, 0) }
   const k = (S.noteKey || 0) + ':' + (S.noteRead ? 'r' : 'w')
-  return <section id="v-note" key={k}>
-    <div className="topbar"><button className="iconbtn" onClick={leaveNote}>← 기록</button>
-      <div className="ne-top-r"><select className="field ne-state" id="ne-state" defaultValue={n['상태'] || '초안'} onChange={() => { noteChanged(); saveNoteNow(false) }}>{NOTE_STATES.map(x => <option key={x}>{x}</option>)}</select>
-        <button className="iconbtn" onClick={noteMenu} aria-label="더 보기">⋯</button></div></div>
-    <div className="seg ne-mode"><button className={S.noteRead ? '' : 'on'} onClick={() => setRead(false)}>✎ 쓰기</button><button className={S.noteRead ? 'on' : ''} onClick={() => setRead(true)}>📖 읽기</button></div>
-    {S.noteRead ? <article className="ne-read" id="ne-read" onClick={e => { const a = (e.target as HTMLElement).closest('a.wlink') as HTMLElement | null; if (a) openLink(unesc(a.dataset.t || '')) }}
-      dangerouslySetInnerHTML={{ __html: `<h1>${esc(n['제목'] || '제목 없음')}</h1>${renderMd(n['본문'])}` }} /> : <>
-      <input className="ne-title" id="ne-title" placeholder="제목" defaultValue={n['제목']} onInput={noteChanged} />
-      <div className="ne-tools" id="ne-tools">
-        <button onClick={() => mdWrap('## ', '')} title="소제목">소제목</button><button onClick={() => mdWrap('> ', '')} title="인용">❝ 인용</button>
-        <button onClick={() => mdWrap('**', '**')} title="굵게"><b>굵게</b></button><button onClick={() => mdWrap('- ', '')} title="목록">• 목록</button>
-        <button onClick={() => modal(<LinkPicker />)} title="책이나 글 잇기">[[ ]] 잇기</button><button onClick={openRelated} title="연결된 필사">📚 필사 넣기</button><button onClick={() => openNoteAI('spell')} title="맞춤법 검사">✓ 맞춤법</button>
-        <span className="vbtns"><button type="button" className="vbtn" title="받아쓰기" aria-label="받아쓰기" onClick={e => toggleDictate(e.currentTarget, 'ne-body')}>🎤</button>
-          <button type="button" className="vbtn" title="녹음 후 정리" aria-label="녹음 후 정리" onClick={() => startRecording('note', recNoteDone)}>🎙</button></span></div>
-      <textarea ref={ref} className="ne-body" id="ne-body" placeholder={'쓰고 싶은 이야기를 적어 보세요.\n[[책 제목]]처럼 쓰면 책과 이어져요.'} defaultValue={n['본문']} onInput={() => { grow(); noteChanged() }} />
-    </>}
-    <div className="ne-count" id="ne-count" ref={el => { if (el && !el.textContent) el.textContent = countText(n) }} />
-    <div className="panel2"><h4>키워드 <button className="kw-ai" onClick={e => noteKw(e.currentTarget)}>AI 추천</button></h4>
-      <input className="field" id="ne-kw" defaultValue={n['키워드']} placeholder="예: 사랑, 자유" onInput={noteChanged} />
-      <div className="row" style={{ marginTop: 8 }}><div><label style={{ marginTop: 0 }}>묶음</label><input className="field" id="ne-group" list="ne-groups" defaultValue={n['묶음']} placeholder="예: 독서 에세이" onInput={noteChanged} /></div>
-        <div><label style={{ marginTop: 0 }}>발행 링크</label><input className="field" id="ne-link" defaultValue={n['발행링크']} placeholder="브런치 · 블로그 주소" onInput={noteChanged} /></div></div>
-      <datalist id="ne-groups">{uniq<string>(S.notes.map((x: Rec) => x['묶음'])).map(g => <option key={g} value={g} />)}</datalist>
-      {n['발행링크'] && <a className="small" href={n['발행링크']} target="_blank" rel="noopener">발행한 글 열기 ↗</a>}</div>
-    <div className="actions"><button className="btn" onClick={() => openNoteAI()}>✨ AI 제안</button><button className="btn" onClick={openRelated}>📚 연결된 필사</button>
-      <button className="btn primary grow" onClick={() => saveNoteNow(true)}>저장</button></div>
-    {back.length > 0 && <div className="panel2"><h4>이 글을 언급한 글</h4>{back.map(x => <button className="mini" key={x.ID} onClick={() => openNote(x.ID)}><b>{x['제목'] || '제목 없음'}</b></button>)}</div>}
-    <div className="small ne-saved" id="ne-saved" ref={el => { if (el && !el.dataset.init) { el.dataset.init = '1'; el.textContent = S.noteDirty ? '저장 전' : isTemp(n.ID) ? '' : '저장됨' } }} />
+  const cur = n
+  const kws = splitKw(cur['키워드'] || '')
+  const changed = () => { noteChanged(); setPv(pv + 1) }
+  const openProps = (focus?: string) => { setPropsOpen(true); if (focus) setTimeout(() => { const el = $(focus); if (el) { el.focus(); el.scrollIntoView({ block: 'center' }) } }, 40) }
+  const md = (s2: string) => String(s2 || '').slice(5).replace('-', '.')
+  return <section id="v-note" key={k} className="ed-note" style={{ ['--ed-fs' as string]: fs + 'px' }}>
+    <div className="ed-top">
+      <button type="button" className="ed-ic" aria-label="뒤로 (저장돼요)" onClick={leaveNote}><IcBack /></button>
+      <span className="ed-saved" id="ne-saved" ref={el => { if (el && !el.dataset.init) { el.dataset.init = '1'; el.textContent = S.noteDirty ? '저장 전' : isTemp(n.ID) ? '' : '저장됨' } }} />
+      <div className="ed-top-r">
+        <button type="button" className="ed-ic" aria-label={S.noteRead ? '쓰기' : '읽기'} title={S.noteRead ? '쓰기' : '읽기'} onClick={() => setRead(!S.noteRead)} style={{ fontSize: 17 }}>{S.noteRead ? '✎' : '📖'}</button>
+        <button type="button" className="ed-ic" aria-label="글자 크기" onClick={() => setFs(nextEdFont())} style={{ fontSize: 15, fontWeight: 700 }}>Aa</button>
+        <button type="button" className="ed-ic" aria-label="더 보기" onClick={noteMenu}>⋯</button>
+        <button type="button" className="btn primary ed-done" onClick={() => { saveNoteNow(true); leaveNote() }}>완료</button>
+      </div>
+    </div>
+    <div className="ed-page" style={{ paddingBottom: S.noteRead ? 40 : 90 + kb }}>
+      {S.noteRead ? <h1 className="ed-title ed-read-title">{n['제목'] || '제목 없음'}</h1>
+        : <input className="ne-title ed-title" id="ne-title" placeholder="제목" defaultValue={n['제목']} onInput={noteChanged}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ref.current?.focus() } }} />}
+      <div className="ed-props">
+        <button type="button" className={'ed-pill st-' + (cur['상태'] || '초안')} onClick={() => openProps('ne-state')}>{cur['상태'] || '초안'}</button>
+        <button type="button" className={'ed-pill ' + (cur['묶음'] ? '' : 'empty')} onClick={() => openProps('ne-group')}>{cur['묶음'] ? '📚 ' + cur['묶음'] : '＋ 묶음'}</button>
+        <button type="button" className={'ed-pill ' + (kws.length ? '' : 'empty')} onClick={() => openProps('ne-kw')}>{kws.length ? kws.slice(0, 2).map(x => '#' + x).join(' ') + (kws.length > 2 ? ` +${kws.length - 2}` : '') : '＋ 키워드'}</button>
+        {cur['발행링크'] && <a className="ed-pill" href={cur['발행링크']} target="_blank" rel="noopener">발행 ↗</a>}
+        {(n['수정일'] || n['작성일']) && <span className="ed-pill plain">{md(n['수정일'] || n['작성일'])}</span>}
+      </div>
+      <div className={'ed-panel ' + (propsOpen ? '' : 'hidden')}>
+        <div className="ed-row"><span className="ed-k">상태</span><div className="ed-v"><select className="field" id="ne-state" defaultValue={n['상태'] || '초안'} onChange={() => { changed(); saveNoteNow(false) }}>{NOTE_STATES.map(x => <option key={x}>{x}</option>)}</select></div></div>
+        <div className="ed-row"><span className="ed-k">묶음</span><div className="ed-v"><input className="field" id="ne-group" list="ne-groups" defaultValue={n['묶음']} placeholder="예: 독서 에세이" onInput={changed} /></div></div>
+        <div className="ed-row col"><span className="ed-k"># 키워드 <button type="button" className="kw-ai" onClick={e => noteKw(e.currentTarget)}>AI 추천</button></span>
+          <input className="field" id="ne-kw" defaultValue={n['키워드']} placeholder="예: 사랑, 자유" onInput={changed} /></div>
+        <div className="ed-row"><span className="ed-k">발행 링크</span><div className="ed-v"><input className="field" id="ne-link" defaultValue={n['발행링크']} placeholder="브런치 · 블로그 주소" onInput={changed} /></div></div>
+        <datalist id="ne-groups">{uniq<string>(S.notes.map((x: Rec) => x['묶음'])).map(g => <option key={g} value={g} />)}</datalist>
+        <button type="button" className="ed-fold" onClick={() => setPropsOpen(false)}>▲ 접기</button>
+      </div>
+      <div className="ed-hr" />
+      {S.noteRead && <article className="ne-read" id="ne-read" onClick={e => { const a = (e.target as HTMLElement).closest('a.wlink') as HTMLElement | null; if (a) openLink(unesc(a.dataset.t || '')) }}
+        dangerouslySetInnerHTML={{ __html: renderMd(n['본문']) }} />}
+      {!S.noteRead && <textarea ref={ref} className="ne-body ed-body" id="ne-body" placeholder={'쓰고 싶은 이야기를 적어 보세요.\n[[책 제목]]처럼 쓰면 책과 이어져요.'} defaultValue={n['본문']} onInput={() => { grow(); noteChanged() }} />}
+      <div className="ne-count" id="ne-count" ref={el => { if (el && !el.textContent) el.textContent = countText(n) }} />
+      <div className="actions" style={{ marginTop: 0 }}><button className="btn grow" onClick={() => openNoteAI()}>✨ AI 제안</button><button className="btn grow" onClick={openRelated}>📚 연결된 필사</button></div>
+      {back.length > 0 && <div className="panel2"><h4>이 글을 언급한 글</h4>{back.map(x => <button className="mini" key={x.ID} onClick={() => openNote(x.ID)}><b>{x['제목'] || '제목 없음'}</b></button>)}</div>}
+    </div>
+    {!S.noteRead && <div className="ed-kb" style={{ bottom: kb }} onMouseDown={e => e.preventDefault()}>
+      <button type="button" className="ed-tb" onClick={() => mdWrap('## ', '')}><b>H</b>소제목</button>
+      <button type="button" className="ed-tb" onClick={() => mdWrap('> ', '')}><b>❝</b>인용</button>
+      <button type="button" className="ed-tb" onClick={() => mdWrap('**', '**')}><b>B</b>굵게</button>
+      <button type="button" className="ed-tb" onClick={() => mdWrap('- ', '')}><b>•</b>목록</button>
+      <button type="button" className="ed-tb" onClick={openRelated}><b>📚</b>필사</button>
+      <button type="button" className="ed-tb" onClick={() => modal(<LinkPicker />)}><b>[[ ]]</b>잇기</button>
+      <button type="button" className="ed-tb" onClick={() => openNoteAI('spell')}><b>✓</b>맞춤법</button>
+      <button type="button" className="ed-tb" onClick={e => toggleDictate(e.currentTarget, 'ne-body')}><b>🎤</b>받아쓰기</button>
+      <button type="button" className="ed-tb" onClick={() => startRecording('note', recNoteDone)}><b>🎙</b>녹음</button>
+      <button type="button" className="ed-tb end" aria-label="키보드 내리기" onClick={() => (document.activeElement as HTMLElement | null)?.blur()}><IcDown /></button>
+    </div>}
   </section>
 }

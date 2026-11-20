@@ -32,7 +32,7 @@ const FAB_LABEL: Record<string, string> = { library: '책 추가', notes: '새 �
 
 function Nav() {
   const tab = TAB_OF[S.view as View] || S.view
-  return <nav className="nav" id="nav">{TABS.filter(([v]) => v !== 'together' || togetherOn()).map(([v, label]) =>
+  return <nav className={"nav" + (S.view === "note" && !S.noteRead ? " hidden" : "")} id="nav">{TABS.filter(([v]) => v !== 'together' || togetherOn()).map(([v, label]) =>
     <button key={v} data-v={v} className={tab === v ? 'on' : ''} onClick={() => go(v)}>{ICONS[v]}{label}{v === 'together' && <i className={'tg-dot ' + ((S.tg.incoming || []).length ? '' : 'hidden')} />}</button>)}</nav>
 }
 // ＋ 버튼: 지금 보고 있는 탭에 맞는 것만 (서재 → 책 추가, 기록 → 새 기록, 책 → 문장)
